@@ -221,7 +221,7 @@ legend_html = '''
 '''
 m.get_root().html.add_child(folium.Element(legend_html))
 
-st_folium(m, height=650, width="stretch")
+st_folium(m, height=650, width="stretch", returned_objects=[])
 
 st.divider() 
 
@@ -258,5 +258,6 @@ if data_sensor:
 else:
 
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
