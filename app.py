@@ -221,7 +221,7 @@ legend_html = '''
 '''
 m.get_root().html.add_child(folium.Element(legend_html))
 
-st_folium(m, height=650, use_container_width=True)
+st_folium(m, height=650, width="stretch")
 
 st.divider() 
 
@@ -254,6 +254,7 @@ if data_sensor:
     df = pd.DataFrame(tabel_data)
     df = df.sort_values(by='Hujan (mm)', ascending=False) 
     
-    st.dataframe(df, use_container_width=True, hide_index=True)
+    st.dataframe(df, width="stretch", hide_index=True)
 else:
+
     st.warning("Data API masih kosong / belum ketarik.")
