@@ -101,8 +101,8 @@ st.markdown(f"""
 def ambil_data_live():
     # --- MASUKIN AKUN AWSCENTER LU DI SINI YA BRO ---
     akun_list = [
-        {"username": "97242", "password": "97242@2018"},
-        {"username": "97240", "password": "97240@2020"},
+        {"username": st.secrets["AWSCENTER_USER"], "password": st.secrets["AWSCENTER_PASS"]}
+        {"username": st.secrets["AWSCENTER_USER2"], "password": st.secrets["AWSCENTER_PASS2"]}
     ]
 
     login_url = "https://awscenter.bmkg.go.id/base/verify"
@@ -258,3 +258,4 @@ if data_sensor:
 else:
 
     st.warning("Data API masih kosong / belum ketarik.")
+
