@@ -5,9 +5,16 @@ import pandas as pd
 import requests
 from datetime import datetime
 import pytz # <-- Tambahan library buat ngatur zona waktu
+from streamlit_autorefresh import st_autorefresh
 
 # Atur Judul Tab Browser & Bikin Full Layar
 st.set_page_config(page_title="Peta Longsor NTB", layout="wide")
+
+# ==========================================
+# FITUR AUTO-REFRESH MODE TV DISPLAY
+# ==========================================
+# Refresh halaman secara halus setiap 5 menit (300.000 milidetik)
+st_autorefresh(interval=300000, limit=None, key="auto_refresh_bmkg")
 
 # ==========================================
 # AMBIL WAKTU REAL-TIME SAAT INI
@@ -258,6 +265,7 @@ if data_sensor:
 else:
 
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
