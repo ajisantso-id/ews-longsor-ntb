@@ -149,7 +149,7 @@ m = folium.Map(location=[-8.60, 117.45], zoom_start=8.5)
 # MASUKIN ZONA MERAH GEOJSON
 try:
     folium.GeoJson(
-        "zona_merah.geojson",
+        "zona_merahfix.geojson",
         name="Zona Rawan Longsor",
         style_function=lambda feature: {
             'fillColor': '#ff0000',
@@ -162,16 +162,16 @@ except Exception as e:
     pass
 
 # --- TAMBAHIN INI BUAT ZONA MERAH SUMBAWA/BIMA ---
-try:
-    folium.GeoJson(
-        "zona_merah_smb.geojson", # <--- GANTI PAKE NAMA FILE LU
-        name="Zona Rawan Longsor Sumbawa dan Bima",
-        style_function=lambda feature: {'fillColor': '#ff0000', 'color': '#cc0000', 'weight': 1, 'fillOpacity': 0.4}
-    ).add_to(m)
-except Exception as e:
-    pass
+#try:
+ #   folium.GeoJson(
+  #      "zona_merah_smb.geojson", # <--- GANTI PAKE NAMA FILE LU
+   #     name="Zona Rawan Longsor Sumbawa dan Bima",
+    #    style_function=lambda feature: {'fillColor': '#ff0000', 'color': '#cc0000', 'weight': 1, 'fillOpacity': 0.4}
+    #).add_to(m)
+#except Exception as e:
+ #   pass
 
-# LOGIKA KATEGORI HUJAN BMKG
+# LOGIKA KATEGORI HUJAN & STATUS AREA BMKG
 for item in data_sensor:
     try:
         lat = float(item['lat'])
@@ -180,22 +180,24 @@ for item in data_sensor:
         curah_str = str(item['curah']).replace(',', '.')
         curah = float(curah_str) if curah_str.strip() != "" else 0.0
 
+        # --- PERBAIKAN WARNA & LOGO ICON ---
         if curah == 0:
-            kategori, potensi, warna, ikon = "Cerah / Berawan", "Aman", "green", "ok-sign"
+            kategori, status_area, warna, ikon = "Cerah / Berawan", "Aman", "lightgray", "cloud"
         elif 0 < curah <= 20:
-            kategori, potensi, warna, ikon = "Hujan Ringan", "Aman", "lightgreen", "tint"
+            kategori, status_area, warna, ikon = "Hujan Ringan", "Aman", "green", "tint"
         elif 20 < curah <= 50:
-            kategori, potensi, warna, ikon = "Hujan Sedang", "Aman", "blue", "cloud"
+            kategori, status_area, warna, ikon = "Hujan Sedang", "Aman", "blue", "tint"
         elif 50 < curah <= 100:
-            kategori, potensi, warna, ikon = "Hujan Lebat", "WASPADA Longsor", "orange", "info-sign"
+            kategori, status_area, warna, ikon = "Hujan Lebat", "WASPADA", "orange", "info-sign"
         elif 100 < curah <= 150:
-            kategori, potensi, warna, ikon = "Hujan Sangat Lebat", "SIAGA Longsor", "red", "warning-sign"
+            kategori, status_area, warna, ikon = "Hujan Sangat Lebat", "SIAGA", "red", "warning-sign"
         else: 
-            kategori, potensi, warna, ikon = "Hujan Ekstrem", "AWAS LONGSOR / BANJIR", "darkred", "flash"
+            kategori, status_area, warna, ikon = "Hujan Ekstrem", "AWAS", "darkred", "flash"
 
+        # --- PERBAIKAN TEKS POPUP (Potensi -> Status Area) ---
         folium.Marker(
             [lat, lon],
-            popup=f"<div style='min-width: 150px;'><b>{nama}</b><br>Curah Hujan: <b>{curah} mm</b><br>Kategori: <b>{kategori}</b><br>Potensi: <b>{potensi}</b><br><small>Update: {item['tanggal']} UTC</small></div>",
+            popup=f"<div style='min-width: 150px;'><b>{nama}</b><br>Curah Hujan: <b>{curah} mm</b><br>Kategori: <b>{kategori}</b><br>Status Area: <b>{status_area}</b><br><small>Update: {item['tanggal']} UTC</small></div>",
             tooltip=f"{nama} ({kategori})",
             icon=folium.Icon(color=warna, icon=ikon)
         ).add_to(m)
@@ -215,14 +217,15 @@ legend_html = '''
     <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center; color: black;"><b>Keterangan Peta</b></h4>
     <div style="margin-bottom: 8px;">
         <i style="background: #ff0000; opacity: 0.5; width: 15px; height: 15px; float: left; margin-right: 8px; border: 1px solid #cc0000;"></i>
-        <b>Zona Rawan Longsor</b>
+        <b>Zona Kerentanan PVMBG</b>
     </div>
     <hr style="margin: 5px 0; border-top: 1px solid #ccc;">
     <div style="margin-bottom: 5px; font-size: 11px; color: #333;"><b>Kategori Hujan (24 Jam):</b></div>
-    <div style="margin-bottom: 5px;"><i style="background: green; border-radius: 50%; width: 12px; height: 12px; float: left; margin-top: 2px; margin-right: 10px;"></i>Cerah / Ringan (< 20 mm)</div>
+    <div style="margin-bottom: 5px;"><i style="background: lightgray; border-radius: 50%; width: 12px; height: 12px; float: left; margin-top: 2px; margin-right: 10px;"></i>Cerah (0 mm)</div>
+    <div style="margin-bottom: 5px;"><i style="background: green; border-radius: 50%; width: 12px; height: 12px; float: left; margin-top: 2px; margin-right: 10px;"></i>Ringan (0.1 - 20 mm)</div>
     <div style="margin-bottom: 5px;"><i style="background: blue; border-radius: 50%; width: 12px; height: 12px; float: left; margin-top: 2px; margin-right: 10px;"></i>Sedang (20 - 50 mm)</div>
     <div style="margin-bottom: 5px;"><i style="background: orange; border-radius: 50%; width: 12px; height: 12px; float: left; margin-top: 2px; margin-right: 10px;"></i>Lebat / Waspada (50 - 100)</div>
-    <div style="margin-bottom: 5px;"><i style="background: red; border-radius: 50%; width: 12px; height: 12px; float: left; margin-top: 2px; margin-right: 10px;"></i>Sangat Lebat / Siaga (100 - 150)</div>
+    <div style="margin-bottom: 5px;"><i style="background: red; border-radius: 50%; width: 12px; height: 12px; float: left; margin-top: 2px; margin-right: 10px;"></i>Sgt Lebat / Siaga (100 - 150)</div>
     <div><i style="background: darkred; border-radius: 50%; width: 12px; height: 12px; float: left; margin-top: 2px; margin-right: 10px;"></i>Ekstrem / Awas (> 150 mm)</div>
 </div>
 '''
@@ -265,6 +268,7 @@ if data_sensor:
 else:
 
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
