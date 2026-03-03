@@ -146,17 +146,32 @@ data_sensor = ambil_data_live()
 # Geser titik tengah ke koordinat antara Lombok & Sumbawa, dan kecilin zoom-nya
 m = folium.Map(location=[-8.60, 117.45], zoom_start=8.5)
 
-# MASUKIN ZONA MERAH GEOJSON
+# ==========================================
+# FUNGSI PEWARNAAN OTOMATIS (STANDAR PVMBG / ESDM)
+# ==========================================
+def style_kerentanan(feature):
+    # 🔴 PENTING: Ganti 'NAMA_KOLOM' sama nama kolom kategori di data lu (misal: 'KETERANGAN' atau 'KERENTANAN')
+    kategori = str(feature['properties'].get('REMARK', '')).upper()
+    
+    # Mencocokkan dengan standar warna peta PVMBG
+    if 'SANGAT TINGGI' in kategori:
+        return {'fillColor': '#cc0000', 'color': '#cc0000', 'weight': 1, 'fillOpacity': 0.6} # Merah Tua
+    elif 'TINGGI' in kategori:
+        return {'fillColor': '#ff3385', 'color': '#ff3385', 'weight': 1, 'fillOpacity': 0.6} # Pink / Merah Muda
+    elif 'MENENGAH' in kategori or 'SEDANG' in kategori:
+        return {'fillColor': '#ffff00', 'color': '#ffff00', 'weight': 1, 'fillOpacity': 0.6} # Kuning
+    elif 'SANGAT RENDAH' in kategori:
+        return {'fillColor': '#00ccff', 'color': '#00ccff', 'weight': 1, 'fillOpacity': 0.3} # Biru Muda (Transparan dikit)
+    else:
+        # Default untuk Rendah / Aman
+        return {'fillColor': '#00cc00', 'color': '#00cc00', 'weight': 1, 'fillOpacity': 0.3} # Hijau (Transparan dikit)
+
+# Memanggil Peta GeoJSON dengan Style PVMBG
 try:
     folium.GeoJson(
-        "zona_merahfix.geojson",
-        name="Zona Rawan Longsor",
-        style_function=lambda feature: {
-            'fillColor': '#ff0000',
-            'color': '#cc0000',
-            'weight': 1,
-            'fillOpacity': 0.4,
-        }
+        "zona_esdm_ntb.geojson",
+        name="Zona Kerentanan Gerakan Tanah",
+        style_function=style_kerentanan
     ).add_to(m)
 except Exception as e:
     pass
@@ -204,29 +219,34 @@ for item in data_sensor:
     except Exception as e:
         continue 
 
-# BIKIN LEGEND MENGAMBANG
+# BIKIN LEGEND MENGAMBANG (UPDATE STANDAR PVMBG)
 legend_html = '''
 <div style="
     position: fixed; 
     bottom: 30px; left: 30px; width: 230px; height: auto; 
-    background-color: rgba(255, 255, 255, 0.85); 
+    background-color: rgba(255, 255, 255, 0.9); 
     border: 2px solid grey; z-index: 9999; 
-    font-size: 13px; padding: 10px; border-radius: 8px; 
+    font-size: 12px; padding: 10px; border-radius: 8px; 
     box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;
 ">
     <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center; color: black;"><b>Keterangan Peta</b></h4>
-    <div style="margin-bottom: 8px;">
-        <i style="background: #ff0000; opacity: 0.5; width: 15px; height: 15px; float: left; margin-right: 8px; border: 1px solid #cc0000;"></i>
-        <b>Zona Kerentanan PVMBG</b>
-    </div>
+    
+    <div style="margin-bottom: 5px;"><b>Kerentanan Gerakan Tanah (PVMBG):</b></div>
+    <div style="margin-bottom: 2px;"><i style="background: #cc0000; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Sangat Tinggi</div>
+    <div style="margin-bottom: 2px;"><i style="background: #ff3385; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Tinggi</div>
+    <div style="margin-bottom: 2px;"><i style="background: #ffff00; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Menengah</div>
+    <div style="margin-bottom: 2px;"><i style="background: #00cc00; opacity: 0.3; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Rendah</div>
+    <div style="margin-bottom: 8px;"><i style="background: #00ccff; opacity: 0.3; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Sangat Rendah</div>
+    
     <hr style="margin: 5px 0; border-top: 1px solid #ccc;">
+    
     <div style="margin-bottom: 5px; font-size: 11px; color: #333;"><b>Kategori Hujan (24 Jam):</b></div>
-    <div style="margin-bottom: 5px;"><i style="background: lightgray; border-radius: 50%; width: 12px; height: 12px; float: left; margin-top: 2px; margin-right: 10px;"></i>Cerah (0 mm)</div>
-    <div style="margin-bottom: 5px;"><i style="background: green; border-radius: 50%; width: 12px; height: 12px; float: left; margin-top: 2px; margin-right: 10px;"></i>Ringan (0.1 - 20 mm)</div>
-    <div style="margin-bottom: 5px;"><i style="background: blue; border-radius: 50%; width: 12px; height: 12px; float: left; margin-top: 2px; margin-right: 10px;"></i>Sedang (20 - 50 mm)</div>
-    <div style="margin-bottom: 5px;"><i style="background: orange; border-radius: 50%; width: 12px; height: 12px; float: left; margin-top: 2px; margin-right: 10px;"></i>Lebat / Waspada (50 - 100)</div>
-    <div style="margin-bottom: 5px;"><i style="background: red; border-radius: 50%; width: 12px; height: 12px; float: left; margin-top: 2px; margin-right: 10px;"></i>Sgt Lebat / Siaga (100 - 150)</div>
-    <div><i style="background: darkred; border-radius: 50%; width: 12px; height: 12px; float: left; margin-top: 2px; margin-right: 10px;"></i>Ekstrem / Awas (> 150 mm)</div>
+    <div style="margin-bottom: 2px;"><i style="background: lightgray; border-radius: 50%; width: 12px; height: 12px; float: left; margin-top: 2px; margin-right: 10px;"></i>Cerah (0 mm)</div>
+    <div style="margin-bottom: 2px;"><i style="background: green; border-radius: 50%; width: 12px; height: 12px; float: left; margin-top: 2px; margin-right: 10px;"></i>Ringan (0.1 - 20)</div>
+    <div style="margin-bottom: 2px;"><i style="background: blue; border-radius: 50%; width: 12px; height: 12px; float: left; margin-top: 2px; margin-right: 10px;"></i>Sedang (20 - 50)</div>
+    <div style="margin-bottom: 2px;"><i style="background: orange; border-radius: 50%; width: 12px; height: 12px; float: left; margin-top: 2px; margin-right: 10px;"></i>Waspada (50 - 100)</div>
+    <div style="margin-bottom: 2px;"><i style="background: red; border-radius: 50%; width: 12px; height: 12px; float: left; margin-top: 2px; margin-right: 10px;"></i>Siaga (100 - 150)</div>
+    <div><i style="background: darkred; border-radius: 50%; width: 12px; height: 12px; float: left; margin-top: 2px; margin-right: 10px;"></i>Awas (> 150 mm)</div>
 </div>
 '''
 m.get_root().html.add_child(folium.Element(legend_html))
@@ -268,6 +288,7 @@ if data_sensor:
 else:
 
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
