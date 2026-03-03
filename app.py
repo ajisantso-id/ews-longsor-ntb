@@ -176,7 +176,7 @@ folium.TileLayer(
     attr='&copy; <a href="https://carto.com/">CartoDB</a>',
     name='Labels Daerah',
     overlay=True,
-    control=False # Biar gak usah muncul di menu centang peta
+    control=False, # Biar gak usah muncul di menu centang peta
     pane='shadowPane'
 ).add_to(m)
 
@@ -322,6 +322,7 @@ if data_sensor:
 else:
 
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
