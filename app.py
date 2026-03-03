@@ -141,10 +141,43 @@ def ambil_data_live():
 data_sensor = ambil_data_live()
 
 # ==========================================
-# BAGIAN 1: PETA FULL SCREEN
+# 1. BIKIN PETA KOSONG (HAPUS BASEMAP BAWAAN)
 # ==========================================
-# Geser titik tengah ke koordinat antara Lombok & Sumbawa, dan kecilin zoom-nya
-m = folium.Map(location=[-8.60, 117.45], zoom_start=8.5)
+# Ganti koordinat & zoom sesuai titik tengah NTB lu
+m = folium.Map(location=[-8.65, 117.36], zoom_start=8, tiles=None)
+
+# ==========================================
+# 2. LAPISAN BAWAH: DARATAN & JALAN (TANPA TEKS)
+# ==========================================
+folium.TileLayer(
+    tiles='https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png',
+    attr='&copy; <a href="https://carto.com/">CartoDB</a>',
+    name='Basemap',
+    overlay=False
+).add_to(m)
+
+# ==========================================
+# 3. LAPISAN TENGAH: POLIGON ZONA BAHAYA (GEOJSON)
+# ==========================================
+try:
+    folium.GeoJson(
+        "zona_esdm_ntb.geojson",
+        name="Zona Kerentanan PVMBG",
+        style_function=style_kerentanan
+    ).add_to(m)
+except Exception as e:
+    pass
+
+# ==========================================
+# 4. LAPISAN ATAS: TEKS NAMA KOTA / DAERAH AJA
+# ==========================================
+folium.TileLayer(
+    tiles='https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png',
+    attr='&copy; <a href="https://carto.com/">CartoDB</a>',
+    name='Labels Daerah',
+    overlay=True,
+    control=False # Biar gak usah muncul di menu centang peta
+).add_to(m)
 
 # ==========================================
 # FUNGSI PEWARNAAN OTOMATIS (STANDAR PVMBG / ESDM)
@@ -288,6 +321,7 @@ if data_sensor:
 else:
 
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
