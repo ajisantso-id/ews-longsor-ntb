@@ -34,7 +34,7 @@ st.markdown(f"""
     <style>
         /* 1. Ngilangin Padding Kosong Bawaan Streamlit */
         .block-container {{
-            padding-top: 1.5rem !important; /* Sisa dikit buat top bar jam */
+            padding-top: 0.5rem !important; /* Sisa dikit buat top bar jam */
             padding-bottom: 0rem !important;
         }}
         header {{visibility: hidden;}} /* Sembunyiin menu default streamlit di atas */
@@ -288,6 +288,7 @@ if data_sensor:
 else:
 
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
