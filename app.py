@@ -169,7 +169,7 @@ def style_kerentanan(feature):
 # Memanggil Peta GeoJSON dengan Style PVMBG
 try:
     folium.GeoJson(
-        "zona_esdm_ntb.geojson",
+        "zona_merahfix.geojson",
         name="Zona Kerentanan Gerakan Tanah",
         style_function=style_kerentanan
     ).add_to(m)
@@ -288,6 +288,7 @@ if data_sensor:
 else:
 
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
