@@ -144,7 +144,7 @@ data_sensor = ambil_data_live()
 # 1. BIKIN PETA KOSONG (HAPUS BASEMAP BAWAAN)
 # ==========================================
 # Ganti koordinat & zoom sesuai titik tengah NTB lu
-m = folium.Map(location=[-8.65, 117.36], zoom_start=8,5, tiles=None)
+m = folium.Map(location=[-8.65, 117.36], zoom_start=8.5, tiles=None)
 
 # ==========================================
 # 2. LAPISAN BAWAH: DARATAN & JALAN (TANPA TEKS)
@@ -322,6 +322,7 @@ if data_sensor:
 else:
 
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
