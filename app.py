@@ -197,11 +197,11 @@ for item in data_sensor:
 
         # --- PERBAIKAN WARNA & LOGO ICON ---
         if curah == 0:
-            kategori, status_area, warna, ikon = "Cerah / Berawan", "Aman", "lightgray", "cloud"
+            kategori, status_area, warna, ikon = "Cerah / Berawan", "Aman", "blue", "cloud"
         elif 0 < curah <= 20:
             kategori, status_area, warna, ikon = "Hujan Ringan", "Aman", "green", "tint"
         elif 20 < curah <= 50:
-            kategori, status_area, warna, ikon = "Hujan Sedang", "Aman", "blue", "tint"
+            kategori, status_area, warna, ikon = "Hujan Sedang", "Aman", "yellow", "tint"
         elif 50 < curah <= 100:
             kategori, status_area, warna, ikon = "Hujan Lebat", "WASPADA", "orange", "info-sign"
         elif 100 < curah <= 150:
@@ -288,6 +288,7 @@ if data_sensor:
 else:
 
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
