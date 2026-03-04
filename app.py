@@ -1,10 +1,10 @@
-import datetime
 import streamlit as st
 import folium
 from streamlit_folium import st_folium
 import pandas as pd
 import requests
 from datetime import datetime
+from datetime import date, timedelta
 import pytz # <-- Tambahan library buat ngatur zona waktu
 from streamlit_autorefresh import st_autorefresh
 
@@ -106,10 +106,10 @@ st.markdown(f"""
 # ==========================================
 st.sidebar.markdown("### 📅 Filter Waktu Observasi")
 
-# Hitung mundur tanggal (Hari ini, H-1, H-2)
-hari_ini = datetime.date.today()
-h_1 = hari_ini - datetime.timedelta(days=1)
-h_2 = hari_ini - datetime.timedelta(days=2)
+# Hitung mundur tanggal (Hari ini, H-1, H-2) langsung pakai 'date'
+hari_ini = date.today()
+h_1 = hari_ini - timedelta(days=1)
+h_2 = hari_ini - timedelta(days=2)
 
 # Bikin Dropdown biar Forecaster bisa milih
 tanggal_pilih = st.sidebar.selectbox(
@@ -120,11 +120,10 @@ tanggal_pilih = st.sidebar.selectbox(
         ("KEMARIN (" + x.strftime("%d %b %Y") + ")" if x == h_1 else "H-2 (" + x.strftime("%d %b %Y") + ")")
 )
 
-# Ubah formatnya jadi teks standar API (contoh: '2026-03-04')
+# Ubah formatnya jadi teks standar API (contoh: '2026-03-05')
 tanggal_api = tanggal_pilih.strftime("%Y-%m-%d")
 
 st.sidebar.info(f"Peta menampilkan data akumulasi 24 Jam untuk tanggal:\n**{tanggal_api}**")
-
 # ==========================================
 # FUNGSI NARIK DATA DARI MULTIPLE AKUN AWSCENTER
 # ==========================================
@@ -427,6 +426,7 @@ if data_sensor:
 # Nah, 'else' ini posisinya lurus sama 'if' utama yang di atas banget (sebelum gambar)
 else:
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
