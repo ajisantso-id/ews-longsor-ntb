@@ -247,19 +247,19 @@ for item in data_sensor:
         curah = float(curah_str) if curah_str.strip() != "" else 0.0
 
         # --- PERBAIKAN WARNA & LOGO ICON ---
-        if curah == 0:
-            kategori, status_area, warna, ikon = "Cerah / Berawan", "Aman", "blue", "cloud"
+       if curah == 0:
+            kategori, status_area, warna, ikon, warna_ikon = "Cerah / Berawan", "Aman", "blue", "cloud", "white"
         elif 0 < curah <= 20:
-            kategori, status_area, warna, ikon = "Hujan Ringan", "Aman", "green", "tint"
+            kategori, status_area, warna, ikon, warna_ikon = "Hujan Ringan", "Aman", "green", "tint", "white"
         elif 20 < curah <= 50:
-            kategori, status_area, warna, ikon = "Hujan Sedang", "Aman", "beige", "tint"
+            # KHUSUS SEDANG: Pin Beige (Kuning), Ikon Hitam biar kontras!
+            kategori, status_area, warna, ikon, warna_ikon = "Hujan Sedang", "Aman", "beige", "tint", "black" 
         elif 50 < curah <= 100:
-            kategori, status_area, warna, ikon = "Hujan Lebat", "WASPADA", "orange", "info-sign"
+            kategori, status_area, warna, ikon, warna_ikon = "Hujan Lebat", "WASPADA", "orange", "info-sign", "white"
         elif 100 < curah <= 150:
-            kategori, status_area, warna, ikon = "Hujan Sangat Lebat", "SIAGA", "red", "warning-sign"
+            kategori, status_area, warna, ikon, warna_ikon = "Hujan Sangat Lebat", "SIAGA", "red", "warning-sign", "white"
         else: 
-            kategori, status_area, warna, ikon = "Hujan Ekstrem", "AWAS", "darkred", "flash"
-
+            kategori, status_area, warna, ikon, warna_ikon = "Hujan Ekstrem", "AWAS", "darkred", "flash", "white"
         # --- PERBAIKAN TEKS POPUP (Potensi -> Status Area) ---
         folium.Marker(
             [lat, lon],
@@ -313,7 +313,7 @@ legend_html = '''
         <span style="line-height: 18px;">Ringan (0.1 - 20 mm)</span>
     </div>
     <div style="margin-bottom: 6px; height: 18px;">
-        <div style="background: beige; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px; border: 1px solid #ccc;">
+        <div style="background: beige; border-radius: 50%; width: 18px; height: 18px; color: black; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px; border: 1px solid #ccc;">
             <i class="glyphicon glyphicon-tint"></i>
         </div>
         <span style="line-height: 18px;">Sedang (20 - 50 mm)</span>
@@ -378,6 +378,7 @@ if data_sensor:
 else:
 
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
