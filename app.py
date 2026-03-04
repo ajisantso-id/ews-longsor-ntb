@@ -107,18 +107,13 @@ st.markdown(f"""
 # 1. OTAK MESIN WAKTU (Taruh di atas sebelum narik data)
 # ==========================================
 
-# Bikin daya ingat (Session State)
+# Pastiin ini ada di atas
 if 'offset_hari' not in st.session_state:
     st.session_state.offset_hari = 0
 
-# Fungsi rahasia (Callback) biar gak telat mikir pas diklik
-def klik_kemarin():
-    if st.session_state.offset_hari < 2:
-        st.session_state.offset_hari += 1
-
-def klik_lusa():
-    if st.session_state.offset_hari < 2:
-        st.session_state.offset_hari += 2
+# Fungsi baru, 1 fungsi buat semua tombol!
+def set_hari(offset):
+    st.session_state.offset_hari = offset
 
 # Hitung tanggalnya di atas, biar data API dan Peta bisa langsung pake
 tanggal_pilih = date.today() - timedelta(days=st.session_state.offset_hari)
@@ -411,28 +406,35 @@ st.divider()
 # ==========================================
 #st.markdown("---") # Garis pembatas estetik
 
-col1, col2, col3 = st.columns([1, 2, 1])
+# Trik 5 Kolom: Kolom ujung digedein (rasio 2) biar neken 3 kolom tengah
+col_spasi1, col_btn1, col_btn2, col_btn3, col_spasi2 = st.columns([2, 1, 1, 1, 2])
 
-with col1:
-    # Panggil fungsi rahasianya pake on_click
-    st.button("⬅️ Kemarin", on_click=klik_kemarin, use_container_width=True)
+# Tombolnya ukurannya ngepas teks aja (gak usah use_container_width=True)
+with col_btn1:
+    # Kalau diklik, ngirim angka 2 (H-2) ke fungsi set_hari
+    st.button("⏮️ Data H-2", on_click=set_hari, args=(2,)) 
+with col_btn2:
+    # Kalau diklik, ngirim angka 1 (Kemarin)
+    st.button("⏪ Data Kemarin", on_click=set_hari, args=(1,))
+with col_btn3:
+    # Kalau diklik, ngirim angka 0 (Hari Ini)
+    st.button("✅ Data Hari Ini", on_click=set_hari, args=(0,))
 
-with col2:
-    if st.session_state.offset_hari == 0:
-        label = f"HARI INI ({tanggal_pilih.strftime('%d %b %Y')})"
-    elif st.session_state.offset_hari == 1:
-        label = f"KEMARIN ({tanggal_pilih.strftime('%d %b %Y')})"
-    else:
-        label = f"H-2 ({tanggal_pilih.strftime('%d %b %Y')})"
-    
-    # Teks center
-    st.markdown(f"<h5 style='text-align: center; color: #1f77b4; margin-top: 5px;'>📅 {label}</h5>", unsafe_allow_html=True)
+# ==========================================
+# TEKS INFO TANGGAL DI BAWAH TOMBOL
+# ==========================================
+tanggal_pilih = date.today() - timedelta(days=st.session_state.offset_hari)
 
-with col3:
-    st.button("Lusa ➡️", on_click=klik_lusa, use_container_width=True)
+if st.session_state.offset_hari == 0:
+    label = f"Menampilkan Data HARI INI ({tanggal_pilih.strftime('%d %b %Y')})"
+elif st.session_state.offset_hari == 1:
+    label = f"Menampilkan Data KEMARIN ({tanggal_pilih.strftime('%d %b %Y')})"
+else:
+    label = f"Menampilkan Data H-2 ({tanggal_pilih.strftime('%d %b %Y')})"
 
-st.markdown("<br>", unsafe_allow_html=True) # Spasi dikit sebelum masuk tabel
-
+# Teks di-center rapi di bawah tombol
+st.markdown(f"<h5 style='text-align: center; color: #1f77b4; margin-top: 15px;'>📅 {label}</h5>", unsafe_allow_html=True)
+st.markdown("<br>", unsafe_allow_html=True) # Spasi sebelum masuk ke tabel
 # ==========================================
 # BAGIAN 2: TABEL DI BAWAH PETA
 # ==========================================
@@ -481,6 +483,7 @@ if data_sensor:
 # Nah, 'else' ini posisinya lurus sama 'if' utama yang di atas banget (sebelum gambar)
 else:
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
