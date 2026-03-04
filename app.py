@@ -102,28 +102,45 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# FITUR MESIN WAKTU (HISTORI HUJAN)
+# FITUR MESIN WAKTU (PREVIOUS & NEXT)
 # ==========================================
-st.sidebar.markdown("### 📅 Filter Waktu Observasi")
 
-# Hitung mundur tanggal (Hari ini, H-1, H-2) langsung pakai 'date'
-hari_ini = date.today()
-h_1 = hari_ini - timedelta(days=1)
-h_2 = hari_ini - timedelta(days=2)
+# 1. Bikin "Daya Ingat" webnya (Mulai dari 0 = Hari Ini)
+if 'offset_hari' not in st.session_state:
+    st.session_state.offset_hari = 0
 
-# Bikin Dropdown biar Forecaster bisa milih
-tanggal_pilih = st.sidebar.selectbox(
-    "Pilih Histori Peta:",
-    options=[hari_ini, h_1, h_2],
-    format_func=lambda x: 
-        "HARI INI (" + x.strftime("%d %b %Y") + ")" if x == hari_ini else 
-        ("KEMARIN (" + x.strftime("%d %b %Y") + ")" if x == h_1 else "H-2 (" + x.strftime("%d %b %Y") + ")")
-)
+# 2. Bikin Layout 3 Kolom biar tombolnya rapi di kiri, teks di tengah, tombol di kanan
+col1, col2, col3 = st.columns([1, 2, 1])
 
-# Ubah formatnya jadi teks standar API (contoh: '2026-03-05')
+with col1:
+    # Tombol Mundur (Maksimal kita batasi mundur 2 hari / H-2)
+    if st.button("⬅️ Mundur 1 Hari"):
+        if st.session_state.offset_hari < 2:
+            st.session_state.offset_hari += 1
+
+with col3:
+    # Tombol Maju (Maksimal cuma bisa sampai Hari Ini)
+    if st.button("Maju 1 Hari ➡️"):
+        if st.session_state.offset_hari > 0:
+            st.session_state.offset_hari -= 1
+
+# 3. Hitung tanggal berdasarkan jumlah klik
+tanggal_pilih = date.today() - timedelta(days=st.session_state.offset_hari)
 tanggal_api = tanggal_pilih.strftime("%Y-%m-%d")
 
-st.sidebar.info(f"Peta menampilkan data akumulasi 24 Jam untuk tanggal:\n**{tanggal_api}**")
+# 4. Teks Penunjuk Tanggal di Kolom Tengah
+with col2:
+    if st.session_state.offset_hari == 0:
+        label = f"HARI INI ({tanggal_pilih.strftime('%d %b %Y')})"
+    elif st.session_state.offset_hari == 1:
+        label = f"KEMARIN ({tanggal_pilih.strftime('%d %b %Y')})"
+    else:
+        label = f"H-2 ({tanggal_pilih.strftime('%d %b %Y')})"
+    
+    # Bikin teksnya ke tengah (center)
+    st.markdown(f"<h4 style='text-align: center; color: #1f77b4;'>📅 {label}</h4>", unsafe_allow_html=True)
+
+st.markdown("---") # Garis pembatas estetik sebelum masuk ke peta
 # ==========================================
 # FUNGSI NARIK DATA DARI MULTIPLE AKUN AWSCENTER
 # ==========================================
@@ -426,6 +443,7 @@ if data_sensor:
 # Nah, 'else' ini posisinya lurus sama 'if' utama yang di atas banget (sebelum gambar)
 else:
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
