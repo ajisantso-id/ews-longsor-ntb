@@ -398,11 +398,12 @@ if data_sensor:
     )
 
     # Tampilkan tabel yang udah di-style ke Streamlit
-    st.dataframe(styled_df, use_container_width=False, hide_index=True)
+    st.dataframe(styled_df, use_container_width=True, hide_index=True)
 
 # Nah, 'else' ini posisinya lurus sama 'if' utama yang di atas banget (sebelum gambar)
 else:
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
