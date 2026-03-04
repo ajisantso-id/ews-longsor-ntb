@@ -1,3 +1,4 @@
+import datetime
 import streamlit as st
 import folium
 from streamlit_folium import st_folium
@@ -100,6 +101,29 @@ st.markdown(f"""
     <hr style="margin: 0; border: none; border-bottom: 2px solid #002B5B;">
 """, unsafe_allow_html=True)
 
+# ==========================================
+# FITUR MESIN WAKTU (HISTORI HUJAN)
+# ==========================================
+st.sidebar.markdown("### 📅 Filter Waktu Observasi")
+
+# Hitung mundur tanggal (Hari ini, H-1, H-2)
+hari_ini = datetime.date.today()
+h_1 = hari_ini - datetime.timedelta(days=1)
+h_2 = hari_ini - datetime.timedelta(days=2)
+
+# Bikin Dropdown biar Forecaster bisa milih
+tanggal_pilih = st.sidebar.selectbox(
+    "Pilih Histori Peta:",
+    options=[hari_ini, h_1, h_2],
+    format_func=lambda x: 
+        "HARI INI (" + x.strftime("%d %b %Y") + ")" if x == hari_ini else 
+        ("KEMARIN (" + x.strftime("%d %b %Y") + ")" if x == h_1 else "H-2 (" + x.strftime("%d %b %Y") + ")")
+)
+
+# Ubah formatnya jadi teks standar API (contoh: '2026-03-04')
+tanggal_api = tanggal_pilih.strftime("%Y-%m-%d")
+
+st.sidebar.info(f"Peta menampilkan data akumulasi 24 Jam untuk tanggal:\n**{tanggal_api}**")
 
 # ==========================================
 # FUNGSI NARIK DATA DARI MULTIPLE AKUN AWSCENTER
@@ -403,6 +427,7 @@ if data_sensor:
 # Nah, 'else' ini posisinya lurus sama 'if' utama yang di atas banget (sebelum gambar)
 else:
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
