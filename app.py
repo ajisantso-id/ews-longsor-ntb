@@ -218,14 +218,14 @@ def style_kerentanan(feature):
         return {'fillColor': '#00cc00', 'color': '#00cc00', 'weight': 1, 'fillOpacity': 0.3} # Hijau (Transparan dikit)
 
 # Memanggil Peta GeoJSON dengan Style PVMBG
-#try:
-  #  folium.GeoJson(
-  #      "zona_merahfix.geojson",
-  #      name="Zona Kerentanan Gerakan Tanah",
-  #      style_function=style_kerentanan
-  #  ).add_to(m)
-#except Exception as e:
-#    pass
+try:
+    folium.GeoJson(
+        "zona_merahfix.geojson",
+        name="Zona Kerentanan Gerakan Tanah",
+        style_function=style_kerentanan
+    ).add_to(m)
+except Exception as e:
+    pass
 
 # --- TAMBAHIN INI BUAT ZONA MERAH SUMBAWA/BIMA ---
 #try:
@@ -339,6 +339,7 @@ if data_sensor:
 else:
 
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
