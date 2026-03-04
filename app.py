@@ -110,13 +110,13 @@ if 'offset_hari' not in st.session_state:
     st.session_state.offset_hari = 0
 
 # Fungsi rahasia (Callback) biar gak telat mikir pas diklik
-def klik_mundur():
+def klik_kemarin():
     if st.session_state.offset_hari < 2:
         st.session_state.offset_hari += 1
 
-def klik_maju():
-    if st.session_state.offset_hari > 0:
-        st.session_state.offset_hari -= 1
+def klik_lusa():
+    if st.session_state.offset_hari < 2:
+        st.session_state.offset_hari += 2
 
 # Hitung tanggalnya di atas, biar data API dan Peta bisa langsung pake
 tanggal_pilih = date.today() - timedelta(days=st.session_state.offset_hari)
@@ -385,7 +385,7 @@ col1, col2, col3 = st.columns([1, 2, 1])
 
 with col1:
     # Panggil fungsi rahasianya pake on_click
-    st.button("⬅️ Mundur 1 Hari", on_click=klik_mundur, use_container_width=True)
+    st.button("⬅️ Kemarin", on_click=klik_kemarin, use_container_width=True)
 
 with col2:
     if st.session_state.offset_hari == 0:
@@ -399,7 +399,7 @@ with col2:
     st.markdown(f"<h5 style='text-align: center; color: #1f77b4; margin-top: 5px;'>📅 {label}</h5>", unsafe_allow_html=True)
 
 with col3:
-    st.button("Maju 1 Hari ➡️", on_click=klik_maju, use_container_width=True)
+    st.button("Lusa ➡️", on_click=klik_lusa, use_container_width=True)
 
 st.markdown("<br>", unsafe_allow_html=True) # Spasi dikit sebelum masuk tabel
 
@@ -451,6 +451,7 @@ if data_sensor:
 # Nah, 'else' ini posisinya lurus sama 'if' utama yang di atas banget (sebelum gambar)
 else:
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
