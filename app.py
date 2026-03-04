@@ -247,7 +247,7 @@ for item in data_sensor:
         curah = float(curah_str) if curah_str.strip() != "" else 0.0
 
         # --- PERBAIKAN WARNA & LOGO ICON ---
-       if curah == 0:
+    if curah == 0:
             kategori, status_area, warna, ikon, warna_ikon = "Cerah / Berawan", "Aman", "blue", "cloud", "white"
         elif 0 < curah <= 20:
             kategori, status_area, warna, ikon, warna_ikon = "Hujan Ringan", "Aman", "green", "tint", "white"
@@ -378,6 +378,7 @@ if data_sensor:
 else:
 
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
