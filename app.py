@@ -1,3 +1,5 @@
+import json
+import os
 import streamlit as st
 import folium
 from streamlit_folium import st_folium
@@ -159,7 +161,35 @@ def ambil_data_live():
     return semua_data_gabungan
 
 # Eksekusi Narik Data Live
-data_sensor = ambil_data_live()
+#data_sensor = ambil_data_live()
+
+# LOGIKA PINTAR PENARIKAN DATA (LIVE vs HISTORI)
+# ==========================================
+data_sensor = [] # Kita siapin wadah kosong dulu
+
+# Cek tombol mesin waktu lagi ada di posisi mana
+if st.session_state.offset_hari == 0:
+    # --- JALUR HARI INI (Tarik Live via API) ---
+    with st.spinner("Sedang menarik data Real-Time dari AWS Center..."):
+        data_sensor = ambil_data_live()
+        if not data_sensor:
+            st.error("Gagal menarik data Live / Data kosong.")
+
+elif st.session_state.offset_hari == 1:
+    # --- JALUR KEMARIN (H-1) ---
+    if os.path.exists('data_h1.json'):
+        with open('data_h1.json', 'r') as f:
+            data_sensor = json.load(f)
+    else:
+        st.warning("⚠️ Data histori Kemarin belum tersedia. Robot GitHub belum narik datanya semalam.")
+
+elif st.session_state.offset_hari == 2:
+    # --- JALUR LUSA (H-2) ---
+    if os.path.exists('data_h2.json'):
+        with open('data_h2.json', 'r') as f:
+            data_sensor = json.load(f)
+    else:
+        st.warning("⚠️ Data histori H-2 belum tersedia.")
 
 # ==========================================
 # 1. BIKIN PETA KOSONG (HAPUS BASEMAP BAWAAN)
@@ -451,6 +481,7 @@ if data_sensor:
 # Nah, 'else' ini posisinya lurus sama 'if' utama yang di atas banget (sebelum gambar)
 else:
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
