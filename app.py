@@ -310,25 +310,25 @@ legend_html = '''
         <div style="background: green; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;">
             <i class="glyphicon glyphicon-tint"></i>
         </div>
-        <span style="line-height: 18px;">Ringan (0.1 - 20)</span>
+        <span style="line-height: 18px;">Ringan (0.1 - 20 mm)</span>
     </div>
     <div style="margin-bottom: 6px; height: 18px;">
-        <div style="background: beige; border-radius: 50%; width: 18px; height: 18px; color: black; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px; border: 1px solid #ccc;">
+        <div style="background: yellow; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px; border: 1px solid #ccc;">
             <i class="glyphicon glyphicon-tint"></i>
         </div>
-        <span style="line-height: 18px;">Sedang (20 - 50)</span>
+        <span style="line-height: 18px;">Sedang (20 - 50 mm)</span>
     </div>
     <div style="margin-bottom: 6px; height: 18px;">
         <div style="background: orange; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;">
             <i class="glyphicon glyphicon-info-sign"></i>
         </div>
-        <span style="line-height: 18px;">Waspada (50 - 100)</span>
+        <span style="line-height: 18px;">Waspada (50 - 100 mm)</span>
     </div>
     <div style="margin-bottom: 6px; height: 18px;">
         <div style="background: red; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;">
             <i class="glyphicon glyphicon-warning-sign"></i>
         </div>
-        <span style="line-height: 18px;">Siaga (100 - 150)</span>
+        <span style="line-height: 18px;">Siaga (100 - 150 mm)</span>
     </div>
     <div style="margin-bottom: 6px; height: 18px;">
         <div style="background: darkred; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;">
@@ -378,6 +378,7 @@ if data_sensor:
 else:
 
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
