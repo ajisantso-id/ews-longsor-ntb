@@ -331,7 +331,7 @@ if data_sensor:
 
         tabel_data.append({
             'Stasiun': item['name_station'],
-            #'Kab/Kota': nama_kota,
+            'Kab/Kota': item['nama_kota'],
             'Hujan (mm)': curah,
             'Intensitas': kategori_teks,
             'Status Area': status_teks,
@@ -345,6 +345,7 @@ if data_sensor:
 else:
 
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
