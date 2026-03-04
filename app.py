@@ -399,8 +399,9 @@ if data_sensor:
     st.dataframe(styled_df, use_container_width=True, hide_index=True)
 
 # Nah, 'else' ini posisinya lurus sama 'if' utama yang di atas banget (sebelum gambar)
-        else:
-            st.warning("Data API masih kosong / belum ketarik.")
+else:
+    st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
