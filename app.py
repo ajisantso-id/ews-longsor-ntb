@@ -297,9 +297,9 @@ legend_html = '''
     <hr style="margin: 5px 0; border-top: 1px solid #ccc;">
     
     <div style="margin-bottom: 5px; font-size: 11px; color: #333;"><b>Kategori Hujan (24 Jam):</b></div>
-    <div style="margin-bottom: 2px;"><i style="background: lightgray; border-radius: 50%; width: 12px; height: 12px; float: left; margin-top: 2px; margin-right: 10px;"></i>Cerah (0 mm)</div>
+    <div style="margin-bottom: 2px;"><i style="background: blue; border-radius: 50%; width: 12px; height: 12px; float: left; margin-top: 2px; margin-right: 10px;"></i>Cerah (0 mm)</div>
     <div style="margin-bottom: 2px;"><i style="background: green; border-radius: 50%; width: 12px; height: 12px; float: left; margin-top: 2px; margin-right: 10px;"></i>Ringan (0.1 - 20)</div>
-    <div style="margin-bottom: 2px;"><i style="background: blue; border-radius: 50%; width: 12px; height: 12px; float: left; margin-top: 2px; margin-right: 10px;"></i>Sedang (20 - 50)</div>
+    <div style="margin-bottom: 2px;"><i style="background: yellow; border-radius: 50%; width: 12px; height: 12px; float: left; margin-top: 2px; margin-right: 10px;"></i>Sedang (20 - 50)</div>
     <div style="margin-bottom: 2px;"><i style="background: orange; border-radius: 50%; width: 12px; height: 12px; float: left; margin-top: 2px; margin-right: 10px;"></i>Waspada (50 - 100)</div>
     <div style="margin-bottom: 2px;"><i style="background: red; border-radius: 50%; width: 12px; height: 12px; float: left; margin-top: 2px; margin-right: 10px;"></i>Siaga (100 - 150)</div>
     <div><i style="background: darkred; border-radius: 50%; width: 12px; height: 12px; float: left; margin-top: 2px; margin-right: 10px;"></i>Awas (> 150 mm)</div>
@@ -345,6 +345,7 @@ if data_sensor:
 else:
 
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
