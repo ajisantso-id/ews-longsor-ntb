@@ -230,33 +230,6 @@ folium.TileLayer(
 ).add_to(m)
 
 # ==========================================
-# 2. PANEL TOMBOL FISIK (Taruh di bawah peta, di atas tabel)
-# ==========================================
-st.markdown("---") # Garis pembatas estetik
-
-col1, col2, col3 = st.columns([1, 2, 1])
-
-with col1:
-    # Panggil fungsi rahasianya pake on_click
-    st.button("⬅️ Mundur 1 Hari", on_click=klik_mundur, use_container_width=True)
-
-with col2:
-    if st.session_state.offset_hari == 0:
-        label = f"HARI INI ({tanggal_pilih.strftime('%d %b %Y')})"
-    elif st.session_state.offset_hari == 1:
-        label = f"KEMARIN ({tanggal_pilih.strftime('%d %b %Y')})"
-    else:
-        label = f"H-2 ({tanggal_pilih.strftime('%d %b %Y')})"
-    
-    # Teks center
-    st.markdown(f"<h5 style='text-align: center; color: #1f77b4; margin-top: 5px;'>📅 {label}</h5>", unsafe_allow_html=True)
-
-with col3:
-    st.button("Maju 1 Hari ➡️", on_click=klik_maju, use_container_width=True)
-
-st.markdown("<br>", unsafe_allow_html=True) # Spasi dikit sebelum masuk tabel
-
-# ==========================================
 # FUNGSI PEWARNAAN OTOMATIS (STANDAR PVMBG / ESDM)
 # ==========================================
 def style_kerentanan(feature):
@@ -404,6 +377,33 @@ st_folium(m, height=650, width="stretch", returned_objects=[])
 st.divider() 
 
 # ==========================================
+# 2. PANEL TOMBOL FISIK (Taruh di bawah peta, di atas tabel)
+# ==========================================
+st.markdown("---") # Garis pembatas estetik
+
+col1, col2, col3 = st.columns([1, 2, 1])
+
+with col1:
+    # Panggil fungsi rahasianya pake on_click
+    st.button("⬅️ Mundur 1 Hari", on_click=klik_mundur, use_container_width=True)
+
+with col2:
+    if st.session_state.offset_hari == 0:
+        label = f"HARI INI ({tanggal_pilih.strftime('%d %b %Y')})"
+    elif st.session_state.offset_hari == 1:
+        label = f"KEMARIN ({tanggal_pilih.strftime('%d %b %Y')})"
+    else:
+        label = f"H-2 ({tanggal_pilih.strftime('%d %b %Y')})"
+    
+    # Teks center
+    st.markdown(f"<h5 style='text-align: center; color: #1f77b4; margin-top: 5px;'>📅 {label}</h5>", unsafe_allow_html=True)
+
+with col3:
+    st.button("Maju 1 Hari ➡️", on_click=klik_maju, use_container_width=True)
+
+st.markdown("<br>", unsafe_allow_html=True) # Spasi dikit sebelum masuk tabel
+
+# ==========================================
 # BAGIAN 2: TABEL DI BAWAH PETA
 # ==========================================
 st.subheader("📋 Tabel Detail Monitoring Stasiun")
@@ -451,6 +451,7 @@ if data_sensor:
 # Nah, 'else' ini posisinya lurus sama 'if' utama yang di atas banget (sebelum gambar)
 else:
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
