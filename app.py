@@ -399,9 +399,10 @@ styled_df = df.style.set_properties(
 
 # Tampilkan tabel yang udah di-style ke Streamlit
 st.dataframe(styled_df, use_container_width=True, hide_index=True)
-else:
+    else:
 
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
