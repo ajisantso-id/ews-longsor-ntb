@@ -146,6 +146,17 @@ data_sensor = ambil_data_live()
 # Ganti koordinat & zoom sesuai titik tengah NTB lu
 m = folium.Map(location=[-8.65, 117.36], zoom_start=8.5, tiles=None)
 
+# --- INI JURUS SUNTIKANNYA BRO! Bikin semua logo ukurannya rata dan tebal ---
+fix_icon_size = """
+<style>
+.awesome-marker i {
+    font-size: 16px !important;    /* Paksa ukurannya sama semua */
+    font-weight: bold !important;  /* Paksa cetak tebal biar gak ceking */
+}
+</style>
+"""
+m.get_root().header.add_child(folium.Element(fix_icon_size))
+
 # ==========================================
 # 2. LAPISAN BAWAH: DARATAN & JALAN (TANPA TEKS)
 # ==========================================
@@ -378,6 +389,7 @@ if data_sensor:
 else:
 
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
