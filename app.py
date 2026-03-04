@@ -382,26 +382,26 @@ if data_sensor:
             'Update Terakhir (UTC)': item['tanggal']
         })
 
-    # Convert data list ke DataFrame Pandas
+# Convert data list ke DataFrame
     df = pd.DataFrame(tabel_data)
-    
-    # --- JURUS PANDAS STYLER (RATA TENGAH) ---
-    # Kita pilih kolom mana aja yang mau di-center
-    kolom_center = ["Kab/Kota", "Hujan (mm)", "Intensitas", "Status Area"]
-    
-    styled_df = df.style.set_properties(
-    subset=kolom_center, 
-    **{'text-align': 'center'}
-    ).set_table_styles([
-    # Bonus Bro: Bikin tulisan judul kolomnya (Header) ikutan rata tengah juga!
-    {'selector': 'th', 'props': [('text-align', 'center')]} 
-    ])
-    
-    # Tampilkan tabel yang udah di-style ke Streamlit
-    st.dataframe(styled_df, use_container_width=True, hide_index=True)
-        else:
 
-    st.warning("Data API masih kosong / belum ketarik.")
+    # --- JURUS PANDAS STYLER ---
+    kolom_center = ["Kab/Kota", "Hujan (mm)", "Intensitas", "Status Area"]
+
+    styled_df = df.style.set_properties(
+        subset=kolom_center, 
+        **{'text-align': 'center'}
+    ).set_table_styles([
+        {'selector': 'th', 'props': [('text-align', 'center')]}
+    ])
+
+    # Tampilkan tabel
+    st.dataframe(styled_df, use_container_width=True, hide_index=True)
+
+# Nah, 'else' ini posisinya lurus sama 'if' utama yang di atas banget (sebelum gambar)
+    else:
+        st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
