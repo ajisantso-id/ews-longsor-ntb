@@ -379,7 +379,7 @@ st.divider()
 # ==========================================
 # 2. PANEL TOMBOL FISIK (Taruh di bawah peta, di atas tabel)
 # ==========================================
-st.markdown("---") # Garis pembatas estetik
+#st.markdown("---") # Garis pembatas estetik
 
 col1, col2, col3 = st.columns([1, 2, 1])
 
@@ -451,6 +451,7 @@ if data_sensor:
 # Nah, 'else' ini posisinya lurus sama 'if' utama yang di atas banget (sebelum gambar)
 else:
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
