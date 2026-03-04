@@ -465,6 +465,9 @@ if data_sensor:
 # Convert data list ke DataFrame Pandas
     df = pd.DataFrame(tabel_data)
 
+    # ascending=False artinya dari Besar ke Kecil (Descending)
+    df = df.sort_values(by="Hujan (mm)", ascending=False)
+
     # --- JURUS PANDAS STYLER (RATA TENGAH & FORMAT ANGKA) ---
     kolom_center = ["Kab/Kota", "Hujan (mm)", "Intensitas", "Status Area"]
 
@@ -483,6 +486,7 @@ if data_sensor:
 # Nah, 'else' ini posisinya lurus sama 'if' utama yang di atas banget (sebelum gambar)
 else:
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
