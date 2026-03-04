@@ -383,7 +383,7 @@ if data_sensor:
         })
 
     # Convert data list ke DataFrame Pandas
-        df = pd.DataFrame(data_tabel)
+        df = pd.DataFrame(tabel_data)
 
         # --- JURUS PANDAS STYLER (RATA TENGAH) ---
         # Kita pilih kolom mana aja yang mau di-center
@@ -402,6 +402,7 @@ if data_sensor:
 else:
 
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
