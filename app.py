@@ -265,7 +265,7 @@ for item in data_sensor:
             [lat, lon],
             popup=f"<div style='min-width: 150px;'><b>{nama}</b><br>Curah Hujan: <b>{curah} mm</b><br>Kategori: <b>{kategori}</b><br>Status Area: <b>{status_area}</b><br><small>Update: {item['tanggal']} UTC</small></div>",
             tooltip=f"{nama} ({kategori})",
-            icon=folium.Icon(color=warna, icon=ikon)
+            icon=folium.Icon(color=warna, icon=ikon, icon_color=warna_ikon)
         ).add_to(m)
     except Exception as e:
         continue 
@@ -378,6 +378,7 @@ if data_sensor:
 else:
 
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
