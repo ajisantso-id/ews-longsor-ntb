@@ -161,7 +161,7 @@ folium.TileLayer(
 # ==========================================
 try:
     folium.GeoJson(
-        "zona_esdm_ntb.geojson",
+        "zona_merahfix.geojson",
         name="Zona Kerentanan Gerakan Tanah",
         style_function=style_kerentanan
     ).add_to(m)
@@ -169,7 +169,24 @@ except Exception as e:
     pass
 
 # ==========================================
-# 4. LAPISAN ATAS: TEKS NAMA KOTA / DAERAH AJA
+# 4. LAPISAN TENGAH-ATAS: BATAS KEKUASAAN ARG (THIESSEN)
+# ==========================================
+try:
+    folium.GeoJson(
+        "batas_arg.geojson",
+        name="Wilayah Cakupan ARG",
+        style_function=lambda x: {
+            'color': 'black',       # Warna garis batas hitam
+            'weight': 1.5,          # Ketebalan garis
+            'dashArray': '5, 5',    # Bikin garisnya putus-putus biar estetik
+            'fillOpacity': 0        # Bolongin area dalamnya biar warna PVMBG tetep kelihatan
+        }
+    ).add_to(m)
+except Exception as e:
+    pass
+
+# ==========================================
+# 5. LAPISAN ATAS: TEKS NAMA KOTA / DAERAH AJA
 # ==========================================
 folium.TileLayer(
     tiles='https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png',
@@ -177,7 +194,7 @@ folium.TileLayer(
     name='Labels Daerah',
     overlay=True,
     control=False, # Biar gak usah muncul di menu centang peta
-    pane='shadowPane'
+    #pane='shadowPane'
 ).add_to(m)
 
 # ==========================================
@@ -201,14 +218,14 @@ def style_kerentanan(feature):
         return {'fillColor': '#00cc00', 'color': '#00cc00', 'weight': 1, 'fillOpacity': 0.3} # Hijau (Transparan dikit)
 
 # Memanggil Peta GeoJSON dengan Style PVMBG
-try:
-    folium.GeoJson(
-        "zona_merahfix.geojson",
-        name="Zona Kerentanan Gerakan Tanah",
-        style_function=style_kerentanan
-    ).add_to(m)
-except Exception as e:
-    pass
+#try:
+  #  folium.GeoJson(
+  #      "zona_merahfix.geojson",
+  #      name="Zona Kerentanan Gerakan Tanah",
+  #      style_function=style_kerentanan
+  #  ).add_to(m)
+#except Exception as e:
+#    pass
 
 # --- TAMBAHIN INI BUAT ZONA MERAH SUMBAWA/BIMA ---
 #try:
@@ -322,6 +339,7 @@ if data_sensor:
 else:
 
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
