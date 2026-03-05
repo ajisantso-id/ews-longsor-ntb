@@ -40,7 +40,6 @@ for akun in akun_list:
                 data_tersimpan.append(item)
                 
         print(f"Sukses narik pakai akun: {akun['username']}")
-        break # Kalau udah sukses, stop perulangannya biar nggak narik 2x
         
     except Exception as e:
         print(f"Gagal pakai akun {akun['username']}: {e}")
