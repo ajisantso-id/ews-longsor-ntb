@@ -1,0 +1,42 @@
+name: Robot Update Data Hujan
+
+on:
+  schedule:
+    - cron: '55 23 * * *' 
+  workflow_dispatch: 
+
+# Izin akses biar robot bisa nge-save file ke GitHub lu
+permissions:
+  contents: write
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+        
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          
+      - name: Install Requests
+        run: pip install requests
+        
+      - name: Jalankan Script Tarik Data
+        # Selipan ini ngasih tau Robot passwordnya pas dia bangun
+        env:
+          AWSCENTER_USER: ${{ secrets.AWSCENTER_USER }}
+          AWSCENTER_PASS: ${{ secrets.AWSCENTER_PASS }}
+          AWSCENTER_USER2: ${{ secrets.AWSCENTER_USER2 }}
+          AWSCENTER_PASS2: ${{ secrets.AWSCENTER_PASS2 }}
+        run: python update_data.py
+        
+      - name: Commit dan Save ke GitHub
+        run: |
+          git config --global user.name 'Robot-BMKG'
+          git config --global user.email 'robot@bmkg.go.id'
+          git add data_h1.json data_h2.json
+          git commit -m "Update Otomatis Data Hujan Kemarin & H-2" || exit 0
+          git push
