@@ -25,7 +25,6 @@ jobs:
         run: pip install requests
         
       - name: Jalankan Script Tarik Data
-        # Selipan ini ngasih tau Robot passwordnya pas dia bangun
         env:
           AWSCENTER_USER: ${{ secrets.AWSCENTER_USER }}
           AWSCENTER_PASS: ${{ secrets.AWSCENTER_PASS }}
@@ -33,7 +32,7 @@ jobs:
           AWSCENTER_PASS2: ${{ secrets.AWSCENTER_PASS2 }}
         run: python update_data.py
         
-     - name: Commit dan Save ke GitHub
+      - name: Commit dan Save ke GitHub
         run: |
           git config --global user.name 'Robot-BMKG'
           git config --global user.email 'robot@bmkg.go.id'
