@@ -226,7 +226,24 @@ except Exception as e:
     pass
 
 # ==========================================
-# 4. LAPISAN TENGAH-ATAS: BATAS KEKUASAAN ARG (THIESSEN)
+# 4. LAPISAN TAMBAHAN: ZONA RAWAN BANJIR (GEOJSON)
+# ==========================================
+try:
+    folium.GeoJson(
+        "banjir_ntb.geojson", # <--- Pastiin nama filenya persis sama yang lu upload ke GitHub!
+        name="Zona Rawan Banjir",
+        style_function=lambda feature: {
+            'fillColor': '#00BFFF', # Warna biru muda/cyan terang
+            'color': '#0000FF',     # Garis pinggir biru tua
+            'weight': 1,
+            'fillOpacity': 0.5      # Tingkat transparansi (0.5 biar warna longsor di bawahnya tetep tembus)
+        }
+    ).add_to(m)
+except Exception as e:
+    pass
+
+# ==========================================
+# 5. LAPISAN TENGAH-ATAS: BATAS KEKUASAAN ARG (THIESSEN)
 # ==========================================
 try:
     folium.GeoJson(
@@ -243,7 +260,7 @@ except Exception as e:
     pass
 
 # ==========================================
-# 5. LAPISAN ATAS: TEKS NAMA KOTA / DAERAH AJA
+# 6. LAPISAN ATAS: TEKS NAMA KOTA / DAERAH AJA
 # ==========================================
 folium.TileLayer(
     tiles='https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png',
@@ -397,6 +414,9 @@ legend_html = '''
 '''
 m.get_root().html.add_child(folium.Element(legend_html))
 
+# Tambahin ini kalau belum ada (Cukup 1 kali aja nulisnya di paling bawah peta)
+folium.LayerControl().add_to(m)
+
 st_folium(m, height=650, width="stretch", returned_objects=[])
 
 st.divider() 
@@ -486,6 +506,7 @@ if data_sensor:
 # Nah, 'else' ini posisinya lurus sama 'if' utama yang di atas banget (sebelum gambar)
 else:
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
