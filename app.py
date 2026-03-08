@@ -233,7 +233,7 @@ try:
     folium.GeoJson(
         "banjir_ntb.geojson", # <--- Pastiin nama filenya persis sama yang lu upload ke GitHub!
         name="Zona Rawan Banjir",
-        style_function=lambda feature:, {
+        style_function=lambda feature: {,
             'fillColor': '#00BFFF', # Warna biru muda/cyan terang
             'color': '#0000FF',     # Garis pinggir biru tua
             'weight': 1,
@@ -508,6 +508,7 @@ if data_sensor:
 # Nah, 'else' ini posisinya lurus sama 'if' utama yang di atas banget (sebelum gambar)
 else:
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
