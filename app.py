@@ -217,17 +217,12 @@ folium.TileLayer(
 # 3. LAPISAN TENGAH: POLIGON ZONA BAHAYA (GEOJSON)
 # ==========================================
 try:
-    # 1. Kita bikin "Kardus" pembungkusnya dulu, set supaya ngumpet dari awal
-    grup_longsor = folium.FeatureGroup(name="Zona Rawan Longsor Tanah", show=False)
-    
-    # 2. Kita panggil petanya, tapi nggak dikasih nama dan show lagi di sini
     folium.GeoJson(
         "zona_merahfix.geojson",
-        style_function=style_kerentanan
-    ).add_to(grup_longsor) # 3. Masukin petanya ke dalam Kardus
-    
-    # 4. Masukin Kardusnya ke dalam Peta Utama
-    grup_longsor.add_to(m) 
+        name="Zona Kerentanan Gerakan Tanah",
+        style_function=style_kerentanan,  # <--- JANGAN LUPA KOMA DI SINI BRO!
+        show=False                        # <--- TAMBAHIN MANTRA INI DI SINI!
+    ).add_to(m)
 except Exception as e:
     pass
 
@@ -299,14 +294,14 @@ def style_kerentanan(feature):
         return {'fillColor': '#00cc00', 'color': '#00cc00', 'weight': 1, 'fillOpacity': 0.3} # Hijau (Transparan dikit)
 
 # Memanggil Peta GeoJSON dengan Style PVMBG
-try:
-    folium.GeoJson(
-        "zona_merahfix.geojson",
-        name="Zona Kerentanan Gerakan Tanah",
-        style_function=style_kerentanan
-    ).add_to(m)
-except Exception as e:
-    pass
+#try:
+#    folium.GeoJson(
+ #       "zona_merahfix.geojson",
+  #      name="Zona Kerentanan Gerakan Tanah",
+   #     style_function=style_kerentanan
+    #).add_to(m)
+#except Exception as e:
+ #   pass
 
 # --- TAMBAHIN INI BUAT ZONA MERAH SUMBAWA/BIMA ---
 #try:
@@ -513,6 +508,7 @@ if data_sensor:
 # Nah, 'else' ini posisinya lurus sama 'if' utama yang di atas banget (sebelum gambar)
 else:
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
