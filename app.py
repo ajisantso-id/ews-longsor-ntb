@@ -220,7 +220,8 @@ try:
     folium.GeoJson(
         "zona_merahfix.geojson",
         name="Zona Kerentanan Gerakan Tanah",
-        style_function=style_kerentanan
+        style_function=style_kerentanan,
+        show=False
     ).add_to(m)
 except Exception as e:
     pass
@@ -238,6 +239,7 @@ try:
             'weight': 1,
             'fillOpacity': 0.5      # Tingkat transparansi (0.5 biar warna longsor di bawahnya tetep tembus)
         }
+        show=False
     ).add_to(m)
 except Exception as e:
     pass
@@ -506,6 +508,7 @@ if data_sensor:
 # Nah, 'else' ini posisinya lurus sama 'if' utama yang di atas banget (sebelum gambar)
 else:
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
