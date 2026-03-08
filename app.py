@@ -214,24 +214,6 @@ folium.TileLayer(
 ).add_to(m)
 
 # ==========================================
-# 4. LAPISAN TAMBAHAN: ZONA RAWAN BANJIR (GEOJSON)
-# ==========================================
-try:
-    folium.GeoJson(
-        "banjir_ntb.geojson", # <--- Pastiin nama filenya persis sama yang lu upload ke GitHub!
-        name="Zona Rawan Banjir",
-        style_function=lambda feature: {
-            'fillColor': '#00BFFF', # Warna biru muda/cyan terang
-            'color': '#0000FF',     # Garis pinggir biru tua
-            'weight': 1,
-            'fillOpacity': 0.5      # Tingkat transparansi (0.5 biar warna longsor di bawahnya tetep tembus)
-        },
-        show=False
-    ).add_to(m)
-except Exception as e:
-    pass
-
-# ==========================================
 # 5. LAPISAN TENGAH-ATAS: BATAS KEKUASAAN ARG (THIESSEN)
 # ==========================================
 try:
@@ -280,12 +262,60 @@ def style_kerentanan(feature):
         # Default untuk Rendah / Aman
         return {'fillColor': '#00cc00', 'color': '#00cc00', 'weight': 1, 'fillOpacity': 0.3} # Hijau (Transparan dikit)
 
- #Memanggil Peta GeoJSON dengan Style PVMBG
+# ==========================================
+# FUNGSI WARNA ZONA RAWAN BANJIR (INARISK)
+# ==========================================
+def style_banjir(feature):
+    # Ambil angka tingkat bahaya (QGIS biasanya ngasih nama kolom 'DN')
+    # 3 = Tinggi, 2 = Sedang, 1 = Rendah, 0 = Aman/Background Lautan
+    tingkat_bahaya = feature['properties'].get('DN', 0)
+    
+    if tingkat_bahaya == 3:
+        warna = '#FF0000' # Merah (Tinggi)
+        opacity = 0.5
+        garis = 0.5
+    elif tingkat_bahaya == 2:
+        warna = '#FFA500' # Oranye (Sedang)
+        opacity = 0.5
+        garis = 0.5
+    elif tingkat_bahaya == 1:
+        warna = '#FFFF00' # Kuning (Rendah)
+        opacity = 0.5
+        garis = 0.5
+    else:
+        # INI JURUS NGILANGIN KOTAK BIRUNYA BRO! (Area 0 / Aman)
+        warna = '#000000'
+        opacity = 0.0 # Bikin 100% tembus pandang / hilang
+        garis = 0     # Garis tepinya juga dihilangin
+        
+    return {
+        'fillColor': warna,
+        'color': warna,
+        'weight': garis,
+        'fillOpacity': opacity
+    }
+
+# ==========================================
+# LAPISAN TAMBAHAN: ZONA RAWAN LONGSOR (GEOJSON)
+# ==========================================
 try:
     folium.GeoJson(
         "zona_merahfix.geojson",
         name="Zona Kerentanan Gerakan Tanah",
         style_function=style_kerentanan,
+        show=False
+    ).add_to(m)
+except Exception as e:
+    pass
+
+# ==========================================
+# 4. LAPISAN TAMBAHAN: ZONA RAWAN BANJIR 
+# ==========================================
+try:
+    folium.GeoJson(
+        "banjir_ntb.geojson",
+        name="Zona Rawan Banjir (InaRISK)",
+        style_function=style_banjir,  # <--- Panggil nama fungsi yang baru kita bikin di sini!
         show=False
     ).add_to(m)
 except Exception as e:
@@ -496,6 +526,7 @@ if data_sensor:
 # Nah, 'else' ini posisinya lurus sama 'if' utama yang di atas banget (sebelum gambar)
 else:
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
