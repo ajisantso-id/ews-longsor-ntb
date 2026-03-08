@@ -217,12 +217,17 @@ folium.TileLayer(
 # 3. LAPISAN TENGAH: POLIGON ZONA BAHAYA (GEOJSON)
 # ==========================================
 try:
+    # 1. Kita bikin "Kardus" pembungkusnya dulu, set supaya ngumpet dari awal
+    grup_longsor = folium.FeatureGroup(name="Zona Kerentanan Gerakan Tanah", show=False)
+    
+    # 2. Kita panggil petanya, tapi nggak dikasih nama dan show lagi di sini
     folium.GeoJson(
         "zona_merahfix.geojson",
-        name="Zona Kerentanan Gerakan Tanah",
-        style_function=style_kerentanan,
-        show=False
-    ).add_to(m)
+        style_function=style_kerentanan
+    ).add_to(grup_longsor) # 3. Masukin petanya ke dalam Kardus
+    
+    # 4. Masukin Kardusnya ke dalam Peta Utama
+    grup_longsor.add_to(m) 
 except Exception as e:
     pass
 
@@ -508,6 +513,7 @@ if data_sensor:
 # Nah, 'else' ini posisinya lurus sama 'if' utama yang di atas banget (sebelum gambar)
 else:
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
