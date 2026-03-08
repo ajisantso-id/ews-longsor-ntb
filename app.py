@@ -214,19 +214,6 @@ folium.TileLayer(
 ).add_to(m)
 
 # ==========================================
-# 3. LAPISAN TENGAH: POLIGON ZONA BAHAYA (GEOJSON)
-# ==========================================
-try:
-    folium.GeoJson(
-        "zona_merahfix.geojson",
-        name="Zona Kerentanan Gerakan Tanah",
-        style_function=style_kerentanan,  # <--- JANGAN LUPA KOMA DI SINI BRO!
-        show=False                        # <--- TAMBAHIN MANTRA INI DI SINI!
-    ).add_to(m)
-except Exception as e:
-    pass
-
-# ==========================================
 # 4. LAPISAN TAMBAHAN: ZONA RAWAN BANJIR (GEOJSON)
 # ==========================================
 try:
@@ -293,15 +280,16 @@ def style_kerentanan(feature):
         # Default untuk Rendah / Aman
         return {'fillColor': '#00cc00', 'color': '#00cc00', 'weight': 1, 'fillOpacity': 0.3} # Hijau (Transparan dikit)
 
-# Memanggil Peta GeoJSON dengan Style PVMBG
-#try:
-#    folium.GeoJson(
- #       "zona_merahfix.geojson",
-  #      name="Zona Kerentanan Gerakan Tanah",
-   #     style_function=style_kerentanan
-    #).add_to(m)
-#except Exception as e:
- #   pass
+ #Memanggil Peta GeoJSON dengan Style PVMBG
+try:
+    folium.GeoJson(
+        "zona_merahfix.geojson",
+        name="Zona Kerentanan Gerakan Tanah",
+        style_function=style_kerentanan,
+        show=False
+    ).add_to(m)
+except Exception as e:
+    pass
 
 # --- TAMBAHIN INI BUAT ZONA MERAH SUMBAWA/BIMA ---
 #try:
@@ -508,6 +496,7 @@ if data_sensor:
 # Nah, 'else' ini posisinya lurus sama 'if' utama yang di atas banget (sebelum gambar)
 else:
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
