@@ -2,7 +2,7 @@ name: Robot Update Data Hujan
 
 on:
   schedule:
-    - cron: '55 23 * * *' 
+    - cron: '47 23 * * *' 
   workflow_dispatch: 
 
 # Izin akses biar robot bisa nge-save file ke GitHub lu
