@@ -218,7 +218,7 @@ folium.TileLayer(
 # ==========================================
 try:
     # 1. Kita bikin "Kardus" pembungkusnya dulu, set supaya ngumpet dari awal
-    grup_longsor = folium.FeatureGroup(name="Zona Kerentanan Gerakan Tanah", show=False)
+    grup_longsor = folium.FeatureGroup(name="Zona Rawan Longsor Tanah", show=False)
     
     # 2. Kita panggil petanya, tapi nggak dikasih nama dan show lagi di sini
     folium.GeoJson(
@@ -513,6 +513,7 @@ if data_sensor:
 # Nah, 'else' ini posisinya lurus sama 'if' utama yang di atas banget (sebelum gambar)
 else:
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
