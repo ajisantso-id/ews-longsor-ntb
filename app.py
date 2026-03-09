@@ -11,7 +11,7 @@ import pytz # <-- Tambahan library buat ngatur zona waktu
 from streamlit_autorefresh import st_autorefresh
 
 # Atur Judul Tab Browser & Bikin Full Layar
-st.set_page_config(page_title="Peta Longsor NTB", layout="wide")
+st.set_page_config(page_title="Peta Peringatan Dini Longsor dan Banjir NTB", layout="wide")
 
 # ==========================================
 # FITUR AUTO-REFRESH MODE TV DISPLAY
@@ -516,6 +516,7 @@ if data_sensor:
 # Nah, 'else' ini posisinya lurus sama 'if' utama yang di atas banget (sebelum gambar)
 else:
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
