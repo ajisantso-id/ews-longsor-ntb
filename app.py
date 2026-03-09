@@ -9,6 +9,7 @@ from datetime import datetime
 from datetime import date, timedelta
 import pytz # <-- Tambahan library buat ngatur zona waktu
 from streamlit_autorefresh import st_autorefresh
+from branca.element import Template, MacroElement
 
 # Atur Judul Tab Browser & Bikin Full Layar
 st.set_page_config(page_title="Peta Longsor NTB", layout="wide")
@@ -263,38 +264,22 @@ def style_kerentanan(feature):
         return {'fillColor': '#00cc00', 'color': '#00cc00', 'weight': 1, 'fillOpacity': 0.3} # Hijau (Transparan dikit)
 
 # ==========================================
-# FUNGSI WARNA ZONA RAWAN BANJIR (INARISK)
+# FUNGSI WARNA ZONA RAWAN BANJIR (INARISK BINARY)
 # ==========================================
 def style_banjir(feature):
-    # Ambil angka tingkat bahaya (QGIS biasanya ngasih nama kolom 'DN')
-    # 3 = Tinggi, 2 = Sedang, 1 = Rendah, 0 = Aman/Background Lautan
-    tingkat_bahaya = feature['properties'].get('DN', 0)
-    
-    if tingkat_bahaya == 3:
-        warna = '#FF0000' # Merah (Tinggi)
-        opacity = 0.5
-        garis = 0.5
-    elif tingkat_bahaya == 2:
-        warna = '#FFA500' # Oranye (Sedang)
-        opacity = 0.5
-        garis = 0.5
-    elif tingkat_bahaya == 1:
-        warna = '#FFFF00' # Kuning (Rendah)
-        opacity = 0.5
-        garis = 0.5
-    else:
-        # INI JURUS NGILANGIN KOTAK BIRUNYA BRO! (Area 0 / Aman)
-        warna = '#000000'
-        opacity = 0.0 # Bikin 100% tembus pandang / hilang
-        garis = 0     # Garis tepinya juga dihilangin
+    try:
+        tingkat_bahaya = int(float(feature['properties'].get('DN', 0)))
+    except:
+        tingkat_bahaya = 0
         
-    return {
-        'fillColor': warna,
-        'color': warna,
-        'weight': garis,
-        'fillOpacity': opacity
-    }
-
+    if tingkat_bahaya == 1:
+        warna = '#00BFFF' # Biru Muda (Banjir)
+        opacity = 0.5
+    else:
+        warna = '#000000'
+        opacity = 0.0 
+        
+    return {'fillColor': warna, 'color': warna, 'weight': 0.5 if opacity > 0 else 0, 'fillOpacity': opacity}
 # ==========================================
 # LAPISAN TAMBAHAN: ZONA RAWAN LONGSOR (GEOJSON)
 # ==========================================
@@ -364,75 +349,95 @@ for item in data_sensor:
     except Exception as e:
         continue 
 
-# BIKIN LEGEND MENGAMBANG (UPDATE STANDAR PVMBG + BATAS ARG)
-legend_html = '''
-<div style="
-    position: fixed; 
-    bottom: 30px; left: 30px; width: 230px; height: auto; 
-    background-color: rgba(255, 255, 255, 0.9); 
-    border: 2px solid grey; z-index: 9999; 
-    font-size: 12px; padding: 10px; border-radius: 8px; 
-    box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;
-">
-    <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center; color: black;"><b>Keterangan Peta</b></h4>
+# ==========================================
+# KOTAK LEGEND PINTAR (DINAMIS)
+# ==========================================
+legend_dinamis = """
+{% macro html(this, kwargs) %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+</head>
+<body>
+<div id='maplegend' class='maplegend' 
+    style='position: absolute; z-index:9999; background-color:rgba(255, 255, 255, 0.9);
+    border-radius:6px; padding: 10px; font-size:14px; left: 20px; bottom: 20px; border: 2px solid grey;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.3);'>
     
-    <div style="margin-bottom: 5px;"><b>Kerentanan Gerakan Tanah (PVMBG):</b></div>
-    <div style="margin-bottom: 2px;"><i style="background: #cc0000; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Sangat Tinggi</div>
-    <div style="margin-bottom: 2px;"><i style="background: #ff3385; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Tinggi</div>
-    <div style="margin-bottom: 2px;"><i style="background: #ffff00; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Menengah</div>
-    <div style="margin-bottom: 2px;"><i style="background: #00cc00; opacity: 0.3; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Rendah</div>
-    <div style="margin-bottom: 6px;"><i style="background: #00ccff; opacity: 0.3; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Sangat Rendah</div>
-    
-    <div style="margin-bottom: 8px;">
-        <hr style="border: none; border-top: 2px dashed black; width: 15px; float: left; margin-top: 6px; margin-right: 8px;">
-        <b>Cakupan Sensor ARG</b>
+    <div id="legend-hujan">
+        <strong>Kategori Hujan (24 Jam):</strong><br>
+        <i style="background:#0000FF; width:12px; height:12px; float:left; margin-right:8px; margin-top:4px; border-radius:50%;"></i> Cerah (0 mm)<br>
+        <i style="background:#008000; width:12px; height:12px; float:left; margin-right:8px; margin-top:4px; border-radius:50%;"></i> Ringan (0.1 - 20 mm)<br>
+        <i style="background:#FFFF00; width:12px; height:12px; float:left; margin-right:8px; margin-top:4px; border-radius:50%;"></i> Sedang (20 - 50 mm)<br>
+        <i style="background:#FFA500; width:12px; height:12px; float:left; margin-right:8px; margin-top:4px; border-radius:50%;"></i> Waspada (50 - 100 mm)<br>
+        <i style="background:#FF0000; width:12px; height:12px; float:left; margin-right:8px; margin-top:4px; border-radius:50%;"></i> Siaga (100 - 150 mm)<br>
+        <i style="background:#800000; width:12px; height:12px; float:left; margin-right:8px; margin-top:4px; border-radius:50%;"></i> Awas (> 150 mm)<br>
     </div>
-    
-    <hr style="margin: 5px 0; border-top: 1px solid #ccc;">
-    
-    <div style="margin-bottom: 5px; font-size: 11px; color: #333;"><b>Kategori Hujan (24 Jam):</b></div>
-    
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
 
-    <div style="margin-bottom: 6px; height: 18px;">
-        <div style="background: blue; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;">
-            <i class="glyphicon glyphicon-cloud"></i>
-        </div>
-        <span style="line-height: 18px;">Cerah (0 mm)</span>
+    <div id="legend-longsor" style="display: none; margin-top: 10px; border-top: 1px solid #ccc; padding-top: 5px;">
+        <strong>Kerentanan Gerakan Tanah:</strong><br>
+        <i style="background:#FF0000; width:15px; height:15px; float:left; margin-right:8px; opacity:0.7;"></i> Sangat Tinggi<br>
+        <i style="background:#FF69B4; width:15px; height:15px; float:left; margin-right:8px; opacity:0.7;"></i> Tinggi<br>
+        <i style="background:#FFFF00; width:15px; height:15px; float:left; margin-right:8px; opacity:0.7;"></i> Menengah<br>
+        <i style="background:#00FF00; width:15px; height:15px; float:left; margin-right:8px; opacity:0.7;"></i> Rendah<br>
+        <i style="background:#00BFFF; width:15px; height:15px; float:left; margin-right:8px; opacity:0.7;"></i> Sangat Rendah<br>
     </div>
-    <div style="margin-bottom: 6px; height: 18px;">
-        <div style="background: green; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;">
-            <i class="glyphicon glyphicon-tint"></i>
-        </div>
-        <span style="line-height: 18px;">Ringan (0.1 - 20 mm)</span>
-    </div>
-    <div style="margin-bottom: 6px; height: 18px;">
-        <div style="background: beige; border-radius: 50%; width: 18px; height: 18px; color: black; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px; border: 1px solid #ccc;">
-            <i class="glyphicon glyphicon-tint"></i>
-        </div>
-        <span style="line-height: 18px;">Sedang (20 - 50 mm)</span>
-    </div>
-    <div style="margin-bottom: 6px; height: 18px;">
-        <div style="background: orange; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;">
-            <i class="glyphicon glyphicon-info-sign"></i>
-        </div>
-        <span style="line-height: 18px;">Waspada (50 - 100 mm)</span>
-    </div>
-    <div style="margin-bottom: 6px; height: 18px;">
-        <div style="background: red; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;">
-            <i class="glyphicon glyphicon-warning-sign"></i>
-        </div>
-        <span style="line-height: 18px;">Siaga (100 - 150 mm)</span>
-    </div>
-    <div style="margin-bottom: 6px; height: 18px;">
-        <div style="background: darkred; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;">
-            <i class="glyphicon glyphicon-flash"></i>
-        </div>
-        <span style="line-height: 18px;">Awas (> 150 mm)</span>
+
+    <div id="legend-banjir" style="display: none; margin-top: 10px; border-top: 1px solid #ccc; padding-top: 5px;">
+        <strong>Kerentanan Banjir:</strong><br>
+        <i style="background:#00BFFF; width:15px; height:15px; float:left; margin-right:8px; opacity:0.5; border: 1px solid #0000FF;"></i> Rawan Banjir (InaRISK)<br>
     </div>
 </div>
-'''
-m.get_root().html.add_child(folium.Element(legend_html))
+</body>
+</html>
+
+<script type="text/javascript">
+  // JURUS SAKTI JAVASCRIPT: Nguping klik dari forecaster
+  setTimeout(function() {
+      var map_instance = null;
+      for (var key in window) {
+          if (key.match(/^map_[a-z0-9]+$/)) {
+              var obj = window[key];
+              if (typeof obj === 'object' && obj !== null && obj.on) {
+                  map_instance = obj;
+                  break;
+              }
+          }
+      }
+      
+      if (map_instance) {
+          // Kalau layer DICENTANG (Nyala)
+          map_instance.on('overlayadd', function(e) {
+              var nama_layer = e.name.toLowerCase();
+              if (nama_layer.includes("longsor") || nama_layer.includes("tanah")) {
+                  document.getElementById("legend-longsor").style.display = "block";
+              }
+              if (nama_layer.includes("banjir")) {
+                  document.getElementById("legend-banjir").style.display = "block";
+              }
+          });
+
+          // Kalau layer DI-UNCHECK (Mati)
+          map_instance.on('overlayremove', function(e) {
+              var nama_layer = e.name.toLowerCase();
+              if (nama_layer.includes("longsor") || nama_layer.includes("tanah")) {
+                  document.getElementById("legend-longsor").style.display = "none";
+              }
+              if (nama_layer.includes("banjir")) {
+                  document.getElementById("legend-banjir").style.display = "none";
+              }
+          });
+      }
+  }, 1000);
+</script>
+{% endmacro %}
+"""
+
+# Masukin kodingan cerdas ini ke dalam peta utama (m)
+macro = MacroElement()
+macro._template = Template(legend_dinamis)
+m.get_root().add_child(macro)
 
 # Tambahin ini kalau belum ada (Cukup 1 kali aja nulisnya di paling bawah peta)
 folium.LayerControl().add_to(m)
@@ -526,6 +531,7 @@ if data_sensor:
 # Nah, 'else' ini posisinya lurus sama 'if' utama yang di atas banget (sebelum gambar)
 else:
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
