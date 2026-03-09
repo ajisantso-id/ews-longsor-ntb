@@ -368,6 +368,11 @@ legend_html = '''
     <div style="margin-bottom: 2px;"><i style="background: #ffff00; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Menengah</div>
     <div style="margin-bottom: 2px;"><i style="background: #00cc00; opacity: 0.3; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Rendah</div>
     <div style="margin-bottom: 6px;"><i style="background: #00ccff; opacity: 0.3; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Sangat Rendah</div>
+    
+<div style="margin-top: 5px;">
+    <strong>Kerentanan Banjir:</strong><br>
+    <i style="background:#00BFFF; width:15px; height:15px; float:left; margin-right:8px; opacity:0.7; border: 1px solid #0000FF;"></i> Rawan Banjir (InaRISK)<br>
+</div>
 
  <div style="margin-bottom: 8px;">
         <hr style="border: none; border-top: 2px dashed black; width: 15px; float: left; margin-top: 6px; margin-right: 8px;">
@@ -512,6 +517,7 @@ if data_sensor:
 # Nah, 'else' ini posisinya lurus sama 'if' utama yang di atas banget (sebelum gambar)
 else:
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
