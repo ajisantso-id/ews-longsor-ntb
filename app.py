@@ -9,7 +9,6 @@ from datetime import datetime
 from datetime import date, timedelta
 import pytz # <-- Tambahan library buat ngatur zona waktu
 from streamlit_autorefresh import st_autorefresh
-from branca.element import Template, MacroElement
 
 # Atur Judul Tab Browser & Bikin Full Layar
 st.set_page_config(page_title="Peta Longsor NTB", layout="wide")
@@ -443,7 +442,7 @@ col_spasi1, col_btn1, col_btn2, col_btn3, col_spasi2 = st.columns([2, 1, 1, 1, 2
 # Tombolnya ukurannya ngepas teks aja (gak usah use_container_width=True)
 with col_btn1:
     # Kalau diklik, ngirim angka 2 (H-2) ke fungsi set_hari
-    st.button("⏮️ Data H-2", on_click=set_hari, args=(2,)) 
+    st.button("⏮️ Data Lusa", on_click=set_hari, args=(2,)) 
 with col_btn2:
     # Kalau diklik, ngirim angka 1 (Kemarin)
     st.button("⏪ Data Kemarin", on_click=set_hari, args=(1,))
@@ -457,11 +456,11 @@ with col_btn3:
 tanggal_pilih = date.today() - timedelta(days=st.session_state.offset_hari)
 
 if st.session_state.offset_hari == 0:
-    label = f"Menampilkan Data HARI INI ({tanggal_pilih.strftime('%d %b %Y')})"
+    label = f"Menampilkan Data HARI INI ({tanggal_pilih.strftime('%d %B %Y')})"
 elif st.session_state.offset_hari == 1:
-    label = f"Menampilkan Data KEMARIN ({tanggal_pilih.strftime('%d %b %Y')})"
+    label = f"Menampilkan Data KEMARIN ({tanggal_pilih.strftime('%d %B %Y')})"
 else:
-    label = f"Menampilkan Data H-2 ({tanggal_pilih.strftime('%d %b %Y')})"
+    label = f"Menampilkan Data LUSA ({tanggal_pilih.strftime('%d %B %Y')})"
 
 # Teks di-center rapi di bawah tombol
 st.markdown(f"<h5 style='text-align: center; color: #1f77b4; margin-top: 15px;'>📅 {label}</h5>", unsafe_allow_html=True)
@@ -517,6 +516,7 @@ if data_sensor:
 # Nah, 'else' ini posisinya lurus sama 'if' utama yang di atas banget (sebelum gambar)
 else:
     st.warning("Data API masih kosong / belum ketarik.")
+
 
 
 
