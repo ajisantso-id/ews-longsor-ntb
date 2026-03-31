@@ -446,7 +446,6 @@ legend_hujan = '''
 # Masukin ke peta utama (PASTIIN INI ADA DI BAWAH YA BRO)
 m.get_root().html.add_child(folium.Element(legend_bahaya))
 m.get_root().html.add_child(folium.Element(legend_hujan))
-#m.get_root().html.add_child(folium.Element(legend_html))
 # Tambahin ini kalau belum ada (Cukup 1 kali aja nulisnya di paling bawah peta)
 folium.LayerControl().add_to(m)
 
