@@ -384,12 +384,12 @@ legend_bahaya = '''
 '''
 
 # ==========================================
-# 1. KOTAK LEGEND BAHAYA (Posisi Paling Atas)
+# 1. KOTAK LEGEND BAHAYA (Posisi Atas)
 # ==========================================
 legend_bahaya = '''
 <div style="
     position: fixed; 
-    bottom: 360px; left: 30px; width: 230px; height: auto; 
+    bottom: 370px; left: 30px; width: 230px; height: auto; 
     background-color: rgba(255, 255, 255, 0.9); 
     border: 2px solid grey; z-index: 9999; 
     font-size: 12px; padding: 10px; border-radius: 8px; 
@@ -417,29 +417,9 @@ legend_bahaya = '''
 '''
 
 # ==========================================
-# 2. KOTAK LEGEND STATUS AREA (Posisi Tengah)
+# 2. KOTAK LEGEND STATUS PERINGATAN (Posisi Bawah - Gabungan)
 # ==========================================
-legend_status = '''
-<div style="
-    position: fixed; 
-    bottom: 240px; left: 30px; width: 230px; height: auto; 
-    background-color: rgba(255, 255, 255, 0.9); 
-    border: 2px solid grey; z-index: 9999; 
-    font-size: 12px; padding: 10px; border-radius: 8px; 
-    box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;
-">
-    <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center; color: black;"><b>Status Area (Peringatan)</b></h4>
-    
-    <div style="margin-bottom: 4px;"><i style="background: orange; opacity: 0.8; width: 12px; height: 12px; float: left; margin-right: 8px; border-radius: 2px;"></i>Waspada</div>
-    <div style="margin-bottom: 4px;"><i style="background: red; opacity: 0.8; width: 12px; height: 12px; float: left; margin-right: 8px; border-radius: 2px;"></i>Siaga</div>
-    <div style="margin-bottom: 4px;"><i style="background: darkred; opacity: 0.8; width: 12px; height: 12px; float: left; margin-right: 8px; border-radius: 2px;"></i>Awas</div>
-</div>
-'''
-
-# ==========================================
-# 3. KOTAK LEGEND HUJAN (Posisi Bawah - Revisi Istilah)
-# ==========================================
-legend_hujan = '''
+legend_peringatan = '''
 <div style="
     position: fixed; 
     bottom: 30px; left: 30px; width: 230px; height: auto; 
@@ -448,10 +428,12 @@ legend_hujan = '''
     font-size: 12px; padding: 10px; border-radius: 8px; 
     box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;
 ">
-    <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center; color: black;"><b>Kategori Hujan (24 Jam)</b></h4>
+    <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center; color: black;"><b>Status Peringatan</b></h4>
     
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
 
+    <div style="margin-bottom: 5px; font-weight: bold; color: #333;">Intensitas Hujan (24 Jam):</div>
+    
     <div style="margin-bottom: 6px; height: 18px;">
         <div style="background: blue; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;">
             <i class="glyphicon glyphicon-cloud"></i>
@@ -493,13 +475,19 @@ legend_hujan = '''
         </div>
         <span style="line-height: 18px;">Ekstrem (> 150 mm)</span>
     </div>
+
+    <hr style="margin: 8px 0; border-top: 1px dashed #999;">
+
+    <div style="margin-bottom: 5px; font-weight: bold; color: #333;">Level Peringatan Area:</div>
+    <div style="margin-bottom: 4px; height: 14px;"><i style="background: orange; opacity: 0.8; width: 12px; height: 12px; float: left; margin-right: 8px; border-radius: 2px; margin-top: 1px;"></i><span style="line-height: 14px;">Waspada</span></div>
+    <div style="margin-bottom: 4px; height: 14px;"><i style="background: red; opacity: 0.8; width: 12px; height: 12px; float: left; margin-right: 8px; border-radius: 2px; margin-top: 1px;"></i><span style="line-height: 14px;">Siaga</span></div>
+    <div style="margin-bottom: 0px; height: 14px;"><i style="background: darkred; opacity: 0.8; width: 12px; height: 12px; float: left; margin-right: 8px; border-radius: 2px; margin-top: 1px;"></i><span style="line-height: 14px;">Awas</span></div>
 </div>
 '''
 
-# Masukin Ketiga Kotaknya ke Peta Utama
+# Masukin 2 Kotak Baru ke Peta Utama
 m.get_root().html.add_child(folium.Element(legend_bahaya))
-m.get_root().html.add_child(folium.Element(legend_status))
-m.get_root().html.add_child(folium.Element(legend_hujan))
+m.get_root().html.add_child(folium.Element(legend_peringatan))
 # Tambahin ini kalau belum ada (Cukup 1 kali aja nulisnya di paling bawah peta)
 folium.LayerControl().add_to(m)
 
