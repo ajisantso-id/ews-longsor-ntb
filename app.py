@@ -357,7 +357,7 @@ for item in data_sensor:
 legend_bahaya = '''
 <div style="
     position: fixed; 
-    bottom: 370px; left: 30px; width: 230px; height: auto; 
+    bottom: 350px; left: 30px; width: 230px; height: auto; 
     background-color: rgba(255, 255, 255, 0.9); 
     border: 2px solid grey; z-index: 9999; 
     font-size: 12px; padding: 10px; border-radius: 8px; 
