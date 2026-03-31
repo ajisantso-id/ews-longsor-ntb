@@ -11,7 +11,7 @@ import pytz # <-- Tambahan library buat ngatur zona waktu
 from streamlit_autorefresh import st_autorefresh
 
 # Atur Judul Tab Browser & Bikin Full Layar
-st.set_page_config(page_title="Peta Peringatan Dini Longsor dan Banjir NTB", layout="wide")
+st.set_page_config(page_title="Dashboard Peringatan Dini Longsor dan Banjir NTB", layout="wide")
 
 # ==========================================
 # FITUR AUTO-REFRESH MODE TV DISPLAY
@@ -96,7 +96,7 @@ st.markdown(f"""
         <img src="https://www.bmkg.go.id/asset/img/logo/logo-bmkg.png">
         <div class="ofs-title">
             <h3>Stasiun Meteorologi ZAM Lombok</h3>
-            <p>Peta Peringatan Dini Longsor dan Banjir NTB</p>
+            <p>Dashboard Peringatan Dini Longsor dan Banjir NTB</p>
         </div>
     </div>
     
@@ -179,7 +179,7 @@ elif st.session_state.offset_hari == 1:
         st.warning("⚠️ Data histori Kemarin belum tersedia. Robot GitHub belum narik datanya semalam.")
 
 elif st.session_state.offset_hari == 2:
-    # --- JALUR LUSA (H-2) ---
+    # --- JALUR SELUMBARI (H-2) ---
     if os.path.exists('data_h2.json'):
         with open('data_h2.json', 'r') as f:
             data_sensor = json.load(f)
@@ -272,7 +272,7 @@ def style_banjir(feature):
         tingkat_bahaya = 0
         
     if tingkat_bahaya == 1:
-        warna = '#00BFFF' # Biru Muda (Banjir)
+        warna = '#00008B' # Biru Muda (Banjir)
         opacity = 0.5
     else:
         warna = '#000000'
@@ -370,7 +370,7 @@ legend_html = '''
     
 <div style="margin-top: 5px;">
     <strong>Kerentanan Banjir:</strong><br>
-    <i style="background:#00BFFF; width:15px; height:15px; float:left; margin-right:8px; opacity:0.7; border: 1px solid #0000FF;"></i> Rawan Banjir (InaRISK)<br>
+    <i style="background:#00008B; width:15px; height:15px; float:left; margin-right:8px; opacity:0.7; border: 1px solid #0000FF;"></i> Rawan Banjir (InaRISK)<br>
 </div>
 
  <div style="margin-bottom: 8px;">
@@ -442,10 +442,10 @@ col_spasi1, col_btn1, col_btn2, col_btn3, col_spasi2 = st.columns([2, 1, 1, 1, 2
 # Tombolnya ukurannya ngepas teks aja (gak usah use_container_width=True)
 with col_btn1:
     # Kalau diklik, ngirim angka 2 (H-2) ke fungsi set_hari
-    st.button("⏮️ Data Lusa", on_click=set_hari, args=(2,)) 
+    st.button("⏮️ Data H-2", on_click=set_hari, args=(2,)) 
 with col_btn2:
     # Kalau diklik, ngirim angka 1 (Kemarin)
-    st.button("⏪ Data Kemarin", on_click=set_hari, args=(1,))
+    st.button("⏪ Data H-1", on_click=set_hari, args=(1,))
 with col_btn3:
     # Kalau diklik, ngirim angka 0 (Hari Ini)
     st.button("✅ Data Hari Ini", on_click=set_hari, args=(0,))
