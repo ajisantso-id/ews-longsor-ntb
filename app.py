@@ -456,11 +456,11 @@ with col_btn3:
 tanggal_pilih = date.today() - timedelta(days=st.session_state.offset_hari)
 
 if st.session_state.offset_hari == 0:
-    label = f"Menampilkan Data HARI INI ({tanggal_pilih.strftime('%d %B %Y')})"
+    label = f"Menampilkan Data Hari ini ({tanggal_pilih.strftime('%d %B %Y')})"
 elif st.session_state.offset_hari == 1:
-    label = f"Menampilkan Data KEMARIN ({tanggal_pilih.strftime('%d %B %Y')})"
+    label = f"Menampilkan Data Kemarin ({tanggal_pilih.strftime('%d %B %Y')})"
 else:
-    label = f"Menampilkan Data LUSA ({tanggal_pilih.strftime('%d %B %Y')})"
+    label = f"Menampilkan Data Selumbari ({tanggal_pilih.strftime('%d %B %Y')})"
 
 # Teks di-center rapi di bawah tombol
 st.markdown(f"<h5 style='text-align: center; color: #1f77b4; margin-top: 15px;'>📅 {label}</h5>", unsafe_allow_html=True)
