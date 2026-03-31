@@ -384,7 +384,60 @@ legend_bahaya = '''
 '''
 
 # ==========================================
-# KOTAK LEGEND 2: KATEGORI HUJAN (Posisi Bawah)
+# 1. KOTAK LEGEND BAHAYA (Posisi Paling Atas)
+# ==========================================
+legend_bahaya = '''
+<div style="
+    position: fixed; 
+    bottom: 360px; left: 30px; width: 230px; height: auto; 
+    background-color: rgba(255, 255, 255, 0.9); 
+    border: 2px solid grey; z-index: 9999; 
+    font-size: 12px; padding: 10px; border-radius: 8px; 
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;
+">
+    <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center; color: black;"><b>Kategori Bahaya</b></h4>
+    
+    <div style="margin-bottom: 5px;"><b>Kerentanan Gerakan Tanah (PVMBG):</b></div>
+    <div style="margin-bottom: 2px;"><i style="background: #cc0000; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Sangat Tinggi</div>
+    <div style="margin-bottom: 2px;"><i style="background: #ff3385; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Tinggi</div>
+    <div style="margin-bottom: 2px;"><i style="background: #ffff00; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Menengah</div>
+    <div style="margin-bottom: 2px;"><i style="background: #00cc00; opacity: 0.3; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Rendah</div>
+    <div style="margin-bottom: 6px;"><i style="background: #00ccff; opacity: 0.3; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Sangat Rendah</div>
+    
+    <div style="margin-top: 8px;">
+        <strong>Kerentanan Banjir:</strong><br>
+        <i style="background:#00008B; width:15px; height:15px; float:left; margin-right:8px; opacity:0.7; border: 1px solid #0000FF;"></i> Rawan Banjir (InaRISK)<br>
+    </div>
+
+    <div style="margin-top: 8px; margin-bottom: 4px;">
+        <hr style="border: none; border-top: 2px dashed black; width: 15px; float: left; margin-top: 6px; margin-right: 8px;">
+        <b>Cakupan Sensor ARG</b>
+    </div>
+</div>
+'''
+
+# ==========================================
+# 2. KOTAK LEGEND STATUS AREA (Posisi Tengah)
+# ==========================================
+legend_status = '''
+<div style="
+    position: fixed; 
+    bottom: 240px; left: 30px; width: 230px; height: auto; 
+    background-color: rgba(255, 255, 255, 0.9); 
+    border: 2px solid grey; z-index: 9999; 
+    font-size: 12px; padding: 10px; border-radius: 8px; 
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;
+">
+    <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center; color: black;"><b>Status Area (Peringatan)</b></h4>
+    
+    <div style="margin-bottom: 4px;"><i style="background: orange; opacity: 0.8; width: 12px; height: 12px; float: left; margin-right: 8px; border-radius: 2px;"></i>Waspada</div>
+    <div style="margin-bottom: 4px;"><i style="background: red; opacity: 0.8; width: 12px; height: 12px; float: left; margin-right: 8px; border-radius: 2px;"></i>Siaga</div>
+    <div style="margin-bottom: 4px;"><i style="background: darkred; opacity: 0.8; width: 12px; height: 12px; float: left; margin-right: 8px; border-radius: 2px;"></i>Awas</div>
+</div>
+'''
+
+# ==========================================
+# 3. KOTAK LEGEND HUJAN (Posisi Bawah - Revisi Istilah)
 # ==========================================
 legend_hujan = '''
 <div style="
@@ -424,27 +477,28 @@ legend_hujan = '''
         <div style="background: orange; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;">
             <i class="glyphicon glyphicon-info-sign"></i>
         </div>
-        <span style="line-height: 18px;">Waspada (50 - 100 mm)</span>
+        <span style="line-height: 18px;">Lebat (50 - 100 mm)</span> 
     </div>
     
     <div style="margin-bottom: 6px; height: 18px;">
         <div style="background: red; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;">
             <i class="glyphicon glyphicon-warning-sign"></i>
         </div>
-        <span style="line-height: 18px;">Siaga (100 - 150 mm)</span>
+        <span style="line-height: 18px;">Sangat Lebat (100 - 150 mm)</span>
     </div>
     
     <div style="margin-bottom: 6px; height: 18px;">
         <div style="background: darkred; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;">
             <i class="glyphicon glyphicon-flash"></i>
         </div>
-        <span style="line-height: 18px;">Awas (> 150 mm)</span>
+        <span style="line-height: 18px;">Ekstrem (> 150 mm)</span>
     </div>
 </div>
 '''
 
-# Masukin ke peta utama (PASTIIN INI ADA DI BAWAH YA BRO)
+# Masukin Ketiga Kotaknya ke Peta Utama
 m.get_root().html.add_child(folium.Element(legend_bahaya))
+m.get_root().html.add_child(folium.Element(legend_status))
 m.get_root().html.add_child(folium.Element(legend_hujan))
 # Tambahin ini kalau belum ada (Cukup 1 kali aja nulisnya di paling bawah peta)
 folium.LayerControl().add_to(m)
