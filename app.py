@@ -15,7 +15,7 @@ st.set_page_config(page_title="Dashboard Peringatan Dini Longsor dan Banjir NTB"
 
 # ==========================================
 # FITUR AUTO-REFRESH MODE TV DISPLAY
-# ==========================================
+# ==========================================F
 # Refresh halaman secara halus setiap 5 menit (300.000 milidetik)
 st_autorefresh(interval=300000, limit=None, key="auto_refresh_bmkg")
 
@@ -350,38 +350,6 @@ for item in data_sensor:
 
 # ==========================================
 # BIKIN LEGEND MENGAMBANG (UPDATE STANDAR PVMBG + BATAS ARG)
-# ==========================================
-# KOTAK LEGEND 1: KATEGORI BAHAYA (Posisi Atas)
-# ==========================================
-legend_bahaya = '''
-<div style="
-    position: fixed; 
-    bottom: 240px; left: 30px; width: 230px; height: auto; 
-    background-color: rgba(255, 255, 255, 0.9); 
-    border: 2px solid grey; z-index: 9999; 
-    font-size: 12px; padding: 10px; border-radius: 8px; 
-    box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;
-">
-    <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center; color: black;"><b>Kategori Bahaya</b></h4>
-    
-    <div style="margin-bottom: 5px;"><b>Kerentanan Gerakan Tanah (PVMBG):</b></div>
-    <div style="margin-bottom: 2px;"><i style="background: #cc0000; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Sangat Tinggi</div>
-    <div style="margin-bottom: 2px;"><i style="background: #ff3385; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Tinggi</div>
-    <div style="margin-bottom: 2px;"><i style="background: #ffff00; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Menengah</div>
-    <div style="margin-bottom: 2px;"><i style="background: #00cc00; opacity: 0.3; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Rendah</div>
-    <div style="margin-bottom: 6px;"><i style="background: #00ccff; opacity: 0.3; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Sangat Rendah</div>
-    
-    <div style="margin-top: 8px;">
-        <strong>Kerentanan Banjir:</strong><br>
-        <i style="background:#00008B; width:15px; height:15px; float:left; margin-right:8px; opacity:0.7; border: 1px solid #0000FF;"></i> Rawan Banjir (InaRISK)<br>
-    </div>
-
-    <div style="margin-top: 8px; margin-bottom: 4px;">
-        <hr style="border: none; border-top: 2px dashed black; width: 15px; float: left; margin-top: 6px; margin-right: 8px;">
-        <b>Cakupan Sensor ARG</b>
-    </div>
-</div>
-'''
 
 # ==========================================
 # 1. KOTAK LEGEND BAHAYA (Posisi Atas)
