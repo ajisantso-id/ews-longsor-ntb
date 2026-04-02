@@ -14,7 +14,7 @@ from streamlit_autorefresh import st_autorefresh
 # ==========================================
 st.set_page_config(
     page_title="Dashboard Peringatan Dini Longsor dan Banjir NTB",
-    page_icon="⛈️",
+    page_icon="https://www.bmkg.go.id/asset/img/logo/logo-bmkg.png",
     layout="wide"
 )
 
@@ -79,7 +79,7 @@ st.markdown(f"""
             padding: 0px 30px 5px 30px;
         }}
         .ofs-header img {{
-            width: 65px;
+            width: 50px;
             margin-right: 15px;
         }}
         .ofs-title h3 {{
