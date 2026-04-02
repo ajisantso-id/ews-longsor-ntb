@@ -193,13 +193,29 @@ elif st.session_state.offset_hari == 2:
 m = folium.Map(location=[-8.65, 117.36], zoom_start=8.5, tiles=None, attributionControl=False)
 
 # ==========================================
+# 2. PILIHAN BASEMAP 1: GOOGLE MAPS (JALAN) - Default
+# ==========================================
 folium.TileLayer(
-    tiles='http://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}',
+    tiles='http://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}',
     attr=' ',
-    name='Basemap',
-    overlay=False
+    name='Google Maps (Standar)',
+    overlay=False,
+    control=True
 ).add_to(m)
 
+# ==========================================
+# 3. PILIHAN BASEMAP 2: GOOGLE SATELLITE HYBRID
+# ==========================================
+folium.TileLayer(
+    # Perhatiin kodenya 'lyrs=y' (Artinya Hybrid: Satelit + Label Nama Tempat)
+    tiles='http://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}',
+    attr=' ',
+    name='Google Satellite (Satelit)',
+    overlay=False,
+    control=True
+).add_to(m)
+
+(Nah, baru di bawahnya lu
 # ==========================================
 # 5. LAPISAN TENGAH-ATAS: BATAS KEKUASAAN ARG (THIESSEN)
 # ==========================================
