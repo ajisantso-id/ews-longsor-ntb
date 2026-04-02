@@ -1,37 +1,41 @@
 import json
 import os
-import streamlit as st
-import folium
-from streamlit_folium import st_folium
 import pandas as pd
 import requests
-from datetime import datetime
-from datetime import date, timedelta
+from datetime import datetime, date, timedelta
 import pytz 
+import folium
+from streamlit_folium import st_folium
 from streamlit_autorefresh import st_autorefresh
+import streamlit as st # <--- PENTING
 
 # ==========================================
-# 1. ATUR HALAMAN (WAJIB PALING ATAS)
+# 1. ATUR HALAMAN (WAJIB BARIS PERTAMA SETELAH IMPORT!)
 # ==========================================
+# Kalau ini nggak ditaruh paling atas, layout="wide" bakal diabaikan dan peta jadi ciut!
 st.set_page_config(
     page_title="Dashboard Peringatan Dini Longsor dan Banjir NTB",
     page_icon="⛈️",
-    layout="wide", # Ini udah cukup bikin full layar tanpa perlu CSS aneh-aneh
+    layout="wide",
     initial_sidebar_state="expanded" 
 )
 
 # ==========================================
-# 2. CSS NATURAL (Merapihkan Atas Bawah Aja)
+# 2. CSS SAKTI YANG AMAN (TIDAK MENGHILANGKAN TOMBOL SIDEBAR)
 # ==========================================
 st.markdown("""
     <style>
-    /* Kurangin jarak kosong di atas biar peta langsung naik ke pucuk */
+    /* Paksa container utama jadi mentok layar 100% */
     .block-container {
+        max-width: 100% !important;
         padding-top: 1rem !important;
+        padding-right: 1rem !important;
+        padding-left: 1rem !important;
         padding-bottom: 1rem !important;
     }
-    header {visibility: hidden;} /* Sembunyiin menu Streamlit */
-    footer {visibility: hidden;} /* Sembunyiin watermark Streamlit */
+    
+    /* Footer/Watermark bawah aja yang kita hilangin, Header biarin aja! */
+    footer {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
 
