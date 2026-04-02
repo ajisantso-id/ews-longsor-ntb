@@ -190,26 +190,13 @@ elif st.session_state.offset_hari == 2:
 # 1. BIKIN PETA KOSONG (HAPUS BASEMAP BAWAAN)
 # ==========================================
 # Ganti koordinat & zoom sesuai titik tengah NTB lu
-m = folium.Map(location=[-8.65, 117.36], zoom_start=8.5, tiles=None)
+m = folium.Map(location=[-8.65, 117.36], zoom_start=8.5, tiles=None, attributionControl=False)
 
-# --- INI JURUS SUNTIKANNYA BRO! Bikin semua logo ukurannya rata dan tebal ---
-fix_icon_size = """
-<style>
-.awesome-marker i {
-    font-size: 16px !important;    /* Paksa ukurannya sama semua */
-    font-weight: bold !important;  /* Paksa cetak tebal biar gak ceking */
-}
-</style>
-"""
-m.get_root().header.add_child(folium.Element(fix_icon_size))
-
-# ==========================================
-# 2. LAPISAN BAWAH: DARATAN & JALAN (TANPA TEKS)
 # ==========================================
 folium.TileLayer(
     tiles='http://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}',
-    attr='Google',
-    name='Google Maps (Jalan)',
+    attr=' ',
+    name='Basemap',
     overlay=False
 ).add_to(m)
 
@@ -230,17 +217,6 @@ folium.TileLayer(
 #except Exception as e:
  #   pass
 
-# ==========================================
-# 6. LAPISAN ATAS: TEKS NAMA KOTA / DAERAH AJA
-# ==========================================
-folium.TileLayer(
-    tiles='https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png',
-    attr='&copy; <a href="https://carto.com/">CartoDB</a>',
-    name='Labels Daerah',
-    overlay=True,
-    control=False, # Biar gak usah muncul di menu centang peta
-    pane='shadowPane'
-).add_to(m)
 
 # ==========================================
 # FUNGSI PEWARNAAN OTOMATIS (STANDAR PVMBG / ESDM)
