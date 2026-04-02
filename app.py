@@ -462,6 +462,128 @@ if data_cuaca_bmkg:
 layer_prakiraan.add_to(m)
 
 # ==========================================
+# FUNGSI NARIK DATA PERINGATAN DINI (CAP NOWCAST XML)
+# ==========================================
+@st.cache_data(ttl=300) # Cache 5 menit karena Peringatan Dini update tiap saat!
+def ambil_peringatan_dini():
+    peringatan_aktif = []
+    
+    # Tembak RSS Feed Utama buat dapetin daftar peringatan yang lagi aktif
+    url_rss = "https://www.bmkg.go.id/alerts/nowcast/id.xml" 
+    
+    session = requests.Session()
+    session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+    
+    try:
+        # Coba tarik RSS, kalau link tanpa .xml gagal, pakai yang ada .xml-nya
+        res_rss = session.get(url_rss, timeout=10)
+        if res_rss.status_code != 200:
+            res_rss = session.get("https://www.bmkg.go.id/alerts/nowcast/id", timeout=10)
+            
+        if res_rss.status_code == 200:
+            import xml.etree.ElementTree as ET
+            root_rss = ET.fromstring(res_rss.content)
+            
+            # Cari semua item peringatan di RSS
+            for item in root_rss.findall('.//item'):
+                title = item.findtext('title', '')
+                
+                # FILTER: Cuma ambil peringatan yang nyebut "Nusa Tenggara Barat" atau "NTB"
+                if 'Nusa Tenggara Barat' in title or 'NTB' in title:
+                    link_detail = item.findtext('link', '')
+                    
+                    if link_detail:
+                        # 2. Tarik data detail CAP XML dari link spesifik provinsinya
+                        res_cap = session.get(link_detail, timeout=10)
+                        
+                        if res_cap.status_code == 200:
+                            cap_root = ET.fromstring(res_cap.content)
+                            
+                            # JURUS SAKTI: Fungsi buat ngakalin Namespace XML CAP BMKG yang ribet
+                            def cari_teks(elemen, nama_tag):
+                                for child in elemen.iter():
+                                    if child.tag.endswith(nama_tag):
+                                        return child.text
+                                return "Tidak tersedia"
+                            
+                            event = cari_teks(cap_root, 'event')
+                            headline = cari_teks(cap_root, 'headline')
+                            desc = cari_teks(cap_root, 'description')
+                            effective = cari_teks(cap_root, 'effective')
+                            expires = cari_teks(cap_root, 'expires')
+                            
+                            # 3. Ekstrak POLYGON (Batas Wilayah Kecamatan Terdampak)
+                            polygons = []
+                            for elem in cap_root.iter():
+                                if elem.tag.endswith('polygon'):
+                                    if elem.text:
+                                        # Format koordinat BMKG: "lat,lon lat,lon lat,lon"
+                                        koordinat_mentah = elem.text.strip().split()
+                                        coords = []
+                                        for pt in koordinat_mentah:
+                                            if ',' in pt:
+                                                lat_s, lon_s = pt.split(',')
+                                                coords.append((float(lat_s), float(lon_s)))
+                                        # Folium butuh array of (lat, lon)
+                                        if coords:
+                                            polygons.append(coords)
+                                            
+                            if polygons:
+                                peringatan_aktif.append({
+                                    'event': event,
+                                    'headline': headline,
+                                    'description': desc,
+                                    'effective': effective,
+                                    'expires': expires,
+                                    'polygons': polygons
+                                })
+                                
+    except Exception as e:
+        pass # Kalau server peringatan BMKG lagi down, skip tanpa error
+        
+    return peringatan_aktif
+
+# ==========================================
+# LAYER TAMBAHAN: POLYGON PERINGATAN DINI 
+# ==========================================
+layer_peringatan = folium.FeatureGroup(name="🚨 Peringatan Dini Cuaca", show=True)
+
+with st.spinner("🚨 Mengecek Peringatan Dini Cuaca NTB..."):
+    data_peringatan = ambil_peringatan_dini()
+
+# Kalau ada datanya, gambar Polygon Merahnya!
+if data_peringatan:
+    for alert in data_peringatan:
+        for poly in alert['polygons']:
+            folium.Polygon(
+                locations=poly,
+                color='red',           # Garis tepi merah
+                weight=2,
+                fill=True,
+                fill_color='red',      # Isi dalemnya merah
+                fill_opacity=0.3,      # Agak transparan 30% biar peta jalan tetep kelihatan
+                tooltip=f"<b>🚨 {alert['event']}</b> (Klik untuk detail)",
+                popup=folium.Popup(
+                    f"""
+                    <div style='min-width: 280px; max-height: 250px; overflow-y: auto;'>
+                        <h4 style='color: #cc0000; margin-top:0;'>🚨 {alert['event']}</h4>
+                        <b>{alert['headline']}</b><br><br>
+                        <span style='font-size: 12px; color: #333;'>{alert['description']}</span><br><br>
+                        <hr style='margin: 5px 0;'>
+                        <small style='color: #555;'>
+                        <b>Mulai:</b> {alert['effective']}<br>
+                        <b>Berakhir:</b> {alert['expires']}
+                        </small>
+                    </div>
+                    """, 
+                    max_width=350
+                )
+            ).add_to(layer_peringatan)
+
+# Masukin Polygon-nya ke Peta!
+layer_peringatan.add_to(m)
+
+# ==========================================
 folium.LayerControl().add_to(m)
 
 # TAMPILKAN PETA
