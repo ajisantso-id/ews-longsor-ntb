@@ -538,7 +538,7 @@ def ambil_peringatan_dini():
 # ==========================================
 # LAYER TAMBAHAN: POLYGON PERINGATAN DINI 
 # ==========================================
-layer_peringatan = folium.FeatureGroup(name="🚨 Peringatan Dini Cuaca", show=True)
+layer_peringatan = folium.FeatureGroup(name="🚨 Peringatan Dini Cuaca", show=False)
 
 with st.spinner("🚨 Mengecek Peringatan Dini Cuaca NTB..."):
     data_peringatan = ambil_peringatan_dini()
