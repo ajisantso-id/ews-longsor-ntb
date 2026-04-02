@@ -40,62 +40,78 @@ waktu_utc_str = utc_now.strftime("%H:%M:%S UTC")
 # ==========================================
 st.markdown(f"""
     <style>
-        /* 1. Ngilangin Padding Kosong Bawaan Streamlit */
+        /* 1. BUNUH SEMUA SPASI SILUMAN STREAMLIT */
         .block-container {{
-            padding-top: 30px !important; /* Pasin banget buat tinggi top-time-bar */
+            padding-top: 26px !important; /* Mentok seukuran persis top-time-bar */
             padding-bottom: 0rem !important;
+            margin-top: 0px !important;
         }}
-        header {{display: none !important;}} /* MATIIN TOTAL header bawaan biar gak makan tempat */
-        [data-testid="stToolbar"] {{display: none !important;}} /* Matiin tombol deploy/titik 3 di kanan atas */
+        header {{display: none !important;}}
+        [data-testid="stToolbar"] {{display: none !important;}}
         
-        /* 2. Bikin Baris Waktu di Paling Atas (Fixed) */
+        /* Ini biang keroknya: Hapus margin bawaan markdown */
+        .element-container, .stMarkdown, p {{
+            margin-bottom: 0 !important;
+            margin-top: 0 !important;
+        }}
+
+        /* 2. Bikin Baris Waktu di Paling Atas (Fixed 26px) */
         .top-time-bar {{
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
+            height: 26px; /* Kunci tingginya! */
             background-color: #ffffff;
             border-bottom: 1px solid #e0e0e0;
             z-index: 99999;
             display: flex;
             justify-content: space-between;
-            padding: 6px 30px;
+            align-items: center;
+            padding: 0 30px;
             font-size: 11px;
             color: #0056b3;
             font-weight: bold;
             letter-spacing: 0.5px;
         }}
         
-        /* 3. Bikin Header Logo & Judul Rapat (Space Dihilangkan!) */
+        /* 3. Header Logo (Mepet banget ke top-bar) */
         .ofs-header {{
             display: flex;
             align-items: center;
-            padding: 5px 30px 10px 30px;
-            margin-top: 5px; /* <--- INI OBATNYA! Kita bikin mepet atas! */
+            padding: 5px 30px 5px 30px; /* Atasnya dikasih 5px aja biar rapi */
+            background-color: #ffffff;
         }}
         .ofs-header img {{
             width: 65px;
             margin-right: 15px;
         }}
         .ofs-title h3 {{
-            margin: 0;
-            padding: 0;
-            color: #002B5B; /* Warna Biru BMKG */
+            margin: 0 !important;
+            padding: 0 !important;
+            color: #002B5B; 
             font-size: 20px;
             font-weight: 800;
             line-height: 1.2;
         }}
         .ofs-title p {{
-            margin: 0;
-            padding: 0;
+            margin: 0 !important;
+            padding: 0 !important;
             color: #444;
             font-size: 15px;
             line-height: 1.2;
         }}
         
-        /* 4. Tarik Peta Ke Atas Dikit Biar Nempel Garis Biru */
+        /* 4. Garis Biru Tepat Di Atas Peta */
+        .garis-biru {{
+            margin: 0 30px !important;
+            border: none !important;
+            border-bottom: 2px solid #002B5B !important;
+        }}
+
+        /* 5. Tarik Peta Ke Atas Dikit Biar Nempel Garis */
         iframe[title="streamlit_folium.st_folium"] {{
-            margin-top: -10px;
+            margin-top: -5px !important;
         }}
     </style>
 
@@ -111,8 +127,9 @@ st.markdown(f"""
             <p>Dashboard Peringatan Dini Longsor dan Banjir NTB</p>
         </div>
     </div>
-    <hr style="margin: 0 30px; border: none; border-bottom: 2px solid #002B5B;">
+    <hr class="garis-biru">
 """, unsafe_allow_html=True)
+
 # ==========================================
 # OTAK MESIN WAKTU 
 # ==========================================
