@@ -8,7 +8,7 @@ import folium
 from streamlit_folium import st_folium
 from streamlit_autorefresh import st_autorefresh
 import streamlit as st 
-import streamlit.components.v1 as components # <-- Wajib buat Jam Realtime!
+import streamlit.components.v1 as components # <--- PENTING BUAT JAM JS!
 
 # ==========================================
 # 1. ATUR HALAMAN (WAJIB PALING ATAS!)
@@ -21,78 +21,71 @@ st.set_page_config(
 )
 
 # ==========================================
-# 2. CSS DEWA: SIDEBAR NGAMBANG & PETA MENTOK
+# 2. CSS SAKTI: HEADER RAPAT & BERSIH
 # ==========================================
 st.markdown("""
     <style>
     /* A. PEPETIN PETA KE ATAS & FULL KANAN KIRI */
-    .block-container {
+    .main .block-container {
         max-width: 100% !important;
-        padding-top: 60px !important; /* Pas banget buat tinggi Header AWS */
+        padding-top: 3.5rem !important; /* Jarak pas buat Header Custom */
         padding-right: 0rem !important;
         padding-left: 0rem !important;
         padding-bottom: 0rem !important;
     }
     
-    /* B. HAPUS MENU STREAMLIT DI KANAN ATAS */
+    /* B. HAPUS MENU STREAMLIT DI KANAN ATAS (Deploy dll) */
     [data-testid="stToolbar"] {display: none !important;}
     [data-testid="stDecoration"] {display: none !important;}
     footer {display: none !important;}
     
-    /* C. AMANKAN TOMBOL SIDEBAR BIAR BISA DITUTUP/DIBUKA */
-    header { 
-        background-color: transparent !important; 
-        z-index: 9999999 !important; /* Kasta tertinggi biar bisa diklik */
-    }
-    
-    /* D. BIKIN SIDEBAR JADI OVERLAY (Nggak Dorong Peta) */
-    [data-testid="stSidebar"] {
-        position: fixed !important;
-        z-index: 999999 !important;
-        box-shadow: 2px 0 10px rgba(0,0,0,0.3);
+    /* C. AMANKAN TOMBOL SIDEBAR (Biar Gak Nabrak Header) */
+    header[data-testid="stHeader"] { 
+        background: transparent !important; 
+        z-index: 999999 !important; 
     }
 
-    /* E. BIKIN HEADER PUTIH ALA AWS CENTER */
-    .header-aws {
+    /* D. BIKIN HEADER PUTIH ALA AWS CENTER DI ATAS PETA */
+    .custom-header {
         position: fixed;
         top: 0;
-        left: 0;
-        width: 100vw;
-        height: 60px;
+        left: 4rem; /* KITA KASIH RUANG KOSONG DI KIRI BUAT TOMBOL PANAH STREAMLIT! */
+        right: 0;
+        height: 3.5rem;
         background-color: white;
-        z-index: 99999; /* Di bawah tombol panah sidebar, tapi di atas peta */
+        z-index: 99999;
         border-bottom: 2px solid #002B5B;
         display: flex;
         align-items: center;
-        padding-left: 60px; /* Kasih jarak aman buat tombol sidebar Streamlit */
+        padding-left: 10px;
         box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
-    .header-aws img {
-        height: 40px;
+    .custom-header img {
+        height: 35px;
         margin-right: 15px;
     }
-    .header-aws h3 {
+    .custom-header h3 {
         margin: 0;
         color: #002B5B;
-        font-size: 22px;
+        font-size: 20px;
         font-weight: 800;
         line-height: 1;
     }
-    .header-aws span {
+    .custom-header span {
         margin-left: 15px;
         color: #555;
-        font-size: 16px;
+        font-size: 15px;
         border-left: 2px solid #ccc;
         padding-left: 15px;
     }
-    
-    /* F. Tarik Peta Ke Atas Dikit Biar Rapat */
+
+    /* E. NAIKIN PETA DIKIT BIAR SPACE PUTIH HILANG TOTAL */
     iframe[title="streamlit_folium.st_folium"] {
-        margin-top: -10px;
+        margin-top: -15px !important;
     }
     </style>
     
-    <div class="header-aws">
+    <div class="custom-header">
         <img src="https://www.bmkg.go.id/asset/img/logo/logo-bmkg.png">
         <h3>BMKG</h3>
         <span>Dashboard Peringatan Dini Longsor dan Banjir NTB</span>
@@ -100,7 +93,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # ==========================================
-# 3. KONTROL WAKTU (Auto Refresh Data 5 Menit Sekali)
+# 3. MESIN WAKTU & REFRESH DATA (Tiap 5 Menit)
 # ==========================================
 st_autorefresh(interval=300000, limit=None, key="auto_refresh_bmkg") 
 
@@ -111,7 +104,6 @@ def set_hari(offset):
     st.session_state.offset_hari = offset
 
 tanggal_pilih = date.today() - timedelta(days=st.session_state.offset_hari)
-tanggal_api = tanggal_pilih.strftime("%Y-%m-%d")
 
 # ==========================================
 # 4. FUNGSI PENARIKAN DATA
@@ -158,19 +150,19 @@ elif st.session_state.offset_hari == 2:
         with open('data_h2.json', 'r') as f: data_sensor = json.load(f)
 
 # ==========================================
-# 5. SIDEBAR (MENU KIRI)
+# 5. SIDEBAR (MENU KIRI - AMAN TERKENDALI)
 # ==========================================
 with st.sidebar:
-    # A. Judul Sidebar Simpel
+    # A. Judul Minimalis
     st.image("https://www.bmkg.go.id/asset/img/logo/logo-bmkg.png", width=60)
     st.markdown("<h3 style='margin-top: 5px; margin-bottom: 0px; color:#002B5B;'>Stamet ZAM Lombok</h3>", unsafe_allow_html=True)
     st.divider()
 
-    # B. JAM REALTIME JAVASCRIPT (Jalan Setiap Detik!)
-    jam_realtime_html = """
-    <div style="font-family: sans-serif; color: #333; font-size: 14px; font-weight: bold;">
+    # B. JAM REALTIME (JAVASCRIPT MURNI!)
+    clock_html = """
+    <div id="clock_container" style="font-family: sans-serif; color: #333; font-size: 14px; font-weight: bold;">
         Waktu Server (UTC):<br>
-        <span id="jam_digital" style="font-size: 18px; color: #002B5B;">Memuat...</span>
+        <span id="jam_digital" style="font-size: 17px; color: #002B5B;">Memuat Jam...</span>
     </div>
     <script>
         function updateClock() {
@@ -186,17 +178,16 @@ with st.sidebar:
             var m = ("0" + d.getUTCMinutes()).slice(-2);
             var s = ("0" + d.getUTCSeconds()).slice(-2);
             
-            var fullString = dayName + ", " + date + " " + monthName + " " + year + "<br>" + h + ":" + m + ":" + s + " UTC";
-            document.getElementById('jam_digital').innerHTML = fullString;
+            document.getElementById('jam_digital').innerHTML = dayName + ", " + date + " " + monthName + " " + year + "<br>" + h + ":" + m + ":" + s + " UTC";
         }
-        setInterval(updateClock, 1000); 
+        setInterval(updateClock, 1000); // Trigger tiap detik
         updateClock();
     </script>
     """
-    components.html(jam_realtime_html, height=75)
+    components.html(clock_html, height=75) # Bikin Iframe untuk Script
     st.divider()
 
-    # C. Kontrol Mesin Waktu
+    # C. Tombol Mesin Waktu
     st.markdown("#### ⏳ Kontrol Data")
     st.button("✅ Data Hari Ini", on_click=set_hari, args=(0,), use_container_width=True)
     st.button("⏪ Data Kemarin (H-1)", on_click=set_hari, args=(1,), use_container_width=True)
@@ -308,25 +299,4 @@ legend_bahaya = '''
 legend_peringatan = '''
 <div style="position: fixed; bottom: 20px; right: 15px; width: 220px; height: auto; background-color: rgba(255, 255, 255, 0.9); border: 2px solid grey; z-index: 9999; font-size: 11px; padding: 10px; border-radius: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;">
     <h4 style="margin-top: 0; margin-bottom: 8px; font-size: 13px; text-align: center; color: black;"><b>Status Peringatan</b></h4>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-    <div style="margin-bottom: 5px; font-weight: bold; color: #333;">Intensitas Hujan (24 Jam):</div>
-    <div style="margin-bottom: 6px; height: 18px;"><div style="background: blue; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;"><i class="glyphicon glyphicon-cloud"></i></div><span style="line-height: 18px;">Cerah (0 mm)</span></div>
-    <div style="margin-bottom: 6px; height: 18px;"><div style="background: green; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;"><i class="glyphicon glyphicon-tint"></i></div><span style="line-height: 18px;">Ringan (0.1 - 20 mm)</span></div>
-    <div style="margin-bottom: 6px; height: 18px;"><div style="background: beige; border-radius: 50%; width: 18px; height: 18px; color: black; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px; border: 1px solid #ccc;"><i class="glyphicon glyphicon-tint"></i></div><span style="line-height: 18px;">Sedang (20 - 50 mm)</span></div>
-    <div style="margin-bottom: 6px; height: 18px;"><div style="background: orange; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;"><i class="glyphicon glyphicon-info-sign"></i></div><span style="line-height: 18px;">Lebat (50 - 100 mm)</span> </div>
-    <div style="margin-bottom: 6px; height: 18px;"><div style="background: red; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;"><i class="glyphicon glyphicon-warning-sign"></i></div><span style="line-height: 18px;">Sangat Lebat (100-150 mm)</span></div>
-    <div style="margin-bottom: 6px; height: 18px;"><div style="background: darkred; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;"><i class="glyphicon glyphicon-flash"></i></div><span style="line-height: 18px;">Ekstrem (> 150 mm)</span></div>
-    <hr style="margin: 8px 0; border-top: 1px dashed #999;">
-    <div style="margin-bottom: 5px; font-weight: bold; color: #333;">Level Area:</div>
-    <div style="margin-bottom: 4px; height: 14px;"><i style="background: orange; opacity: 0.8; width: 12px; height: 12px; float: left; margin-right: 8px; border-radius: 2px; margin-top: 1px;"></i><span style="line-height: 14px;">Waspada</span></div>
-    <div style="margin-bottom: 4px; height: 14px;"><i style="background: red; opacity: 0.8; width: 12px; height: 12px; float: left; margin-right: 8px; border-radius: 2px; margin-top: 1px;"></i><span style="line-height: 14px;">Siaga</span></div>
-    <div style="margin-bottom: 0px; height: 14px;"><i style="background: darkred; opacity: 0.8; width: 12px; height: 12px; float: left; margin-right: 8px; border-radius: 2px; margin-top: 1px;"></i><span style="line-height: 14px;">Awas</span></div>
-</div>
-'''
-
-m.get_root().html.add_child(folium.Element(legend_bahaya))
-m.get_root().html.add_child(folium.Element(legend_peringatan))
-folium.LayerControl().add_to(m)
-
-# TAMPILKAN PETA
-st_folium(m, use_container_width=True, height=850, returned_objects=[])
+    <link rel="stylesheet" href="
