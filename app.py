@@ -36,16 +36,17 @@ tanggal_str = wita_now.strftime("%A, %d %B %Y").upper()
 waktu_utc_str = utc_now.strftime("%H:%M:%S UTC")
 
 # ==========================================
-# CSS HACK: BIKIN HEADER ALA OFS BMKG
+# CSS HACK: BIKIN HEADER ALA OFS BMKG & ILANGIN SPACE KOSONG
 # ==========================================
 st.markdown(f"""
     <style>
         /* 1. Ngilangin Padding Kosong Bawaan Streamlit */
         .block-container {{
-            padding-top: 0.5rem !important; /* Sisa dikit buat top bar jam */
+            padding-top: 30px !important; /* Pasin banget buat tinggi top-time-bar */
             padding-bottom: 0rem !important;
         }}
-        header {{visibility: hidden;}} /* Sembunyiin menu default streamlit di atas */
+        header {{display: none !important;}} /* MATIIN TOTAL header bawaan biar gak makan tempat */
+        [data-testid="stToolbar"] {{display: none !important;}} /* Matiin tombol deploy/titik 3 di kanan atas */
         
         /* 2. Bikin Baris Waktu di Paling Atas (Fixed) */
         .top-time-bar {{
@@ -65,13 +66,12 @@ st.markdown(f"""
             letter-spacing: 0.5px;
         }}
         
-        /* 3. Bikin Header Logo & Judul Rapat */
+        /* 3. Bikin Header Logo & Judul Rapat (Space Dihilangkan!) */
         .ofs-header {{
             display: flex;
             align-items: center;
-            padding: 5px 0px 10px 0px;
-            margin-top: 25px; /* Jarak dari top bar */
-            padding-left: 30px;
+            padding: 5px 30px 10px 30px;
+            margin-top: 5px; /* <--- INI OBATNYA! Kita bikin mepet atas! */
         }}
         .ofs-header img {{
             width: 65px;
@@ -92,6 +92,11 @@ st.markdown(f"""
             font-size: 15px;
             line-height: 1.2;
         }}
+        
+        /* 4. Tarik Peta Ke Atas Dikit Biar Nempel Garis Biru */
+        iframe[title="streamlit_folium.st_folium"] {{
+            margin-top: -10px;
+        }}
     </style>
 
     <div class="top-time-bar">
@@ -106,10 +111,8 @@ st.markdown(f"""
             <p>Dashboard Peringatan Dini Longsor dan Banjir NTB</p>
         </div>
     </div>
-    
-    <hr style="margin: 0; border: none; border-bottom: 2px solid #002B5B;">
+    <hr style="margin: 0 30px; border: none; border-bottom: 2px solid #002B5B;">
 """, unsafe_allow_html=True)
-
 # ==========================================
 # OTAK MESIN WAKTU 
 # ==========================================
