@@ -212,7 +212,7 @@ folium.TileLayer(
     attr=' ',
     name='Google Satellite (Satelit)',
     overlay=False,
-    control=True
+    control=True,
     show=False
 ).add_to(m)
 # ==========================================
