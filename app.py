@@ -214,8 +214,6 @@ folium.TileLayer(
     overlay=False,
     control=True
 ).add_to(m)
-
-(Nah, baru di bawahnya lu
 # ==========================================
 # 5. LAPISAN TENGAH-ATAS: BATAS KEKUASAAN ARG (THIESSEN)
 # ==========================================
