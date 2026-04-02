@@ -190,7 +190,7 @@ elif st.session_state.offset_hari == 2:
 # 1. BIKIN PETA KOSONG (HAPUS BASEMAP BAWAAN)
 # ==========================================
 # Ganti koordinat & zoom sesuai titik tengah NTB lu
-m = folium.Map(location=[-8.65, 117.36], zoom_start=8.5, tiles=None, attributionControl=False)
+m = folium.Map(location=[-8.65, 117.36], zoom_start=8, tiles=None, attributionControl=False)
 
 # ==========================================
 # 2. PILIHAN BASEMAP 1: GOOGLE MAPS (JALAN) - Default
