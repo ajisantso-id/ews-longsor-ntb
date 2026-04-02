@@ -194,7 +194,7 @@ m = folium.Map(location=[-8.65, 117.36], zoom_start=8.5, tiles=None, attribution
 
 # ==========================================
 folium.TileLayer(
-    tiles='http://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}',
+    tiles='http://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}',
     attr=' ',
     name='Basemap',
     overlay=False
