@@ -216,19 +216,19 @@ folium.TileLayer(
 # ==========================================
 # 5. LAPISAN TENGAH-ATAS: BATAS KEKUASAAN ARG (THIESSEN)
 # ==========================================
-try:
-    folium.GeoJson(
-        "batas_arg.geojson",
-        name="Wilayah Cakupan ARG",
-        style_function=lambda x: {
-            'color': 'black',       # Warna garis batas hitam
-            'weight': 1.5,          # Ketebalan garis
-            'dashArray': '5, 5',    # Bikin garisnya putus-putus biar estetik
-            'fillOpacity': 0        # Bolongin area dalamnya biar warna PVMBG tetep kelihatan
-        }
-    ).add_to(m)
-except Exception as e:
-    pass
+#try:
+ #   folium.GeoJson(
+  #      "batas_arg.geojson",
+   #     name="Wilayah Cakupan ARG",
+    #    style_function=lambda x: {
+     #       'color': 'black',       # Warna garis batas hitam
+      #      'weight': 1.5,          # Ketebalan garis
+       #     'dashArray': '5, 5',    # Bikin garisnya putus-putus biar estetik
+        #    'fillOpacity': 0        # Bolongin area dalamnya biar warna PVMBG tetep kelihatan
+      #  }
+    #).add_to(m)
+#except Exception as e:
+ #   pass
 
 # ==========================================
 # 6. LAPISAN ATAS: TEKS NAMA KOTA / DAERAH AJA
@@ -316,39 +316,96 @@ except Exception as e:
  #   pass
 
 # LOGIKA KATEGORI HUJAN & STATUS AREA BMKG
+# ==========================================
+# PEMBUATAN PIN SENSOR (DINAMIS & DECLUTTERING)
+# ==========================================
 for item in data_sensor:
     try:
         lat = float(item['lat'])
         lon = float(item['lng'])
         nama = item['name_station']
-        curah_str = str(item['curah']).replace(',', '.')
-        curah = float(curah_str) if curah_str.strip() != "" else 0.0
+        tanggal = item.get('tanggal', 'Waktu tidak diketahui')
+        
+        # 1. CEK KONDISI OFFLINE DULU
+        # Kalau datanya kosong (None/"") atau ada tulisan offline
+        curah_raw = item.get('curah', '')
+        if curah_raw is None or str(curah_raw).strip() == "" or str(curah_raw).lower() == "offline":
+            html_offline = '''
+            <div style="background: grey; border-radius: 50%; width: 18px; height: 18px; color: red; text-align: center; line-height: 16px; font-weight: bold; border: 2px solid white; box-shadow: 1px 1px 3px rgba(0,0,0,0.5); font-size: 12px;">
+                ✖
+            </div>
+            '''
+            folium.Marker(
+                [lat, lon],
+                popup=f"<div style='min-width: 150px;'><b>{nama}</b><br>Status: <b>OFFLINE / NO DATA</b><br><small>Update: {tanggal} UTC</small></div>",
+                tooltip=f"{nama}: OFFLINE",
+                icon=folium.DivIcon(html=html_offline)
+            ).add_to(m)
+            continue # Skip ke bawahnya, lanjut ke stasiun berikutnya
+            
+        # Kalau data hujannya ada, kita ubah jadi angka
+        curah_str = str(curah_raw).replace(',', '.')
+        curah = float(curah_str)
 
-        # --- PERBAIKAN WARNA & LOGO ICON ---
-        if curah == 0:
-            kategori, status_area, warna, ikon, warna_ikon = "Cerah / Berawan", "Aman", "blue", "cloud", "white"
-        elif 0 < curah <= 20:
-            kategori, status_area, warna, ikon, warna_ikon = "Hujan Ringan", "Aman", "green", "tint", "white"
-        elif 20 < curah <= 50:
-            # KHUSUS SEDANG: Pin Beige (Kuning), Ikon Hitam biar kontras!
-            kategori, status_area, warna, ikon, warna_ikon = "Hujan Sedang", "Aman", "beige", "tint", "black" 
-        elif 50 < curah <= 100:
-            kategori, status_area, warna, ikon, warna_ikon = "Hujan Lebat", "WASPADA", "orange", "info-sign", "white"
-        elif 100 < curah <= 150:
-            kategori, status_area, warna, ikon, warna_ikon = "Hujan Sangat Lebat", "SIAGA", "red", "warning-sign", "white"
-        else: 
-            kategori, status_area, warna, ikon, warna_ikon = "Hujan Ekstrem", "AWAS", "darkred", "flash", "white"
-        # --- PERBAIKAN TEKS POPUP (Potensi -> Status Area) ---
-        folium.Marker(
-            [lat, lon],
-            popup=f"<div style='min-width: 150px;'><b>{nama}</b><br>Curah Hujan: <b>{curah} mm</b><br>Kategori: <b>{kategori}</b><br>Status Area: <b>{status_area}</b><br><small>Update: {item['tanggal']} UTC</small></div>",
-            tooltip=f"{nama} ({kategori})",
-            icon=folium.Icon(color=warna, icon=ikon, icon_color=warna_ikon)
-        ).add_to(m)
+        # Kadang alat rusak ngirim data -999, kita anggap offline juga
+        if curah < 0:
+            html_offline = '''
+            <div style="background: grey; border-radius: 50%; width: 18px; height: 18px; color: red; text-align: center; line-height: 16px; font-weight: bold; border: 2px solid white; box-shadow: 1px 1px 3px rgba(0,0,0,0.5); font-size: 12px;">
+                ✖
+            </div>
+            '''
+            folium.Marker(
+                [lat, lon],
+                popup=f"<div style='min-width: 150px;'><b>{nama}</b><br>Status: <b>ERROR / OFFLINE</b><br><small>Update: {tanggal} UTC</small></div>",
+                tooltip=f"{nama}: ERROR",
+                icon=folium.DivIcon(html=html_offline)
+            ).add_to(m)
+            continue
+
+        # ==========================================
+        # 2. KONDISI AMAN (< 50 mm) -> JADI TITIK KECIL
+        # ==========================================
+        if curah < 50:
+            if curah == 0:
+                kategori, status_area, fill_warna = "Cerah / Berawan", "Aman", "blue"
+            elif 0 < curah <= 20:
+                kategori, status_area, fill_warna = "Hujan Ringan", "Aman", "green"
+            else:
+                kategori, status_area, fill_warna = "Hujan Sedang", "Aman", "#F5DEB3" # Kode warna Beige (Kuning Gandum)
+
+            folium.CircleMarker(
+                location=[lat, lon],
+                radius=6, # Ukuran titiknya
+                color='black', # Garis tepi hitam biar titiknya kontras
+                weight=1.5,
+                fill_color=fill_warna,
+                fill_opacity=0.9,
+                popup=f"<div style='min-width: 150px;'><b>{nama}</b><br>Curah Hujan: <b>{curah} mm</b><br>Kategori: <b>{kategori}</b><br>Status Area: <b>{status_area}</b><br><small>Update: {tanggal} UTC</small></div>",
+                tooltip=f"{nama}: {curah} mm ({kategori})"
+            ).add_to(m)
+
+        # ==========================================
+        # 3. KONDISI BAHAYA (>= 50 mm) -> MUNCUL PIN GEDE!
+        # ==========================================
+        else:
+            if 50 <= curah <= 100:
+                kategori, status_area, warna, ikon, warna_ikon = "Hujan Lebat", "WASPADA", "orange", "info-sign", "white"
+            elif 100 < curah <= 150:
+                kategori, status_area, warna, ikon, warna_ikon = "Hujan Sangat Lebat", "SIAGA", "red", "warning-sign", "white"
+            else:
+                kategori, status_area, warna, ikon, warna_ikon = "Hujan Ekstrem", "AWAS", "darkred", "flash", "white"
+            
+            # Kita pakai folium.Marker bawaan punya lu buat nampilin icon gedenya
+            folium.Marker(
+                [lat, lon],
+                popup=f"<div style='min-width: 150px;'><b>{nama}</b><br>Curah Hujan: <b>{curah} mm</b><br>Kategori: <b>{kategori}</b><br>Status Area: <b>{status_area}</b><br><small>Update: {tanggal} UTC</small></div>",
+                tooltip=f"{nama} ({kategori})",
+                icon=folium.Icon(color=warna, icon=ikon, icon_color=warna_ikon)
+            ).add_to(m)
+
     except Exception as e:
-        continue 
-
-# ==========================================
+        continue
+        # ==========================================
 # BIKIN LEGEND MENGAMBANG (UPDATE STANDAR PVMBG + BATAS ARG)
 
 # ==========================================
