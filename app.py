@@ -16,26 +16,6 @@ st.set_page_config(
     page_icon="⛈️",
     layout="wide"
 )
-
-# ==========================================
-# JURUS CSS SAKTI: FULL SCREEN EDGE-TO-EDGE
-# ==========================================
-st.markdown("""
-    <style>
-    /* Hilangkan padding luar Streamlit */
-    .block-container {
-        padding-top: 0rem !important;
-        padding-bottom: 0rem !important;
-        padding-left: 0rem !important;
-        padding-right: 0rem !important;
-        max-width: 100% !important;
-    }
-    /* Sembunyikan header dan footer bawaan biar makin bersih */
-    header {visibility: hidden;}
-    footer {visibility: hidden;}
-    </style>
-    """, unsafe_allow_html=True)
-
 # ==========================================
 # FITUR AUTO-REFRESH MODE TV DISPLAY
 # ==========================================F
