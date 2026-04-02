@@ -207,9 +207,9 @@ m.get_root().header.add_child(folium.Element(fix_icon_size))
 # 2. LAPISAN BAWAH: DARATAN & JALAN (TANPA TEKS)
 # ==========================================
 folium.TileLayer(
-    tiles='https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png',
-    attr='&copy; <a href="https://carto.com/">CartoDB</a>',
-    name='Basemap',
+    tiles='http://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}',
+    attr='Google',
+    name='Google Maps (Jalan)',
     overlay=False
 ).add_to(m)
 
