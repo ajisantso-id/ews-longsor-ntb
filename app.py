@@ -349,32 +349,33 @@ m.get_root().html.add_child(folium.Element(legend_peringatan))
 
 
 # ==========================================
-# FUNGSI NARIK DATA CUACA BMKG (JALUR VIP SESSION)
+# FUNGSI NARIK DATA CUACA BMKG (SESUAI ATURAN RESMI PUSAT)
 # ==========================================
-@st.cache_data(ttl=1800) # Cache 30 menit
+# ATURAN 1: Update pusat cuma 2x sehari. Jadi kita cache 1 JAM (3600 detik). 
+# Biar aman total dari limit 60 request/menit!
+@st.cache_data(ttl=3600) 
 def ambil_cuaca_bmkg():
     data_cuaca_gabungan = []
     
-    # 15 Titik Strategis (Merata dari Lombok sampai Bima)
+    # ATURAN 2: Pakai adm4. Kita set 15 Titik Merata se-NTB
     lokasi_pilihan = [
         "52.71.01.1001", # Mataram
-        "52.01.01.2001", # Gerung (Lombok Barat)
-        "52.08.01.2001", # Tanjung (Lombok Utara)
-        "52.08.03.2001", # Bayan (Lombok Utara)
-        "52.02.01.2001", # Praya (Lombok Tengah)
-        "52.03.01.2001", # Selong (Lombok Timur)
-        "52.03.18.2001", # Sembalun (Lombok Timur)
-        "52.07.01.1001", # Taliwang (Sumbawa Barat)
+        "52.01.01.2001", # Gerung (Lobar)
+        "52.08.01.2001", # Tanjung (KLU)
+        "52.08.03.2001", # Bayan (KLU)
+        "52.02.01.2001", # Praya (Loteng)
+        "52.03.01.2001", # Selong (Lotim)
+        "52.03.18.2001", # Sembalun (Lotim)
+        "52.07.01.1001", # Taliwang (KSB)
         "52.04.04.2001", # Sumbawa Besar
         "52.04.08.2001", # Plampang (Sumbawa)
         "52.05.01.1001", # Dompu
         "52.05.05.2001", # Pekat / Gn. Tambora (Dompu)
         "52.72.01.1001", # Raba (Kota Bima)
         "52.06.02.2001", # Woha (Kab. Bima)
-        "52.06.08.2001"  # Sape (Kab. Bima - Ujung Timur)
+        "52.06.08.2001"  # Sape (Kab. Bima)
     ]
     
-    # JURUS SAKTI: Pakai Session biar koneksi stabil dan gak dianggap spam bot
     session = requests.Session()
     session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'})
     
@@ -390,15 +391,18 @@ def ambil_cuaca_bmkg():
                     if len(data_list) > 0:
                         data_cuaca_gabungan.append(data_list[0])
             
-            # Nafas dikit biar server BMKG kalem
+            # CEGATAN LIMIT: Kalau BMKG ngirim error 429 (Too Many Requests), berhentiin tarikan!
+            elif response.status_code == 429:
+                break
+                
+            # ATURAN 3: Jeda sopan santun biar gak dikira nge-DDoS
             time.sleep(0.5) 
             
         except Exception as e:
             continue
             
     return data_cuaca_gabungan
-
-# ==========================================
+    # ==========================================
 # LAYER TAMBAHAN: PRAKIRAAN CUACA BMKG
 # ==========================================
 layer_prakiraan = folium.FeatureGroup(name="🌤️ Prakiraan Cuaca BMKG (Se-NTB)", show=False)
