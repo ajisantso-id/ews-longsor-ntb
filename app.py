@@ -15,7 +15,7 @@ st.set_page_config(
     page_title="Dashboard Peringatan Dini Longsor dan Banjir NTB",
     page_icon="⛈️",
     layout="wide",
-    initial_sidebar_state="expanded" # Sidebar langsung kebuka pas awal
+    #initial_sidebar_state="expanded" # Sidebar langsung kebuka pas awal
 )
 
 # ==========================================
