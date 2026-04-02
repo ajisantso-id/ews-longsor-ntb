@@ -9,6 +9,7 @@ from datetime import datetime, date, timedelta
 import pytz
 import xml.etree.ElementTree as ET
 from streamlit_autorefresh import st_autorefresh
+import time
 
 # ==========================================
 # ATUR JUDUL TAB BROWSER & BIKIN FULL LAYAR
@@ -346,36 +347,15 @@ legend_peringatan = '''
 m.get_root().html.add_child(folium.Element(legend_bahaya))
 m.get_root().html.add_child(folium.Element(legend_peringatan))
 
+
 # ==========================================
-# FUNGSI NARIK DATA CUACA BMKG (SELURUH NTB)
-# ==========================================
-@st.cache_data(ttl=1800) # Cache 30 menit biar gak kena banned server BMKG
-def ambil_cuaca_bmkg_all():
-    try:
-        # Pake adm1=52 buat narik SELURUH DATA NTB dalam 1 tarikan API
-        url_api = "https://api.bmkg.go.id/publik/prakiraan-cuaca?adm1=52"
-        
-        # JURUS VIP: Pura-pura jadi browser asli biar gak diblokir server pusat
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
-        
-        response = requests.get(url_api, headers=headers, timeout=20)
-        
-        if response.status_code == 200:
-            data_json = response.json()
-            return data_json.get('data', [])
-    except Exception as e:
-        return []
-    return []# ==========================================
 # FUNGSI NARIK DATA CUACA BMKG (API JSON BARU)
 # ==========================================
 @st.cache_data(ttl=1800) # Cache 30 menit biar aman
 def ambil_cuaca_bmkg():
     data_cuaca_gabungan = []
     
-    # KITA BALIK PAKAI ADM4 (Kecamatan/Desa)
-    # Titiknya udah gue sebar biar mencakup SELURUH NTB!
+    # 12 Titik Lokasi Pilihan se-NTB
     lokasi_pilihan = [
         "52.71.01.1001", # Mataram
         "52.01.01.2001", # Gerung (Lobar)
@@ -396,7 +376,7 @@ def ambil_cuaca_bmkg():
     for kode in lokasi_pilihan:
         try:
             url_api = f"https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4={kode}"
-            response = requests.get(url_api, headers=headers, timeout=5)
+            response = requests.get(url_api, headers=headers, timeout=10) # Timeout dipanjangin dikit
             
             if response.status_code == 200:
                 data_json = response.json()
@@ -404,6 +384,10 @@ def ambil_cuaca_bmkg():
                     data_list = data_json['data']
                     if len(data_list) > 0:
                         data_cuaca_gabungan.append(data_list[0])
+            
+            # INI OBATNYA BRO! Kasih jeda nafas 1 detik per lokasi biar gak ditendang Anti-Spam BMKG
+            time.sleep(1) 
+            
         except Exception as e:
             continue
             
@@ -434,7 +418,6 @@ if data_cuaca_bmkg:
             lon = float(lokasi.get('lon', 0))
             if lat == 0 and lon == 0: continue
             
-            # Cuma ambil cuaca, SUHU DIHAPUS sesuai request
             cuaca_list = item.get('cuaca', [])
             keterangan = "Berawan"
             
