@@ -521,6 +521,24 @@ st_folium(m, height=650, width="stretch", returned_objects=[])
 st.divider() 
 
 # ==========================================
+# TOMBOL DOWNLOAD PETA (INTERAKTIF HTML)
+# ==========================================
+# 1. Save peta yang udah jadi (dengan semua overlay & pin) ke dalam file sementara
+nama_file_peta = "Peta_EWS_NTB_Terbaru.html"
+m.save(nama_file_peta)
+
+# 2. Bikin tombol download di Streamlit
+st.markdown("---") # Bikin garis pemisah
+with open(nama_file_peta, "rb") as file:
+    st.download_button(
+        label="📥 Download Peta EWS (Interactive HTML)",
+        data=file,
+        file_name=nama_file_peta,
+        mime="text/html",
+        help="Download peta ini untuk dibuka secara offline di browser (Chrome/Edge/Firefox)"
+    )
+
+# ==========================================
 # 2. PANEL TOMBOL FISIK (Taruh di bawah peta, di atas tabel)
 # ==========================================
 #st.markdown("---") # Garis pembatas estetik
