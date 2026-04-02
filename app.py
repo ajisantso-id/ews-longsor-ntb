@@ -40,28 +40,21 @@ waktu_utc_str = utc_now.strftime("%H:%M:%S UTC")
 # ==========================================
 st.markdown(f"""
     <style>
-        /* 1. BUNUH SEMUA SPASI SILUMAN STREAMLIT */
+        /* 1. Ngilangin Padding Kosong Bawaan Streamlit */
         .block-container {{
-            padding-top: 26px !important; /* Mentok seukuran persis top-time-bar */
+            padding-top: 28px !important; /* Tinggi fix untuk top-time-bar */
             padding-bottom: 0rem !important;
-            margin-top: 0px !important;
         }}
-        header {{display: none !important;}}
-        [data-testid="stToolbar"] {{display: none !important;}}
+        header {{display: none !important;}} 
+        [data-testid="stToolbar"] {{display: none !important;}} 
         
-        /* Ini biang keroknya: Hapus margin bawaan markdown */
-        .element-container, .stMarkdown, p {{
-            margin-bottom: 0 !important;
-            margin-top: 0 !important;
-        }}
-
-        /* 2. Bikin Baris Waktu di Paling Atas (Fixed 26px) */
+        /* 2. Bikin Baris Waktu di Paling Atas (Fixed) */
         .top-time-bar {{
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
-            height: 26px; /* Kunci tingginya! */
+            height: 28px;
             background-color: #ffffff;
             border-bottom: 1px solid #e0e0e0;
             z-index: 99999;
@@ -75,12 +68,15 @@ st.markdown(f"""
             letter-spacing: 0.5px;
         }}
         
-        /* 3. Header Logo (Mepet banget ke top-bar) */
+        /* 3. WADAH HEADER: KITA BETOT KE ATAS! */
+        .ofs-header-container {{
+            margin-top: -20px !important; /* <--- JURUS BETOT: Tarik logo ke atas nabrak baris waktu */
+        }}
+
         .ofs-header {{
             display: flex;
             align-items: center;
-            padding: 5px 30px 5px 30px; /* Atasnya dikasih 5px aja biar rapi */
-            background-color: #ffffff;
+            padding: 0px 30px 5px 30px;
         }}
         .ofs-header img {{
             width: 65px;
@@ -102,16 +98,16 @@ st.markdown(f"""
             line-height: 1.2;
         }}
         
-        /* 4. Garis Biru Tepat Di Atas Peta */
+        /* 4. GARIS BIRU: Kasih jarak bawah biar nggak ditelan peta */
         .garis-biru {{
-            margin: 0 30px !important;
+            margin: 0 30px 10px 30px !important; /* Kasih 10px di bawah garis */
             border: none !important;
             border-bottom: 2px solid #002B5B !important;
         }}
 
-        /* 5. Tarik Peta Ke Atas Dikit Biar Nempel Garis */
+        /* 5. NORMALIASI PETA: Jangan ditarik ke atas lagi! */
         iframe[title="streamlit_folium.st_folium"] {{
-            margin-top: -5px !important;
+            margin-top: 0px !important; /* <--- OBAT GARIS KETUTUP: Bikin 0 biar garis birunya kelihatan */
         }}
     </style>
 
@@ -120,14 +116,16 @@ st.markdown(f"""
         <div>STANDAR WAKTU INDONESIA &nbsp;&nbsp;:&nbsp;&nbsp; {waktu_utc_str}</div>
     </div>
     
-    <div class="ofs-header">
-        <img src="https://www.bmkg.go.id/asset/img/logo/logo-bmkg.png">
-        <div class="ofs-title">
-            <h3>Stasiun Meteorologi ZAM Lombok</h3>
-            <p>Dashboard Peringatan Dini Longsor dan Banjir NTB</p>
+    <div class="ofs-header-container">
+        <div class="ofs-header">
+            <img src="https://www.bmkg.go.id/asset/img/logo/logo-bmkg.png">
+            <div class="ofs-title">
+                <h3>Stasiun Meteorologi ZAM Lombok</h3>
+                <p>Dashboard Peringatan Dini Longsor dan Banjir NTB</p>
+            </div>
         </div>
+        <hr class="garis-biru">
     </div>
-    <hr class="garis-biru">
 """, unsafe_allow_html=True)
 
 # ==========================================
