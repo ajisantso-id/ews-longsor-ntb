@@ -349,43 +349,49 @@ m.get_root().html.add_child(folium.Element(legend_peringatan))
 
 
 # ==========================================
-# FUNGSI NARIK DATA CUACA BMKG (SEMUA KECAMATAN SE-NTB)
+# FUNGSI NARIK DATA CUACA BMKG (JALUR VIP SESSION)
 # ==========================================
 @st.cache_data(ttl=1800) # Cache 30 menit
 def ambil_cuaca_bmkg():
     data_cuaca_gabungan = []
     
-    # KODE ADM2 (KABUPATEN/KOTA) SE-NTB
-    # Dengan 10 request ini, kita dapet data SEMUA KECAMATAN di NTB
-    # tanpa bikin server BMKG jebol / timeout.
-    kabupaten_ntb = [
-        "52.01", # Lombok Barat
-        "52.02", # Lombok Tengah
-        "52.03", # Lombok Timur
-        "52.04", # Sumbawa
-        "52.05", # Dompu
-        "52.06", # Bima
-        "52.07", # Sumbawa Barat
-        "52.08", # Lombok Utara
-        "52.71", # Kota Mataram
-        "52.72"  # Kota Bima
+    # 15 Titik Strategis (Merata dari Lombok sampai Bima)
+    lokasi_pilihan = [
+        "52.71.01.1001", # Mataram
+        "52.01.01.2001", # Gerung (Lombok Barat)
+        "52.08.01.2001", # Tanjung (Lombok Utara)
+        "52.08.03.2001", # Bayan (Lombok Utara)
+        "52.02.01.2001", # Praya (Lombok Tengah)
+        "52.03.01.2001", # Selong (Lombok Timur)
+        "52.03.18.2001", # Sembalun (Lombok Timur)
+        "52.07.01.1001", # Taliwang (Sumbawa Barat)
+        "52.04.04.2001", # Sumbawa Besar
+        "52.04.08.2001", # Plampang (Sumbawa)
+        "52.05.01.1001", # Dompu
+        "52.05.05.2001", # Pekat / Gn. Tambora (Dompu)
+        "52.72.01.1001", # Raba (Kota Bima)
+        "52.06.02.2001", # Woha (Kab. Bima)
+        "52.06.08.2001"  # Sape (Kab. Bima - Ujung Timur)
     ]
     
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+    # JURUS SAKTI: Pakai Session biar koneksi stabil dan gak dianggap spam bot
+    session = requests.Session()
+    session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'})
     
-    for kode in kabupaten_ntb:
+    for kode in lokasi_pilihan:
         try:
-            url_api = f"https://api.bmkg.go.id/publik/prakiraan-cuaca?adm2={kode}"
-            response = requests.get(url_api, headers=headers, timeout=10)
+            url_api = f"https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4={kode}"
+            response = session.get(url_api, timeout=10)
             
             if response.status_code == 200:
                 data_json = response.json()
                 if isinstance(data_json, dict) and 'data' in data_json:
-                    # Gabungin semua data kecamatan/desa di kabupaten ini
-                    data_cuaca_gabungan.extend(data_json['data'])
+                    data_list = data_json['data']
+                    if len(data_list) > 0:
+                        data_cuaca_gabungan.append(data_list[0])
             
-            # Kasih nafas 1 detik biar gak di-banned
-            time.sleep(1) 
+            # Nafas dikit biar server BMKG kalem
+            time.sleep(0.5) 
             
         except Exception as e:
             continue
@@ -397,7 +403,12 @@ def ambil_cuaca_bmkg():
 # ==========================================
 layer_prakiraan = folium.FeatureGroup(name="🌤️ Prakiraan Cuaca BMKG (Se-NTB)", show=False)
 
-data_cuaca_bmkg = ambil_cuaca_bmkg()
+with st.spinner("📡 Menyinkronkan Data Cuaca BMKG..."):
+    data_cuaca_bmkg = ambil_cuaca_bmkg()
+    
+    # PENGHANCUR CACHE: Kalau gagal narik data, hapus memori kosongnya!
+    if not data_cuaca_bmkg:
+        st.cache_data.clear()
 
 if data_cuaca_bmkg:
     icon_cuaca = {
@@ -407,20 +418,11 @@ if data_cuaca_bmkg:
         "Hujan Lokal": "🌦️", "Hujan Petir": "🌩️"
     }
 
-    # Jurus Saring: Cuma ambil 1 titik per Kecamatan (Total ada ~116 Kecamatan se-NTB)
-    kecamatan_tersimpan = set()
-
     for item in data_cuaca_bmkg:
         try:
             lokasi = item.get('lokasi', {})
-            nama_kec = lokasi.get('kecamatan')
-            nama_kab = lokasi.get('kotkab')
-            
-            # Kalau kecamatannya udah ada di peta, skip! Biar peta lu rapi gak tumpuk-tumpukan.
-            if not nama_kec or nama_kec in kecamatan_tersimpan:
-                continue
-                
-            kecamatan_tersimpan.add(nama_kec)
+            nama_kec = lokasi.get('kecamatan', 'Lokasi')
+            nama_kab = lokasi.get('kotkab', '')
             
             lat = float(lokasi.get('lat', 0))
             lon = float(lokasi.get('lon', 0))
@@ -437,14 +439,7 @@ if data_cuaca_bmkg:
             emoji = icon_cuaca.get(keterangan, "☁️")
             
             html_icon = f"""
-            <div style="
-                font-size:16px; 
-                background:rgba(255,255,255,0.85); 
-                border-radius:50%; 
-                width:26px; height:26px; 
-                display:flex; justify-content:center; align-items:center; 
-                box-shadow:1px 1px 3px rgba(0,0,0,0.5); 
-                border:1px solid #777;">
+            <div style="font-size:16px; background:rgba(255,255,255,0.85); border-radius:50%; width:26px; height:26px; display:flex; justify-content:center; align-items:center; box-shadow:1px 1px 3px rgba(0,0,0,0.5); border:1px solid #777;">
                 {emoji}
             </div>
             """
@@ -452,14 +447,7 @@ if data_cuaca_bmkg:
             folium.Marker(
                 location=[lat, lon], 
                 tooltip=f"<b>Kec. {nama_kec}</b>: {keterangan}",
-                popup=f"""
-                    <div style='min-width: 140px; text-align:center;'>
-                        <b>📍 Kec. {nama_kec}</b><br>
-                        <span style='font-size:35px;'>{emoji}</span><br>
-                        <b>{keterangan}</b><br>
-                        <small>{nama_kab}</small>
-                    </div>
-                """,
+                popup=f"<div style='min-width: 140px; text-align:center;'><b>📍 Kec. {nama_kec}</b><br><span style='font-size:35px;'>{emoji}</span><br><b>{keterangan}</b><br><small>{nama_kab}</small></div>",
                 icon=folium.DivIcon(html=html_icon)
             ).add_to(layer_prakiraan)
             
@@ -468,7 +456,6 @@ if data_cuaca_bmkg:
             
 # Masukin ke Peta
 layer_prakiraan.add_to(m)
-
 
 # ==========================================
 folium.LayerControl().add_to(m)
