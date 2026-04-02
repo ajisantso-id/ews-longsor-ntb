@@ -346,90 +346,97 @@ legend_peringatan = '''
 m.get_root().html.add_child(folium.Element(legend_bahaya))
 m.get_root().html.add_child(folium.Element(legend_peringatan))
 
+# ==========================================
+# LAYER TAMBAHAN: PRAKIRAAN CUACA BMKG (API JSON BARU)
+# ==========================================
 layer_prakiraan = folium.FeatureGroup(name="🌤️ Prakiraan Cuaca BMKG (NTB)", show=False)
 
 try:
-    # Tarik data XML langsung dari server pusat BMKG khusus wilayah NTB
-    url_xml = "https://data.bmkg.go.id/DataMKG/MEWS/DigitalForecast/DigitalForecast-NusaTenggaraBarat.xml"
-    response = requests.get(url_xml, timeout=10)
+    # Pake adm1=52 (Kode Provinsi NTB) biar 1 kali request langsung dapet se-provinsi!
+    url_api = "https://api.bmkg.go.id/publik/prakiraan-cuaca?adm1=52"
+    response = requests.get(url_api, timeout=15)
     
     if response.status_code == 200:
-        root = ET.fromstring(response.content)
-
-        # Kamus Kode Cuaca BMKG ke Emoji
+        data_json = response.json()
+        data_cuaca = data_json.get('data', [])
+        
+        # Kamus Emoji Cuaca (Sesuai output deskripsi cuaca BMKG API baru)
         icon_cuaca = {
-            "0": "☀️", "1": "🌤️", "2": "⛅", "3": "☁️", "4": "☁️",  
-            "5": "🌫️", "10": "🌫️", "45": "🌫️",                      
-            "60": "🌦️", "61": "🌧️", "63": "⛈️", "80": "🌧️",         
-            "95": "🌩️", "97": "🌩️"                                 
+            "Cerah": "☀️",
+            "Cerah Berawan": "⛅",
+            "Berawan": "☁️",
+            "Berawan Tebal": "☁️",
+            "Udara Kabur": "🌫️",
+            "Asap": "🌫️",
+            "Kabut": "🌫️",
+            "Hujan Ringan": "🌧️",
+            "Hujan Sedang": "🌧️",
+            "Hujan Lebat": "⛈️",
+            "Hujan Lokal": "🌦️",
+            "Hujan Petir": "🌩️"
         }
 
-        teks_cuaca = {
-            "0": "Cerah", "1": "Cerah Berawan", "2": "Cerah Berawan", "3": "Berawan", "4": "Berawan Tebal",
-            "5": "Udara Kabur", "10": "Asap", "45": "Kabut", 
-            "60": "Hujan Ringan", "61": "Hujan Sedang", "63": "Hujan Lebat", "80": "Hujan Lokal",
-            "95": "Hujan Petir", "97": "Hujan Petir"
-        }
+        kecamatan_tersimpan = set()
 
-        # Pakai .iter() biar dia nyari ke seluruh sudut file XML-nya tanpa peduli kedalaman
-        for area in root.iter('area'):
-            if area.get('type') == 'land': 
-                nama_area = area.get('description', 'Tidak Diketahui')
+        for item in data_cuaca:
+            lokasi = item.get('lokasi', {})
+            nama_kec = lokasi.get('kecamatan')
+            nama_kab = lokasi.get('kotkab')
+            
+            # Biar peta gak penuh sesak sama ribuan desa, kita ambil 1 titik per Kecamatan aja!
+            if nama_kec and nama_kec not in kecamatan_tersimpan:
+                kecamatan_tersimpan.add(nama_kec)
                 
-                # Cek ketersediaan koordinat
-                lat_str = area.get('latitude')
-                lon_str = area.get('longitude')
-                if not lat_str or not lon_str:
-                    continue # Skip kalau gak ada koordinatnya
+                lat = lokasi.get('lat')
+                lon = lokasi.get('lon')
+                
+                if lat is None or lon is None:
+                    continue
                     
-                lat = float(lat_str)
-                lon = float(lon_str)
+                # Cari deskripsi cuaca terdekat saat ini
+                cuaca_list = item.get('cuaca', [])
+                keterangan = "Tidak Diketahui"
+                
+                if cuaca_list and isinstance(cuaca_list, list):
+                    # Kalau bentuknya array di dalam array (dibagi per hari)
+                    if isinstance(cuaca_list[0], list) and len(cuaca_list[0]) > 0:
+                        keterangan = cuaca_list[0][0].get('weather_desc', 'Tidak Diketahui')
+                    # Kalau bentuknya flat array
+                    elif isinstance(cuaca_list[0], dict):
+                        keterangan = cuaca_list[0].get('weather_desc', 'Tidak Diketahui')
 
-                # Cari parameter cuaca (weather)
-                for param in area.iter('parameter'):
-                    if param.get('id') == 'weather':
-                        waktu_terdekat = param.find('timerange')
-                        if waktu_terdekat is not None:
-                            val = waktu_terdekat.find('value')
-                            if val is not None:
-                                kode_cuaca = val.text
-                                emoji = icon_cuaca.get(kode_cuaca, "❓")
-                                keterangan = teks_cuaca.get(kode_cuaca, "Tidak Diketahui")
+                emoji = icon_cuaca.get(keterangan, "❓")
 
-                                # Bikin Icon Mengambang
-                                html_icon = f"""
-                                <div style="
-                                    font-size: 16px; 
-                                    background: rgba(255,255,255,0.9); 
-                                    border-radius: 50%; 
-                                    width: 25px; height: 25px; 
-                                    display: flex; justify-content: center; align-items: center; 
-                                    box-shadow: 1px 1px 3px rgba(0,0,0,0.5);
-                                    border: 1px solid #777;
-                                ">
-                                    {emoji}
-                                </div>
-                                """
-                                
-                                # Tancepin ke layer
-                                folium.Marker(
-                                    location=[lat, lon],
-                                    tooltip=f"<b>{nama_area}</b>: {keterangan}",
-                                    popup=f"<div style='min-width: 120px; text-align:center;'><b>📍 {nama_area}</b><br><span style='font-size:30px;'>{emoji}</span><br><b>{keterangan}</b></div>",
-                                    icon=folium.DivIcon(html=html_icon)
-                                ).add_to(layer_prakiraan)
-                        
-                        break # Kalau udah dapet data weather, stop pencarian di kota ini, lanjut kota lain
+                # Bikin Icon Mengambang yang Estetik
+                html_icon = f"""
+                <div style="
+                    font-size: 16px; 
+                    background: rgba(255,255,255,0.9); 
+                    border-radius: 50%; 
+                    width: 25px; height: 25px; 
+                    display: flex; justify-content: center; align-items: center; 
+                    box-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+                    border: 1px solid #777;
+                ">
+                    {emoji}
+                </div>
+                """
+                
+                # Tancepin ke layer
+                folium.Marker(
+                    location=[float(lat), float(lon)],
+                    tooltip=f"<b>Kec. {nama_kec}, {nama_kab}</b>: {keterangan}",
+                    popup=f"<div style='min-width: 130px; text-align:center;'><b>📍 Kec. {nama_kec}</b><br><span style='font-size:30px;'>{emoji}</span><br><b>{keterangan}</b></div>",
+                    icon=folium.DivIcon(html=html_icon)
+                ).add_to(layer_prakiraan)
 
 except Exception as e:
-    # Biar kita tau kalau ada masalah narik data dari BMKG pusat
-    st.toast(f"⚠️ Gagal menarik data Prakiraan Cuaca dari BMKG Pusat. Coba refresh lagi.", icon="❌")
+    st.toast("⚠️ API Cuaca BMKG sedang gangguan / lambat.", icon="❌")
 
-# Masukin layer grup yang udah isi icon ke peta utama
+# Masukin layer ke peta utama
 layer_prakiraan.add_to(m)
 
 # ==========================================
-# (PASTIIN KODINGAN INI ADA DI BAWAHNYA)
 folium.LayerControl().add_to(m)
 
 # TAMPILKAN PETA
