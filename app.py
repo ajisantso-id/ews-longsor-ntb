@@ -11,7 +11,11 @@ import pytz # <-- Tambahan library buat ngatur zona waktu
 from streamlit_autorefresh import st_autorefresh
 
 # Atur Judul Tab Browser & Bikin Full Layar
-st.set_page_config(page_title="Dashboard Peringatan Dini Longsor dan Banjir NTB", layout="wide")
+st.set_page_config(
+    page_title="Dashboard Peringatan Dini Longsor dan Banjir NTB",
+    page_icon="⛈️",
+    layout="wide"
+)
 
 # ==========================================
 # FITUR AUTO-REFRESH MODE TV DISPLAY
@@ -402,7 +406,7 @@ for item in data_sensor:
 legend_bahaya = '''
 <div style="
     position: fixed; 
-    bottom: 350px; left: 30px; width: 230px; height: auto; 
+    bottom: 370px; right: 30px; width: 230px; height: auto; 
     background-color: rgba(255, 255, 255, 0.9); 
     border: 2px solid grey; z-index: 9999; 
     font-size: 12px; padding: 10px; border-radius: 8px; 
@@ -421,11 +425,6 @@ legend_bahaya = '''
         <strong>Kerentanan Banjir:</strong><br>
         <i style="background:#00008B; width:15px; height:15px; float:left; margin-right:8px; opacity:0.7; border: 1px solid #0000FF;"></i> Rawan Banjir (InaRISK)<br>
     </div>
-
-    <div style="margin-top: 8px; margin-bottom: 4px;">
-        <hr style="border: none; border-top: 2px dashed black; width: 15px; float: left; margin-top: 6px; margin-right: 8px;">
-        <b>Cakupan Sensor ARG</b>
-    </div>
 </div>
 '''
 
@@ -435,7 +434,7 @@ legend_bahaya = '''
 legend_peringatan = '''
 <div style="
     position: fixed; 
-    bottom: 30px; left: 30px; width: 230px; height: auto; 
+    bottom: 30px; right: 30px; width: 230px; height: auto; 
     background-color: rgba(255, 255, 255, 0.9); 
     border: 2px solid grey; z-index: 9999; 
     font-size: 12px; padding: 10px; border-radius: 8px; 
