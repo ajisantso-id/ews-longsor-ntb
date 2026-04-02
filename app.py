@@ -16,89 +16,88 @@ st.set_page_config(
     page_title="Dashboard EWS NTB",
     page_icon="⛈️",
     layout="wide",
-    initial_sidebar_state="expanded" 
+    initial_sidebar_state="collapsed" # Sengaja default ditutup biar buka web langsung full peta!
 )
 
 # ==========================================
-# 2. CSS SAKTI: SIDEBAR NGAMBANG & HEADER AWS CENTER
+# 2. CSS SAKTI: SIDEBAR NGAMBANG & HEADER RAPAT
 # ==========================================
 st.markdown("""
     <style>
-    /* A. Hilangkan Jarak Putih Kiri-Kanan & Kasih Ruang Buat Header di Atas */
+    /* A. PEPETIN PETA KE HEADER (Hilangin Space Putih) */
     .block-container {
         max-width: 100% !important;
-        padding-top: 70px !important; /* Jarak pas buat Header Putih */
+        padding-top: 55px !important; /* Pas banget sama tinggi Header AWS */
         padding-right: 0rem !important;
         padding-left: 0rem !important;
         padding-bottom: 0rem !important;
     }
     
-    /* B. Hilangkan Watermark Bawah */
-    footer {visibility: hidden;}
+    /* B. HILANGIN FITUR STREAMLIT DI POJOK KANAN ATAS */
+    [data-testid="stToolbar"] {visibility: hidden !important;}
+    footer {visibility: hidden !important;}
     
-    /* C. Bikin Header Asli Streamlit Transparan (Biar tombol panah sidebar kelihatan) */
+    /* C. MENGAMANKAN TOMBOL SIDEBAR BIAR BISA DITUTUP */
     header { 
         background: transparent !important; 
-        z-index: 9999999 !important;
+        z-index: 999999 !important; /* Harus paling tinggi biar tombol panahnya bisa diklik */
     }
     
-    /* D. JURUS OVERLAY SIDEBAR (Biar Gak Dorong Peta) */
+    /* D. SIDEBAR MENGAMBANG (OVERLAY) */
     [data-testid="stSidebar"] {
         position: absolute !important;
-        z-index: 999999 !important;
+        z-index: 99999 !important;
         height: 100vh !important;
         background-color: rgba(255, 255, 255, 0.95) !important;
         box-shadow: 2px 0 10px rgba(0,0,0,0.2);
     }
 
-    /* E. BIKIN HEADER PUTIH ALA AWS CENTER DI ATAS PETA */
+    /* E. BIKIN HEADER PUTIH ALA AWS CENTER */
     .header-aws {
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
-        height: 60px;
+        height: 55px; /* Tinggi disesuaikan */
         background-color: white;
-        z-index: 99999; /* Ngumpet di bawah sidebar, tapi di atas peta */
-        border-bottom: 2px solid #e0e0e0;
+        z-index: 9999; /* Ngumpet di bawah tombol panah sidebar */
+        border-bottom: 2px solid #002B5B;
         display: flex;
         align-items: center;
-        padding: 0 60px; /* Kasih ruang di kiri buat tombol panah Streamlit */
+        padding-left: 60px; /* Jarak aman biar tombol panah Streamlit gak ketiban teks */
         box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
     .header-aws img {
-        height: 40px;
+        height: 35px;
         margin-right: 15px;
     }
     .header-aws h3 {
         margin: 0;
         color: #002B5B;
-        font-size: 22px;
+        font-size: 20px;
         font-weight: 800;
         line-height: 1;
-        display: inline-block;
     }
     .header-aws span {
         margin-left: 15px;
         color: #555;
-        font-size: 16px;
+        font-size: 15px;
         border-left: 2px solid #ccc;
         padding-left: 15px;
-        line-height: 1.2;
     }
     </style>
     
     <div class="header-aws">
         <img src="https://www.bmkg.go.id/asset/img/logo/logo-bmkg.png">
         <h3>BMKG</h3>
-        <span>Dashboard Peringatan Dini Longsor dan Banjir NTB (ZAM Lombok)</span>
+        <span>Dashboard Peringatan Dini Longsor dan Banjir NTB</span>
     </div>
     """, unsafe_allow_html=True)
 
 # ==========================================
-# 3. FITUR AUTO-REFRESH & WAKTU
+# 3. WAKTU REALTIME (Refresh Tiap 1 Menit)
 # ==========================================
-st_autorefresh(interval=300000, limit=None, key="auto_refresh_bmkg")
+st_autorefresh(interval=60000, limit=None, key="auto_refresh_bmkg") # 60000 ms = 1 menit
 
 utc_now = datetime.now(pytz.utc)
 wita_now = utc_now.astimezone(pytz.timezone('Asia/Makassar'))
@@ -162,10 +161,13 @@ elif st.session_state.offset_hari == 2:
     else: st.warning("⚠️ Data histori H-2 belum tersedia.")
 
 # ==========================================
-# 5. SIDEBAR (MENU KIRI - SEKARANG MELAYANG!)
+# 5. SIDEBAR (MENU KIRI)
 # ==========================================
 with st.sidebar:
-    st.markdown("### ⚙️ Panel Kontrol EWS")
+    # 4. Judul Sidebar Simpel
+    st.image("https://www.bmkg.go.id/asset/img/logo/logo-bmkg.png", width=60)
+    st.markdown("<h3 style='margin-top: 5px; margin-bottom: 0px; color:#002B5B;'>Stamet ZAM Lombok</h3>", unsafe_allow_html=True)
+    
     st.markdown(f"**Waktu:** {tanggal_str}<br>*{waktu_utc_str}*", unsafe_allow_html=True)
     st.divider()
 
@@ -180,29 +182,33 @@ with st.sidebar:
     st.info(f"📅 **{label}**")
     st.divider()
 
-    st.markdown("#### 📋 Detail Monitoring")
+    # 6. Tabel Kembali Full
+    st.markdown("#### 📋 Detail Monitoring Stasiun")
     if data_sensor:
         tabel_data = []
         for item in data_sensor:
             curah_str = str(item['curah']).replace(',', '.')
             curah = float(curah_str) if curah_str.strip() != "" else 0.0
 
-            if curah == 0: kategori_teks, status_teks = 'Cerah', '🟢'
-            elif 0 < curah <= 20: kategori_teks, status_teks = 'Ringan', '🟢'
-            elif 20 < curah <= 50: kategori_teks, status_teks = 'Sedang', '🔵'
-            elif 50 < curah <= 100: kategori_teks, status_teks = 'Lebat', '🟠'
-            elif 100 < curah <= 150: kategori_teks, status_teks = 'Sgt Lebat', '🔴'
-            else: kategori_teks, status_teks = 'Ekstrem', '⚫'
+            if curah == 0: kategori_teks, status_teks = 'Cerah', '🟢 Aman'
+            elif 0 < curah <= 20: kategori_teks, status_teks = 'Ringan', '🟢 Aman'
+            elif 20 < curah <= 50: kategori_teks, status_teks = 'Sedang', '🔵 Aman'
+            elif 50 < curah <= 100: kategori_teks, status_teks = 'Lebat', '🟠 Waspada'
+            elif 100 < curah <= 150: kategori_teks, status_teks = 'Sgt Lebat', '🔴 Siaga'
+            else: kategori_teks, status_teks = 'Ekstrem', '⚫ Awas'
 
             tabel_data.append({
                 'Stasiun': item['name_station'],
-                'Hujan': curah,
-                'Ket': kategori_teks,
-                'Area': status_teks
+                'Kab/Kota': item['nama_kota'],
+                'Hujan (mm)': curah,
+                'Intensitas': kategori_teks,
+                'Status Area': status_teks,
+                'Update Terakhir (UTC)': item['tanggal']
             })
 
-        df = pd.DataFrame(tabel_data).sort_values(by="Hujan", ascending=False)
-        styled_df = df.style.set_properties(subset=["Hujan", "Ket", "Area"], **{'text-align': 'center'}).set_table_styles([{'selector': 'th', 'props': [('text-align', 'center')]}]).format({"Hujan": "{:.1f}"})
+        df = pd.DataFrame(tabel_data).sort_values(by="Hujan (mm)", ascending=False)
+        kolom_center = ["Kab/Kota", "Hujan (mm)", "Intensitas", "Status Area"]
+        styled_df = df.style.set_properties(subset=kolom_center, **{'text-align': 'center'}).set_table_styles([{'selector': 'th', 'props': [('text-align', 'center')]}]).format({"Hujan (mm)": "{:.1f}"})
         st.dataframe(styled_df, use_container_width=True, hide_index=True, height=500)
     else:
         st.warning("Data API belum ketarik.")
@@ -297,7 +303,7 @@ m.get_root().html.add_child(folium.Element(legend_bahaya))
 m.get_root().html.add_child(folium.Element(legend_peringatan))
 folium.LayerControl().add_to(m)
 
-# TAMPILKAN PETA (Kasih Tinggi 900 Biar Mentok Bawah)
+# TAMPILKAN PETA
 st_folium(m, use_container_width=True, height=900, returned_objects=[])
 
 # Download Tombol
