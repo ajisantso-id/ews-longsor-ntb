@@ -219,24 +219,25 @@ folium.TileLayer(
 
 
 # ==========================================
-# FUNGSI PEWARNAAN OTOMATIS (STANDAR PVMBG / ESDM)
+# FUNGSI WARNA ZONA RAWAN LONGSOR (PVMBG)
 # ==========================================
 def style_kerentanan(feature):
-    # 🔴 PENTING: Ganti 'NAMA_KOLOM' sama nama kolom kategori di data lu (misal: 'KETERANGAN' atau 'KERENTANAN')
     kategori = str(feature['properties'].get('REMARK', '')).upper()
     
-    # Mencocokkan dengan standar warna peta PVMBG
     if 'SANGAT TINGGI' in kategori:
-        return {'fillColor': '#cc0000', 'color': '#cc0000', 'weight': 1, 'fillOpacity': 0.6} # Merah Tua
+        res = {'fillColor': '#cc0000', 'color': '#cc0000', 'weight': 1, 'fillOpacity': 0.6}
     elif 'TINGGI' in kategori:
-        return {'fillColor': '#ff3385', 'color': '#ff3385', 'weight': 1, 'fillOpacity': 0.6} # Pink / Merah Muda
+        res = {'fillColor': '#ff3385', 'color': '#ff3385', 'weight': 1, 'fillOpacity': 0.6}
     elif 'MENENGAH' in kategori or 'SEDANG' in kategori:
-        return {'fillColor': '#ffff00', 'color': '#ffff00', 'weight': 1, 'fillOpacity': 0.6} # Kuning
+        res = {'fillColor': '#ffff00', 'color': '#ffff00', 'weight': 1, 'fillOpacity': 0.6}
     elif 'SANGAT RENDAH' in kategori:
-        return {'fillColor': '#00ccff', 'color': '#00ccff', 'weight': 1, 'fillOpacity': 0.3} # Biru Muda (Transparan dikit)
+        res = {'fillColor': '#00ccff', 'color': '#00ccff', 'weight': 1, 'fillOpacity': 0.3}
     else:
-        # Default untuk Rendah / Aman
-        return {'fillColor': '#00cc00', 'color': '#00cc00', 'weight': 1, 'fillOpacity': 0.3} # Hijau (Transparan dikit)
+        res = {'fillColor': '#00cc00', 'color': '#00cc00', 'weight': 1, 'fillOpacity': 0.3}
+    
+    # TAMBAHKAN JURUS GHOSTING BIAR BISA DI-KLIK TEMBUS KE BAWAH
+    res['interactive'] = False 
+    return res
 
 # ==========================================
 # FUNGSI WARNA ZONA RAWAN BANJIR (INARISK BINARY)
@@ -248,13 +249,19 @@ def style_banjir(feature):
         tingkat_bahaya = 0
         
     if tingkat_bahaya == 1:
-        warna = '#00008B' # Biru Muda (Banjir)
+        warna = '#00008B'
         opacity = 0.5
     else:
         warna = '#000000'
         opacity = 0.0 
         
-    return {'fillColor': warna, 'color': warna, 'weight': 0.5 if opacity > 0 else 0, 'fillOpacity': opacity}
+    return {
+        'fillColor': warna, 
+        'color': warna, 
+        'weight': 0.5 if opacity > 0 else 0, 
+        'fillOpacity': opacity,
+        'interactive': False  # <--- JANGAN LUPA MANTRA INI DI SINI JUGA!
+    }
 # ==========================================
 # LAPISAN TAMBAHAN: ZONA RAWAN LONGSOR (GEOJSON)
 # ==========================================
@@ -280,17 +287,7 @@ try:
     ).add_to(m)
 except Exception as e:
     pass
-
-# --- TAMBAHIN INI BUAT ZONA MERAH SUMBAWA/BIMA ---
-#try:
- #   folium.GeoJson(
-  #      "zona_merah_smb.geojson", # <--- GANTI PAKE NAMA FILE LU
-   #     name="Zona Rawan Longsor Sumbawa dan Bima",
-    #    style_function=lambda feature: {'fillColor': '#ff0000', 'color': '#cc0000', 'weight': 1, 'fillOpacity': 0.4}
-    #).add_to(m)
-#except Exception as e:
- #   pass
-
+    
 # LOGIKA KATEGORI HUJAN & STATUS AREA BMKG
 # ==========================================
 # PEMBUATAN PIN SENSOR (DINAMIS & DECLUTTERING)
