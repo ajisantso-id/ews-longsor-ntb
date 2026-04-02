@@ -464,82 +464,74 @@ layer_prakiraan.add_to(m)
 # ==========================================
 # FUNGSI NARIK DATA PERINGATAN DINI (CAP NOWCAST XML)
 # ==========================================
-@st.cache_data(ttl=300) # Cache 5 menit karena Peringatan Dini update tiap saat!
+@st.cache_data(ttl=300) # Update tiap 5 menit
 def ambil_peringatan_dini():
     peringatan_aktif = []
-    
-    # Tembak RSS Feed Utama buat dapetin daftar peringatan yang lagi aktif
-    url_rss = "https://www.bmkg.go.id/alerts/nowcast/id.xml" 
     
     session = requests.Session()
     session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
     
     try:
-        # Coba tarik RSS, kalau link tanpa .xml gagal, pakai yang ada .xml-nya
-        res_rss = session.get(url_rss, timeout=10)
-        if res_rss.status_code != 200:
-            res_rss = session.get("https://www.bmkg.go.id/alerts/nowcast/id", timeout=10)
-            
+        # Tarik RSS Feed Peringatan Dini BMKG
+        res_rss = session.get("https://www.bmkg.go.id/alerts/nowcast/id", timeout=10)
+        
         if res_rss.status_code == 200:
             import xml.etree.ElementTree as ET
-            root_rss = ET.fromstring(res_rss.content)
+            import re
             
-            # Cari semua item peringatan di RSS
+            # JURUS SAKTI: Hancurkan Namespace XML biar gampang di-search!
+            rss_text = re.sub(r' xmlns="[^"]+"', '', res_rss.text)
+            root_rss = ET.fromstring(rss_text)
+            
+            # Cari di daftar RSS, ada badai di NTB gak hari ini?
             for item in root_rss.findall('.//item'):
                 title = item.findtext('title', '')
                 
-                # FILTER: Cuma ambil peringatan yang nyebut "Nusa Tenggara Barat" atau "NTB"
+                # Filter khusus NTB
                 if 'Nusa Tenggara Barat' in title or 'NTB' in title:
                     link_detail = item.findtext('link', '')
                     
                     if link_detail:
-                        # 2. Tarik data detail CAP XML dari link spesifik provinsinya
+                        # Masuk ke link detail peringatan dininya
                         res_cap = session.get(link_detail, timeout=10)
                         
                         if res_cap.status_code == 200:
-                            cap_root = ET.fromstring(res_cap.content)
+                            cap_text = re.sub(r' xmlns="[^"]+"', '', res_cap.text)
+                            cap_root = ET.fromstring(cap_text)
                             
-                            # JURUS SAKTI: Fungsi buat ngakalin Namespace XML CAP BMKG yang ribet
-                            def cari_teks(elemen, nama_tag):
-                                for child in elemen.iter():
-                                    if child.tag.endswith(nama_tag):
-                                        return child.text
-                                return "Tidak tersedia"
-                            
-                            event = cari_teks(cap_root, 'event')
-                            headline = cari_teks(cap_root, 'headline')
-                            desc = cari_teks(cap_root, 'description')
-                            effective = cari_teks(cap_root, 'effective')
-                            expires = cari_teks(cap_root, 'expires')
-                            
-                            # 3. Ekstrak POLYGON (Batas Wilayah Kecamatan Terdampak)
-                            polygons = []
-                            for elem in cap_root.iter():
-                                if elem.tag.endswith('polygon'):
-                                    if elem.text:
-                                        # Format koordinat BMKG: "lat,lon lat,lon lat,lon"
-                                        koordinat_mentah = elem.text.strip().split()
+                            info = cap_root.find('.//info')
+                            if info is not None:
+                                event = info.findtext('event', 'Peringatan Dini Cuaca')
+                                headline = info.findtext('headline', '-')
+                                desc = info.findtext('description', '-')
+                                effective = info.findtext('effective', '-')
+                                expires = info.findtext('expires', '-')
+                                
+                                # Tarik Koordinat Poligon Area Terdampak
+                                polygons = []
+                                for area in info.findall('.//area'):
+                                    poly_text = area.findtext('polygon')
+                                    if poly_text:
                                         coords = []
-                                        for pt in koordinat_mentah:
+                                        # Format BMKG: lat,lon lat,lon
+                                        for pt in poly_text.strip().split():
                                             if ',' in pt:
                                                 lat_s, lon_s = pt.split(',')
                                                 coords.append((float(lat_s), float(lon_s)))
-                                        # Folium butuh array of (lat, lon)
                                         if coords:
                                             polygons.append(coords)
                                             
-                            if polygons:
-                                peringatan_aktif.append({
-                                    'event': event,
-                                    'headline': headline,
-                                    'description': desc,
-                                    'effective': effective,
-                                    'expires': expires,
-                                    'polygons': polygons
-                                })
-                                
+                                if polygons:
+                                    peringatan_aktif.append({
+                                        'event': event,
+                                        'headline': headline,
+                                        'description': desc,
+                                        'effective': effective,
+                                        'expires': expires,
+                                        'polygons': polygons
+                                    })
     except Exception as e:
-        pass # Kalau server peringatan BMKG lagi down, skip tanpa error
+        pass 
         
     return peringatan_aktif
 
@@ -551,17 +543,20 @@ layer_peringatan = folium.FeatureGroup(name="🚨 Peringatan Dini Cuaca", show=T
 with st.spinner("🚨 Mengecek Peringatan Dini Cuaca NTB..."):
     data_peringatan = ambil_peringatan_dini()
 
-# Kalau ada datanya, gambar Polygon Merahnya!
-if data_peringatan:
+# LOGIKA NOTIFIKASI & PENGGAMBARAN
+if data_peringatan and len(data_peringatan) > 0:
+    # MUNCUL NOTIF MERAH KALAU ADA BADAI
+    st.toast(f"⚠️ Ada {len(data_peringatan)} Peringatan Dini Cuaca aktif di NTB!", icon="🚨")
+    
     for alert in data_peringatan:
         for poly in alert['polygons']:
             folium.Polygon(
                 locations=poly,
-                color='red',           # Garis tepi merah
+                color='red',           
                 weight=2,
                 fill=True,
-                fill_color='red',      # Isi dalemnya merah
-                fill_opacity=0.3,      # Agak transparan 30% biar peta jalan tetep kelihatan
+                fill_color='red',      
+                fill_opacity=0.3,      
                 tooltip=f"<b>🚨 {alert['event']}</b> (Klik untuk detail)",
                 popup=folium.Popup(
                     f"""
@@ -579,8 +574,10 @@ if data_peringatan:
                     max_width=350
                 )
             ).add_to(layer_peringatan)
+else:
+    # MUNCUL NOTIF HIJAU KALAU CUACA AMAN
+    st.toast("✅ Cuaca NTB Aman! Tidak ada Peringatan Dini Cuaca saat ini.", icon="🟢")
 
-# Masukin Polygon-nya ke Peta!
 layer_peringatan.add_to(m)
 
 # ==========================================
