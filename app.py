@@ -8,6 +8,7 @@ import folium
 from streamlit_folium import st_folium
 from streamlit_autorefresh import st_autorefresh
 import streamlit as st 
+import streamlit.components.v1 as components # <-- Wajib buat Jam Realtime!
 
 # ==========================================
 # 1. ATUR HALAMAN (WAJIB PALING ATAS!)
@@ -16,40 +17,39 @@ st.set_page_config(
     page_title="Dashboard EWS NTB",
     page_icon="⛈️",
     layout="wide",
-    initial_sidebar_state="collapsed" # Sengaja default ditutup biar buka web langsung full peta!
+    initial_sidebar_state="expanded" 
 )
 
 # ==========================================
-# 2. CSS SAKTI: SIDEBAR NGAMBANG & HEADER RAPAT
+# 2. CSS DEWA: SIDEBAR NGAMBANG & PETA MENTOK
 # ==========================================
 st.markdown("""
     <style>
-    /* A. PEPETIN PETA KE HEADER (Hilangin Space Putih) */
+    /* A. PEPETIN PETA KE ATAS & FULL KANAN KIRI */
     .block-container {
         max-width: 100% !important;
-        padding-top: 55px !important; /* Pas banget sama tinggi Header AWS */
+        padding-top: 60px !important; /* Pas banget buat tinggi Header AWS */
         padding-right: 0rem !important;
         padding-left: 0rem !important;
         padding-bottom: 0rem !important;
     }
     
-    /* B. HILANGIN FITUR STREAMLIT DI POJOK KANAN ATAS */
-    [data-testid="stToolbar"] {visibility: hidden !important;}
-    footer {visibility: hidden !important;}
+    /* B. HAPUS MENU STREAMLIT DI KANAN ATAS */
+    [data-testid="stToolbar"] {display: none !important;}
+    [data-testid="stDecoration"] {display: none !important;}
+    footer {display: none !important;}
     
-    /* C. MENGAMANKAN TOMBOL SIDEBAR BIAR BISA DITUTUP */
+    /* C. AMANKAN TOMBOL SIDEBAR BIAR BISA DITUTUP/DIBUKA */
     header { 
-        background: transparent !important; 
-        z-index: 999999 !important; /* Harus paling tinggi biar tombol panahnya bisa diklik */
+        background-color: transparent !important; 
+        z-index: 9999999 !important; /* Kasta tertinggi biar bisa diklik */
     }
     
-    /* D. SIDEBAR MENGAMBANG (OVERLAY) */
+    /* D. BIKIN SIDEBAR JADI OVERLAY (Nggak Dorong Peta) */
     [data-testid="stSidebar"] {
-        position: absolute !important;
-        z-index: 99999 !important;
-        height: 100vh !important;
-        background-color: rgba(255, 255, 255, 0.95) !important;
-        box-shadow: 2px 0 10px rgba(0,0,0,0.2);
+        position: fixed !important;
+        z-index: 999999 !important;
+        box-shadow: 2px 0 10px rgba(0,0,0,0.3);
     }
 
     /* E. BIKIN HEADER PUTIH ALA AWS CENTER */
@@ -57,33 +57,38 @@ st.markdown("""
         position: fixed;
         top: 0;
         left: 0;
-        width: 100%;
-        height: 55px; /* Tinggi disesuaikan */
+        width: 100vw;
+        height: 60px;
         background-color: white;
-        z-index: 9999; /* Ngumpet di bawah tombol panah sidebar */
+        z-index: 99999; /* Di bawah tombol panah sidebar, tapi di atas peta */
         border-bottom: 2px solid #002B5B;
         display: flex;
         align-items: center;
-        padding-left: 60px; /* Jarak aman biar tombol panah Streamlit gak ketiban teks */
+        padding-left: 60px; /* Kasih jarak aman buat tombol sidebar Streamlit */
         box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
     .header-aws img {
-        height: 35px;
+        height: 40px;
         margin-right: 15px;
     }
     .header-aws h3 {
         margin: 0;
         color: #002B5B;
-        font-size: 20px;
+        font-size: 22px;
         font-weight: 800;
         line-height: 1;
     }
     .header-aws span {
         margin-left: 15px;
         color: #555;
-        font-size: 15px;
+        font-size: 16px;
         border-left: 2px solid #ccc;
         padding-left: 15px;
+    }
+    
+    /* F. Tarik Peta Ke Atas Dikit Biar Rapat */
+    iframe[title="streamlit_folium.st_folium"] {
+        margin-top: -10px;
     }
     </style>
     
@@ -95,14 +100,9 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # ==========================================
-# 3. WAKTU REALTIME (Refresh Tiap 1 Menit)
+# 3. KONTROL WAKTU (Auto Refresh Data 5 Menit Sekali)
 # ==========================================
-st_autorefresh(interval=60000, limit=None, key="auto_refresh_bmkg") # 60000 ms = 1 menit
-
-utc_now = datetime.now(pytz.utc)
-wita_now = utc_now.astimezone(pytz.timezone('Asia/Makassar'))
-tanggal_str = wita_now.strftime("%A, %d %B %Y").upper()
-waktu_utc_str = utc_now.strftime("%H:%M:%S UTC")
+st_autorefresh(interval=300000, limit=None, key="auto_refresh_bmkg") 
 
 if 'offset_hari' not in st.session_state:
     st.session_state.offset_hari = 0
@@ -150,40 +150,66 @@ data_sensor = []
 if st.session_state.offset_hari == 0:
     with st.spinner("Sedang menarik data Real-Time..."):
         data_sensor = ambil_data_live()
-        if not data_sensor: st.error("Gagal menarik data Live / Data kosong.")
 elif st.session_state.offset_hari == 1:
     if os.path.exists('data_h1.json'):
         with open('data_h1.json', 'r') as f: data_sensor = json.load(f)
-    else: st.warning("⚠️ Data histori Kemarin belum tersedia.")
 elif st.session_state.offset_hari == 2:
     if os.path.exists('data_h2.json'):
         with open('data_h2.json', 'r') as f: data_sensor = json.load(f)
-    else: st.warning("⚠️ Data histori H-2 belum tersedia.")
 
 # ==========================================
 # 5. SIDEBAR (MENU KIRI)
 # ==========================================
 with st.sidebar:
-    # 4. Judul Sidebar Simpel
+    # A. Judul Sidebar Simpel
     st.image("https://www.bmkg.go.id/asset/img/logo/logo-bmkg.png", width=60)
     st.markdown("<h3 style='margin-top: 5px; margin-bottom: 0px; color:#002B5B;'>Stamet ZAM Lombok</h3>", unsafe_allow_html=True)
-    
-    st.markdown(f"**Waktu:** {tanggal_str}<br>*{waktu_utc_str}*", unsafe_allow_html=True)
     st.divider()
 
-    st.markdown("#### ⏳ Kontrol Waktu Data")
+    # B. JAM REALTIME JAVASCRIPT (Jalan Setiap Detik!)
+    jam_realtime_html = """
+    <div style="font-family: sans-serif; color: #333; font-size: 14px; font-weight: bold;">
+        Waktu Server (UTC):<br>
+        <span id="jam_digital" style="font-size: 18px; color: #002B5B;">Memuat...</span>
+    </div>
+    <script>
+        function updateClock() {
+            var d = new Date();
+            var days = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+            var months = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'];
+            
+            var dayName = days[d.getUTCDay()];
+            var date = ("0" + d.getUTCDate()).slice(-2);
+            var monthName = months[d.getUTCMonth()];
+            var year = d.getUTCFullYear();
+            var h = ("0" + d.getUTCHours()).slice(-2);
+            var m = ("0" + d.getUTCMinutes()).slice(-2);
+            var s = ("0" + d.getUTCSeconds()).slice(-2);
+            
+            var fullString = dayName + ", " + date + " " + monthName + " " + year + "<br>" + h + ":" + m + ":" + s + " UTC";
+            document.getElementById('jam_digital').innerHTML = fullString;
+        }
+        setInterval(updateClock, 1000); 
+        updateClock();
+    </script>
+    """
+    components.html(jam_realtime_html, height=75)
+    st.divider()
+
+    # C. Kontrol Mesin Waktu
+    st.markdown("#### ⏳ Kontrol Data")
     st.button("✅ Data Hari Ini", on_click=set_hari, args=(0,), use_container_width=True)
     st.button("⏪ Data Kemarin (H-1)", on_click=set_hari, args=(1,), use_container_width=True)
     st.button("⏮️ Data Selumbari (H-2)", on_click=set_hari, args=(2,), use_container_width=True) 
 
-    if st.session_state.offset_hari == 0: label = f"Data Hari Ini ({tanggal_pilih.strftime('%d %B %Y')})"
-    elif st.session_state.offset_hari == 1: label = f"Data Kemarin ({tanggal_pilih.strftime('%d %B %Y')})"
-    else: label = f"Data Selumbari ({tanggal_pilih.strftime('%d %B %Y')})"
+    if st.session_state.offset_hari == 0: label = f"Menampilkan: Hari Ini ({tanggal_pilih.strftime('%d %b %Y')})"
+    elif st.session_state.offset_hari == 1: label = f"Menampilkan: Kemarin ({tanggal_pilih.strftime('%d %b %Y')})"
+    else: label = f"Menampilkan: Selumbari ({tanggal_pilih.strftime('%d %b %Y')})"
     st.info(f"📅 **{label}**")
     st.divider()
 
-    # 6. Tabel Kembali Full
-    st.markdown("#### 📋 Detail Monitoring Stasiun")
+    # D. Tabel Full Versi Awal
+    st.markdown("#### 📋 Tabel Stasiun")
     if data_sensor:
         tabel_data = []
         for item in data_sensor:
@@ -200,16 +226,15 @@ with st.sidebar:
             tabel_data.append({
                 'Stasiun': item['name_station'],
                 'Kab/Kota': item['nama_kota'],
-                'Hujan (mm)': curah,
-                'Intensitas': kategori_teks,
-                'Status Area': status_teks,
-                'Update Terakhir (UTC)': item['tanggal']
+                'Hujan': curah,
+                'Ket': kategori_teks,
+                'Area': status_teks,
+                'Update': item['tanggal']
             })
 
-        df = pd.DataFrame(tabel_data).sort_values(by="Hujan (mm)", ascending=False)
-        kolom_center = ["Kab/Kota", "Hujan (mm)", "Intensitas", "Status Area"]
-        styled_df = df.style.set_properties(subset=kolom_center, **{'text-align': 'center'}).set_table_styles([{'selector': 'th', 'props': [('text-align', 'center')]}]).format({"Hujan (mm)": "{:.1f}"})
-        st.dataframe(styled_df, use_container_width=True, hide_index=True, height=500)
+        df = pd.DataFrame(tabel_data).sort_values(by="Hujan", ascending=False)
+        styled_df = df.style.set_properties(subset=["Kab/Kota", "Hujan", "Ket", "Area", "Update"], **{'text-align': 'center'}).set_table_styles([{'selector': 'th', 'props': [('text-align', 'center')]}]).format({"Hujan": "{:.1f}"})
+        st.dataframe(styled_df, use_container_width=True, hide_index=True, height=450)
     else:
         st.warning("Data API belum ketarik.")
 
@@ -266,7 +291,7 @@ for item in data_sensor:
             folium.Marker([lat, lon], popup=f"<div style='min-width: 150px;'><b>{nama}</b><br>Curah Hujan: <b>{curah} mm</b><br>Kategori: <b>{kategori}</b><br>Status Area: <b>{status_area}</b><br><small>Update: {tanggal} UTC</small></div>", tooltip=f"{nama} ({kategori})", icon=folium.Icon(color=warna, icon=ikon, icon_color=warna_ikon)).add_to(m)
     except Exception as e: continue
 
-# Kotak Legend
+# Kotak Legend 
 legend_bahaya = '''
 <div style="position: fixed; bottom: 350px; right: 15px; width: 220px; height: auto; background-color: rgba(255, 255, 255, 0.9); border: 2px solid grey; z-index: 9999; font-size: 11px; padding: 10px; border-radius: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;">
     <h4 style="margin-top: 0; margin-bottom: 8px; font-size: 13px; text-align: center; color: black;"><b>Kategori Bahaya</b></h4>
@@ -304,10 +329,4 @@ m.get_root().html.add_child(folium.Element(legend_peringatan))
 folium.LayerControl().add_to(m)
 
 # TAMPILKAN PETA
-st_folium(m, use_container_width=True, height=900, returned_objects=[])
-
-# Download Tombol
-nama_file_peta = "Peta_EWS_NTB.html"
-m.save(nama_file_peta)
-with open(nama_file_peta, "rb") as file:
-    st.sidebar.download_button(label="📥 Download Peta (HTML)", data=file, file_name=nama_file_peta, mime="text/html")
+st_folium(m, use_container_width=True, height=850, returned_objects=[])
