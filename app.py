@@ -367,17 +367,57 @@ def ambil_cuaca_bmkg_all():
             return data_json.get('data', [])
     except Exception as e:
         return []
-    return []
+    return []# ==========================================
+# FUNGSI NARIK DATA CUACA BMKG (API JSON BARU)
+# ==========================================
+@st.cache_data(ttl=1800) # Cache 30 menit biar aman
+def ambil_cuaca_bmkg():
+    data_cuaca_gabungan = []
+    
+    # KITA BALIK PAKAI ADM4 (Kecamatan/Desa)
+    # Titiknya udah gue sebar biar mencakup SELURUH NTB!
+    lokasi_pilihan = [
+        "52.71.01.1001", # Mataram
+        "52.01.01.2001", # Gerung (Lobar)
+        "52.02.01.2001", # Praya (Loteng)
+        "52.03.01.2001", # Selong (Lotim)
+        "52.08.01.2001", # Tanjung (KLU)
+        "52.03.18.2001", # Sembalun (Lotim)
+        "52.04.04.2001", # Sumbawa Besar
+        "52.07.01.1001", # Taliwang (KSB)
+        "52.05.01.1001", # Dompu
+        "52.72.01.1001", # Raba (Kota Bima)
+        "52.06.02.2001", # Woha (Kab. Bima)
+        "52.04.08.2001"  # Plampang (Sumbawa)
+    ]
+    
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+    
+    for kode in lokasi_pilihan:
+        try:
+            url_api = f"https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4={kode}"
+            response = requests.get(url_api, headers=headers, timeout=5)
+            
+            if response.status_code == 200:
+                data_json = response.json()
+                if isinstance(data_json, dict) and 'data' in data_json:
+                    data_list = data_json['data']
+                    if len(data_list) > 0:
+                        data_cuaca_gabungan.append(data_list[0])
+        except Exception as e:
+            continue
+            
+    return data_cuaca_gabungan
 
 # ==========================================
 # LAYER TAMBAHAN: PRAKIRAAN CUACA BMKG
 # ==========================================
-data_cuaca_ntb = ambil_cuaca_bmkg_all()
+# KUNCI UTAMA: Layer dibikin di luar biar GAK PERNAH HILANG dari menu!
+layer_prakiraan = folium.FeatureGroup(name="🌤️ Prakiraan Cuaca BMKG", show=False)
 
-if data_cuaca_ntb:
-    layer_prakiraan = folium.FeatureGroup(name="🌤️ Prakiraan Cuaca BMKG (Se-NTB)", show=False)
-    
-    # Kamus Emoji Cuaca
+data_cuaca_bmkg = ambil_cuaca_bmkg()
+
+if data_cuaca_bmkg:
     icon_cuaca = {
         "Cerah": "☀️", "Cerah Berawan": "⛅", "Berawan": "☁️", "Berawan Tebal": "☁️",
         "Udara Kabur": "🌫️", "Asap": "🌫️", "Kabut": "🌫️",
@@ -385,61 +425,57 @@ if data_cuaca_ntb:
         "Hujan Lokal": "🌦️", "Hujan Petir": "🌩️"
     }
 
-    # Kita pakai Set buat nyaring biar peta gak tumpuk-tumpukan (1 Titik per Kecamatan)
-    kecamatan_tersaring = set()
-
-    for item in data_cuaca_ntb:
+    for item in data_cuaca_bmkg:
         try:
             lokasi = item.get('lokasi', {})
-            nama_kec = lokasi.get('kecamatan')
-            nama_kab = lokasi.get('kotkab')
+            nama_kec = lokasi.get('kecamatan', 'Lokasi')
             
-            # FILTER: Ambil 1 desa aja per kecamatan biar peta tetep rapi (Gak ribuan titik)
-            if nama_kec and nama_kec not in kecamatan_tersaring:
-                kecamatan_tersaring.add(nama_kec)
-                
-                lat = float(lokasi.get('lat', 0))
-                lon = float(lokasi.get('lon', 0))
-                
-                # Ambil prakiraan cuaca terdekat (Tanpa Suhu!)
-                cuaca_list = item.get('cuaca', [])
-                keterangan = "Berawan"
-                
-                if cuaca_list and len(cuaca_list) > 0:
-                    # Ambil data cuaca jam terdekat
-                    if isinstance(cuaca_list[0], list): # Format baru API BMKG
-                        keterangan = cuaca_list[0][0].get('weather_desc', 'Berawan')
-                    else:
-                        keterangan = cuaca_list[0].get('weather_desc', 'Berawan')
+            lat = float(lokasi.get('lat', 0))
+            lon = float(lokasi.get('lon', 0))
+            if lat == 0 and lon == 0: continue
+            
+            # Cuma ambil cuaca, SUHU DIHAPUS sesuai request
+            cuaca_list = item.get('cuaca', [])
+            keterangan = "Berawan"
+            
+            if cuaca_list and len(cuaca_list) > 0 and isinstance(cuaca_list[0], list):
+                if len(cuaca_list[0]) > 0:
+                    data_saat_ini = cuaca_list[0][0]
+                    keterangan = data_saat_ini.get('weather_desc', 'Berawan')
 
-                emoji = icon_cuaca.get(keterangan, "☁️")
-                
-                # Desain Icon Minimalis
-                html_icon = f"""
-                <div style="font-size:16px; background:rgba(255,255,255,0.85); border-radius:50%; width:26px; height:26px; display:flex; justify-content:center; align-items:center; box-shadow:1px 1px 3px rgba(0,0,0,0.4); border:1px solid #999;">
-                    {emoji}
-                </div>
-                """
-                
-                # Pasang Marker (Cuma nampilin Kondisi Cuaca aja)
-                folium.Marker(
-                    location=[lat, lon], 
-                    tooltip=f"<b>Kec. {nama_kec}</b>: {keterangan}",
-                    popup=f"""
-                        <div style='min-width: 120px; text-align:center;'>
-                            <b>📍 Kec. {nama_kec}</b><br>
-                            <span style='font-size:30px;'>{emoji}</span><br>
-                            <b>{keterangan}</b><br>
-                            <small>{nama_kab}</small>
-                        </div>
-                    """,
-                    icon=folium.DivIcon(html=html_icon)
-                ).add_to(layer_prakiraan)
-                
-        except:
+            emoji = icon_cuaca.get(keterangan, "☁️")
+            
+            html_icon = f"""
+            <div style="
+                font-size:18px; 
+                background:rgba(255,255,255,0.9); 
+                border-radius:50%; 
+                width:30px; height:30px; 
+                display:flex; justify-content:center; align-items:center; 
+                box-shadow:1px 1px 3px rgba(0,0,0,0.5); 
+                border:1px solid #777;">
+                {emoji}
+            </div>
+            """
+            
+            folium.Marker(
+                location=[lat, lon], 
+                tooltip=f"<b>Kec. {nama_kec}</b>: {keterangan}",
+                popup=f"""
+                    <div style='min-width: 140px; text-align:center;'>
+                        <b>📍 Kec. {nama_kec}</b><br>
+                        <span style='font-size:35px;'>{emoji}</span><br>
+                        <b>{keterangan}</b>
+                    </div>
+                """,
+                icon=folium.DivIcon(html=html_icon)
+            ).add_to(layer_prakiraan)
+            
+        except Exception as e:
             continue
             
-    layer_prakiraan.add_to(m)
+# Masukin ke Peta
+layer_prakiraan.add_to(m)
 
 # ==========================================
 folium.LayerControl().add_to(m)
