@@ -299,4 +299,31 @@ legend_bahaya = '''
 legend_peringatan = '''
 <div style="position: fixed; bottom: 20px; right: 15px; width: 220px; height: auto; background-color: rgba(255, 255, 255, 0.9); border: 2px solid grey; z-index: 9999; font-size: 11px; padding: 10px; border-radius: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;">
     <h4 style="margin-top: 0; margin-bottom: 8px; font-size: 13px; text-align: center; color: black;"><b>Status Peringatan</b></h4>
-    <link rel="stylesheet" href="
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <div style="margin-bottom: 5px; font-weight: bold; color: #333;">Intensitas Hujan (24 Jam):</div>
+    <div style="margin-bottom: 6px; height: 18px;"><div style="background: blue; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;"><i class="glyphicon glyphicon-cloud"></i></div><span style="line-height: 18px;">Cerah (0 mm)</span></div>
+    <div style="margin-bottom: 6px; height: 18px;"><div style="background: green; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;"><i class="glyphicon glyphicon-tint"></i></div><span style="line-height: 18px;">Ringan (0.1 - 20 mm)</span></div>
+    <div style="margin-bottom: 6px; height: 18px;"><div style="background: beige; border-radius: 50%; width: 18px; height: 18px; color: black; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px; border: 1px solid #ccc;"><i class="glyphicon glyphicon-tint"></i></div><span style="line-height: 18px;">Sedang (20 - 50 mm)</span></div>
+    <div style="margin-bottom: 6px; height: 18px;"><div style="background: orange; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;"><i class="glyphicon glyphicon-info-sign"></i></div><span style="line-height: 18px;">Lebat (50 - 100 mm)</span> </div>
+    <div style="margin-bottom: 6px; height: 18px;"><div style="background: red; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;"><i class="glyphicon glyphicon-warning-sign"></i></div><span style="line-height: 18px;">Sangat Lebat (100-150 mm)</span></div>
+    <div style="margin-bottom: 6px; height: 18px;"><div style="background: darkred; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;"><i class="glyphicon glyphicon-flash"></i></div><span style="line-height: 18px;">Ekstrem (> 150 mm)</span></div>
+    <hr style="margin: 8px 0; border-top: 1px dashed #999;">
+    <div style="margin-bottom: 5px; font-weight: bold; color: #333;">Level Area:</div>
+    <div style="margin-bottom: 4px; height: 14px;"><i style="background: orange; opacity: 0.8; width: 12px; height: 12px; float: left; margin-right: 8px; border-radius: 2px; margin-top: 1px;"></i><span style="line-height: 14px;">Waspada</span></div>
+    <div style="margin-bottom: 4px; height: 14px;"><i style="background: red; opacity: 0.8; width: 12px; height: 12px; float: left; margin-right: 8px; border-radius: 2px; margin-top: 1px;"></i><span style="line-height: 14px;">Siaga</span></div>
+    <div style="margin-bottom: 0px; height: 14px;"><i style="background: darkred; opacity: 0.8; width: 12px; height: 12px; float: left; margin-right: 8px; border-radius: 2px; margin-top: 1px;"></i><span style="line-height: 14px;">Awas</span></div>
+</div>
+'''
+
+m.get_root().html.add_child(folium.Element(legend_bahaya))
+m.get_root().html.add_child(folium.Element(legend_peringatan))
+folium.LayerControl().add_to(m)
+
+# TAMPILKAN PETA (TINGGI FULL)
+st_folium(m, use_container_width=True, height=900, returned_objects=[])
+
+# Download Tombol
+nama_file_peta = "Peta_EWS_NTB.html"
+m.save(nama_file_peta)
+with open(nama_file_peta, "rb") as file:
+    st.sidebar.download_button(label="📥 Download Peta (HTML)", data=file, file_name=nama_file_peta, mime="text/html")
