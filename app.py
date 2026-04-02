@@ -7,44 +7,99 @@ import pytz
 import folium
 from streamlit_folium import st_folium
 from streamlit_autorefresh import st_autorefresh
-import streamlit as st # <--- PENTING
+import streamlit as st 
 
 # ==========================================
-# 1. ATUR HALAMAN (WAJIB BARIS PERTAMA SETELAH IMPORT!)
+# 1. ATUR HALAMAN (WAJIB PALING ATAS!)
 # ==========================================
-# Kalau ini nggak ditaruh paling atas, layout="wide" bakal diabaikan dan peta jadi ciut!
 st.set_page_config(
-    page_title="Dashboard Peringatan Dini Longsor dan Banjir NTB",
+    page_title="Dashboard EWS NTB",
     page_icon="⛈️",
     layout="wide",
     initial_sidebar_state="expanded" 
 )
 
 # ==========================================
-# 2. CSS SAKTI YANG AMAN (TIDAK MENGHILANGKAN TOMBOL SIDEBAR)
+# 2. CSS SAKTI: SIDEBAR NGAMBANG & HEADER AWS CENTER
 # ==========================================
 st.markdown("""
     <style>
-    /* Paksa container utama jadi mentok layar 100% */
+    /* A. Hilangkan Jarak Putih Kiri-Kanan & Kasih Ruang Buat Header di Atas */
     .block-container {
         max-width: 100% !important;
-        padding-top: 1rem !important;
-        padding-right: 1rem !important;
-        padding-left: 1rem !important;
-        padding-bottom: 1rem !important;
+        padding-top: 70px !important; /* Jarak pas buat Header Putih */
+        padding-right: 0rem !important;
+        padding-left: 0rem !important;
+        padding-bottom: 0rem !important;
     }
     
-    /* Footer/Watermark bawah aja yang kita hilangin, Header biarin aja! */
+    /* B. Hilangkan Watermark Bawah */
     footer {visibility: hidden;}
+    
+    /* C. Bikin Header Asli Streamlit Transparan (Biar tombol panah sidebar kelihatan) */
+    header { 
+        background: transparent !important; 
+        z-index: 9999999 !important;
+    }
+    
+    /* D. JURUS OVERLAY SIDEBAR (Biar Gak Dorong Peta) */
+    [data-testid="stSidebar"] {
+        position: absolute !important;
+        z-index: 999999 !important;
+        height: 100vh !important;
+        background-color: rgba(255, 255, 255, 0.95) !important;
+        box-shadow: 2px 0 10px rgba(0,0,0,0.2);
+    }
+
+    /* E. BIKIN HEADER PUTIH ALA AWS CENTER DI ATAS PETA */
+    .header-aws {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 60px;
+        background-color: white;
+        z-index: 99999; /* Ngumpet di bawah sidebar, tapi di atas peta */
+        border-bottom: 2px solid #e0e0e0;
+        display: flex;
+        align-items: center;
+        padding: 0 60px; /* Kasih ruang di kiri buat tombol panah Streamlit */
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .header-aws img {
+        height: 40px;
+        margin-right: 15px;
+    }
+    .header-aws h3 {
+        margin: 0;
+        color: #002B5B;
+        font-size: 22px;
+        font-weight: 800;
+        line-height: 1;
+        display: inline-block;
+    }
+    .header-aws span {
+        margin-left: 15px;
+        color: #555;
+        font-size: 16px;
+        border-left: 2px solid #ccc;
+        padding-left: 15px;
+        line-height: 1.2;
+    }
     </style>
+    
+    <div class="header-aws">
+        <img src="https://www.bmkg.go.id/asset/img/logo/logo-bmkg.png">
+        <h3>BMKG</h3>
+        <span>Dashboard Peringatan Dini Longsor dan Banjir NTB (ZAM Lombok)</span>
+    </div>
     """, unsafe_allow_html=True)
 
-# Auto-Refresh 5 Menit
+# ==========================================
+# 3. FITUR AUTO-REFRESH & WAKTU
+# ==========================================
 st_autorefresh(interval=300000, limit=None, key="auto_refresh_bmkg")
 
-# ==========================================
-# 3. WAKTU REAL-TIME
-# ==========================================
 utc_now = datetime.now(pytz.utc)
 wita_now = utc_now.astimezone(pytz.timezone('Asia/Makassar'))
 tanggal_str = wita_now.strftime("%A, %d %B %Y").upper()
@@ -60,7 +115,7 @@ tanggal_pilih = date.today() - timedelta(days=st.session_state.offset_hari)
 tanggal_api = tanggal_pilih.strftime("%Y-%m-%d")
 
 # ==========================================
-# 4. FUNGSI DATA
+# 4. FUNGSI PENARIKAN DATA
 # ==========================================
 @st.cache_data(ttl=300) 
 def ambil_data_live():
@@ -107,18 +162,14 @@ elif st.session_state.offset_hari == 2:
     else: st.warning("⚠️ Data histori H-2 belum tersedia.")
 
 # ==========================================
-# 5. SIDEBAR (MENU KIRI)
+# 5. SIDEBAR (MENU KIRI - SEKARANG MELAYANG!)
 # ==========================================
 with st.sidebar:
-    st.image("https://www.bmkg.go.id/asset/img/logo/logo-bmkg.png", width=60)
-    st.markdown("<h3 style='margin-bottom:0; color:#002B5B; font-weight:800;'>ZAM Lombok</h3>", unsafe_allow_html=True)
-    st.markdown("<p style='font-size:14px; margin-top:0;'>Dashboard Peringatan Dini Hidrometeorologi NTB</p>", unsafe_allow_html=True)
-    
+    st.markdown("### ⚙️ Panel Kontrol EWS")
     st.markdown(f"**Waktu:** {tanggal_str}<br>*{waktu_utc_str}*", unsafe_allow_html=True)
     st.divider()
 
     st.markdown("#### ⏳ Kontrol Waktu Data")
-    # Tombol dijejer ke bawah aja biar nggak ngebug di layar kecil
     st.button("✅ Data Hari Ini", on_click=set_hari, args=(0,), use_container_width=True)
     st.button("⏪ Data Kemarin (H-1)", on_click=set_hari, args=(1,), use_container_width=True)
     st.button("⏮️ Data Selumbari (H-2)", on_click=set_hari, args=(2,), use_container_width=True) 
@@ -152,7 +203,6 @@ with st.sidebar:
 
         df = pd.DataFrame(tabel_data).sort_values(by="Hujan", ascending=False)
         styled_df = df.style.set_properties(subset=["Hujan", "Ket", "Area"], **{'text-align': 'center'}).set_table_styles([{'selector': 'th', 'props': [('text-align', 'center')]}]).format({"Hujan": "{:.1f}"})
-        # Tinggi tabel diset dinamis
         st.dataframe(styled_df, use_container_width=True, hide_index=True, height=500)
     else:
         st.warning("Data API belum ketarik.")
@@ -210,7 +260,7 @@ for item in data_sensor:
             folium.Marker([lat, lon], popup=f"<div style='min-width: 150px;'><b>{nama}</b><br>Curah Hujan: <b>{curah} mm</b><br>Kategori: <b>{kategori}</b><br>Status Area: <b>{status_area}</b><br><small>Update: {tanggal} UTC</small></div>", tooltip=f"{nama} ({kategori})", icon=folium.Icon(color=warna, icon=ikon, icon_color=warna_ikon)).add_to(m)
     except Exception as e: continue
 
-# Kotak Legend (Digeser dikit biar gak nabrak pulau Sumbawa)
+# Kotak Legend
 legend_bahaya = '''
 <div style="position: fixed; bottom: 350px; right: 15px; width: 220px; height: auto; background-color: rgba(255, 255, 255, 0.9); border: 2px solid grey; z-index: 9999; font-size: 11px; padding: 10px; border-radius: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;">
     <h4 style="margin-top: 0; margin-bottom: 8px; font-size: 13px; text-align: center; color: black;"><b>Kategori Bahaya</b></h4>
@@ -247,8 +297,8 @@ m.get_root().html.add_child(folium.Element(legend_bahaya))
 m.get_root().html.add_child(folium.Element(legend_peringatan))
 folium.LayerControl().add_to(m)
 
-# TAMPILKAN PETA
-st_folium(m, use_container_width=True, height=750, returned_objects=[])
+# TAMPILKAN PETA (Kasih Tinggi 900 Biar Mentok Bawah)
+st_folium(m, use_container_width=True, height=900, returned_objects=[])
 
 # Download Tombol
 nama_file_peta = "Peta_EWS_NTB.html"
