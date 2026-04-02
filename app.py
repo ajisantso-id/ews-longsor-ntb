@@ -347,36 +347,38 @@ m.get_root().html.add_child(folium.Element(legend_peringatan))
 folium.LayerControl().add_to(m)
 
 # TAMPILKAN PETA
+# TAMPILKAN PETA
 st_folium(m, height=650, width="stretch", returned_objects=[])
 
-st.divider() 
-
 # ==========================================
-# TOMBOL DOWNLOAD PETA (INTERAKTIF HTML)
+# PANEL TOMBOL (DOWNLOAD & KONTROL WAKTU SEJAJAR)
 # ==========================================
+# 1. Save peta yang udah jadi ke dalam file sementara
 nama_file_peta = "Peta_EWS_NTB_Terbaru.html"
 m.save(nama_file_peta)
 
-with open(nama_file_peta, "rb") as file:
-    st.download_button(
-        label="📥 Download Peta EWS (Interactive HTML)",
-        data=file,
-        file_name=nama_file_peta,
-        mime="text/html",
-        help="Download peta ini untuk dibuka secara offline di browser (Chrome/Edge/Firefox)"
-    )
+st.markdown("<br>", unsafe_allow_html=True) # Spasi enter dikit aja biar gak nabrak peta banget
 
-# ==========================================
-# PANEL TOMBOL FISIK
-# ==========================================
-col_spasi1, col_btn1, col_btn2, col_btn3, col_spasi2 = st.columns([2, 1, 1, 1, 2])
+# 2. Bikin 4 Kolom Sejajar. Kolom pertama (rasio 2) agak lebar buat nampung teks Download.
+col_dl, col_btn1, col_btn2, col_btn3 = st.columns([1.5, 1, 1, 1])
+
+with col_dl:
+    with open(nama_file_peta, "rb") as file:
+        st.download_button(
+            label="📥 Download Peta EWS (Interactive HTML)",
+            data=file,
+            file_name=nama_file_peta,
+            mime="text/html",
+            help="Download peta ini untuk dibuka secara offline di browser",
+            use_container_width=True # Biar tombolnya nge-full penuhin kolom
+        )
 
 with col_btn1:
-    st.button("⏮️ Data H-2", on_click=set_hari, args=(2,)) 
+    st.button("⏮️ Data H-2", on_click=set_hari, args=(2,), use_container_width=True) 
 with col_btn2:
-    st.button("⏪ Data H-1", on_click=set_hari, args=(1,))
+    st.button("⏪ Data H-1", on_click=set_hari, args=(1,), use_container_width=True)
 with col_btn3:
-    st.button("✅ Data Hari Ini", on_click=set_hari, args=(0,))
+    st.button("✅ Data Hari Ini", on_click=set_hari, args=(0,), use_container_width=True)
 
 # ==========================================
 # TEKS INFO TANGGAL 
