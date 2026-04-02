@@ -269,10 +269,21 @@ for item in data_sensor:
         continue
 
 # ==========================================
-# BIKIN LEGEND MENGAMBANG
+# BIKIN LEGEND MENGAMBANG (KIRI & KANAN BAWAH)
+# ==========================================
+
+# ==========================================
+# 1. KOTAK LEGEND BAHAYA (Pindah ke KIRI BAWAH)
 # ==========================================
 legend_bahaya = '''
-<div style="position: fixed; bottom: 370px; right: 30px; width: 230px; height: auto; background-color: rgba(255, 255, 255, 0.9); border: 2px solid grey; z-index: 9999; font-size: 12px; padding: 10px; border-radius: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;">
+<div style="
+    position: fixed; 
+    bottom: 30px; left: 30px; width: 230px; height: auto; /* <--- UBAH DI SINI: left 30px & bottom 30px */
+    background-color: rgba(255, 255, 255, 0.9); 
+    border: 2px solid grey; z-index: 9999; 
+    font-size: 12px; padding: 10px; border-radius: 8px; 
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;
+">
     <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center; color: black;"><b>Kategori Bahaya</b></h4>
     <div style="margin-bottom: 5px;"><b>Kerentanan Gerakan Tanah:</b></div>
     <div style="margin-bottom: 2px;"><i style="background: #cc0000; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Sangat Tinggi</div>
@@ -284,8 +295,18 @@ legend_bahaya = '''
 </div>
 '''
 
+# ==========================================
+# 2. KOTAK LEGEND STATUS PERINGATAN (Tetap di KANAN BAWAH)
+# ==========================================
 legend_peringatan = '''
-<div style="position: fixed; bottom: 30px; right: 30px; width: 230px; height: auto; background-color: rgba(255, 255, 255, 0.9); border: 2px solid grey; z-index: 9999; font-size: 12px; padding: 10px; border-radius: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;">
+<div style="
+    position: fixed; 
+    bottom: 30px; right: 30px; width: 230px; height: auto; /* <--- TETAP DI SINI: right 30px & bottom 30px */
+    background-color: rgba(255, 255, 255, 0.9); 
+    border: 2px solid grey; z-index: 9999; 
+    font-size: 12px; padding: 10px; border-radius: 8px; 
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;
+">
     <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center; color: black;"><b>Status Peringatan</b></h4>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <div style="margin-bottom: 5px; font-weight: bold; color: #333;">Intensitas Hujan (24 Jam):</div>
