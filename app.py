@@ -336,7 +336,16 @@ legend_peringatan = '''
     <div style="margin-bottom: 6px; height: 18px;"><div style="background: orange; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;"><i class="glyphicon glyphicon-info-sign"></i></div><span style="line-height: 18px;">Lebat (50 - 100 mm)</span> </div>
     <div style="margin-bottom: 6px; height: 18px;"><div style="background: red; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;"><i class="glyphicon glyphicon-warning-sign"></i></div><span style="line-height: 18px;">Sangat Lebat (100 - 150 mm)</span></div>
     <div style="margin-bottom: 6px; height: 18px;"><div style="background: darkred; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;"><i class="glyphicon glyphicon-flash"></i></div><span style="line-height: 18px;">Ekstrem (> 150 mm)</span></div>
+    
     <hr style="margin: 8px 0; border-top: 1px dashed #999;">
+
+    <div style="margin-bottom: 5px; font-weight: bold; color: #333;">Peringatan Dini (Nowcast):</div>
+    <div style="margin-bottom: 4px; height: 14px;"><i style="background: orange; border: 1px solid darkorange; opacity: 0.8; width: 12px; height: 12px; float: left; margin-right: 8px; border-radius: 2px; margin-top: 1px;"></i><span style="line-height: 14px;">Wilayah Peringatan Dini</span></div>
+    <div style="margin-bottom: 4px; height: 14px;"><i style="background: yellow; border: 1px solid gold; opacity: 0.8; width: 12px; height: 12px; float: left; margin-right: 8px; border-radius: 2px; margin-top: 1px;"></i><span style="line-height: 14px;">Wilayah Potensi Meluas</span></div>
+    <div style="margin-bottom: 0px; height: 14px;"><i style="background: #32CD32; border: 1px solid green; opacity: 0.8; width: 12px; height: 12px; float: left; margin-right: 8px; border-radius: 2px; margin-top: 1px;"></i><span style="line-height: 14px;">Tidak Terdampak</span></div>
+    
+    <hr style="margin: 8px 0; border-top: 1px dashed #999;">
+    
     <div style="margin-bottom: 5px; font-weight: bold; color: #333;">Level Peringatan Area:</div>
     <div style="margin-bottom: 4px; height: 14px;"><i style="background: orange; opacity: 0.8; width: 12px; height: 12px; float: left; margin-right: 8px; border-radius: 2px; margin-top: 1px;"></i><span style="line-height: 14px;">Waspada</span></div>
     <div style="margin-bottom: 4px; height: 14px;"><i style="background: red; opacity: 0.8; width: 12px; height: 12px; float: left; margin-right: 8px; border-radius: 2px; margin-top: 1px;"></i><span style="line-height: 14px;">Siaga</span></div>
@@ -462,89 +471,88 @@ if data_cuaca_bmkg:
 layer_prakiraan.add_to(m)
 
 # ==========================================
-# FUNGSI NARIK DATA PERINGATAN DINI (KEBAL BADAI & NAMESPACE)
+# FUNGSI NARIK DATA PERINGATAN DINI (WARNA ORANGE & KUNING)
 # ==========================================
 @st.cache_data(ttl=300) # Update tiap 5 menit
 def ambil_peringatan_dini():
     peringatan_aktif = []
     
     session = requests.Session()
-    session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'})
+    session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
     
     try:
-        # Tarik RSS Feed Peringatan Dini BMKG
-        res_rss = session.get("https://www.bmkg.go.id/alerts/nowcast/id", timeout=15)
+        res_rss = session.get("https://www.bmkg.go.id/alerts/nowcast/id", timeout=10)
         
         if res_rss.status_code == 200:
             import xml.etree.ElementTree as ET
+            import re
             
-            # Pake content biar gak bentrok format huruf
-            root_rss = ET.fromstring(res_rss.content)
+            # Hancurkan Namespace XML
+            rss_text = re.sub(r' xmlns="[^"]+"', '', res_rss.text)
+            root_rss = ET.fromstring(rss_text)
             
-            # Kita pake .iter() biar kebal dari sistem Namespace XML BMKG yang ribet
-            for item in root_rss.iter():
-                if item.tag.endswith('item'):
-                    title = ""
-                    link_detail = ""
+            for item in root_rss.findall('.//item'):
+                title = item.findtext('title', '')
+                
+                # Filter NTB
+                if 'Nusa Tenggara Barat' in title or 'NTB' in title or 'NUSA TENGGARA BARAT' in title:
+                    link_detail = item.findtext('link', '')
                     
-                    for child in item.iter():
-                        if child.tag.endswith('title'): title = child.text
-                        if child.tag.endswith('link'): link_detail = child.text
-                    
-                    # FILTER SAKTI: Ubah ke huruf kecil semua (.lower()) biar ke-baca robot!
-                    if title and link_detail:
-                        teks_judul = title.lower()
-                        if 'nusa tenggara barat' in teks_judul or 'ntb' in teks_judul:
+                    if link_detail:
+                        res_cap = session.get(link_detail, timeout=10)
+                        
+                        if res_cap.status_code == 200:
+                            cap_text = re.sub(r' xmlns="[^"]+"', '', res_cap.text)
+                            cap_root = ET.fromstring(cap_text)
                             
-                            # Masuk ke link detail CAP XML
-                            res_cap = session.get(link_detail, timeout=15)
-                            
-                            if res_cap.status_code == 200:
-                                cap_root = ET.fromstring(res_cap.content)
+                            info = cap_root.find('.//info')
+                            if info is not None:
+                                event = info.findtext('event', 'Peringatan Dini Cuaca')
+                                headline = info.findtext('headline', '-')
+                                desc = info.findtext('description', '-')
+                                effective = info.findtext('effective', '-')
+                                expires = info.findtext('expires', '-')
                                 
-                                # Fungsi pencari teks kebal namespace
-                                def ambil_teks(elemen_root, nama_tag, default="-"):
-                                    for el in elemen_root.iter():
-                                        if el.tag.endswith(nama_tag):
-                                            return el.text
-                                    return default
-
-                                event = ambil_teks(cap_root, 'event', 'Peringatan Dini Cuaca')
-                                headline = ambil_teks(cap_root, 'headline', '-')
-                                desc = ambil_teks(cap_root, 'description', '-')
-                                effective = ambil_teks(cap_root, 'effective', '-')
-                                expires = ambil_teks(cap_root, 'expires', '-')
+                                polygons_data = []
                                 
-                                # Tarik Koordinat Poligon Area Terdampak
-                                polygons = []
-                                for elem in cap_root.iter():
-                                    if elem.tag.endswith('polygon'):
-                                        poly_text = elem.text
-                                        if poly_text:
-                                            coords = []
-                                            # Format BMKG: lat,lon lat,lon
-                                            for pt in poly_text.strip().split():
-                                                if ',' in pt:
-                                                    try:
-                                                        lat_s, lon_s = pt.split(',')
-                                                        coords.append((float(lat_s), float(lon_s)))
-                                                    except: pass
-                                            if coords:
-                                                polygons.append(coords)
-                                                
-                                if polygons:
+                                # BACA AREA SATU-SATU BUAT NENTUIN WARNA (ORANGE/KUNING)
+                                for area in info.findall('.//area'):
+                                    area_desc = area.findtext('areaDesc', '').lower()
+                                    
+                                    # Logika Warna BMKG:
+                                    warna_poly = 'orange' # Default Peringatan Dini
+                                    if 'meluas' in area_desc or 'potensi' in area_desc:
+                                        warna_poly = 'yellow' # Potensi Meluas
+                                        
+                                    poly_text = area.findtext('polygon')
+                                    if poly_text:
+                                        coords = []
+                                        for pt in poly_text.strip().split():
+                                            if ',' in pt:
+                                                lat_s, lon_s = pt.split(',')
+                                                coords.append((float(lat_s), float(lon_s)))
+                                        
+                                        if coords:
+                                            polygons_data.append({
+                                                'coords': coords,
+                                                'warna': warna_poly,
+                                                'nama_area': area.findtext('areaDesc', 'Wilayah Terdampak')
+                                            })
+                                            
+                                if polygons_data:
                                     peringatan_aktif.append({
                                         'event': event,
                                         'headline': headline,
                                         'description': desc,
                                         'effective': effective,
                                         'expires': expires,
-                                        'polygons': polygons
+                                        'polygons_data': polygons_data
                                     })
     except Exception as e:
         pass 
         
     return peringatan_aktif
+    
 # ==========================================
 # LAYER TAMBAHAN: POLYGON PERINGATAN DINI 
 # ==========================================
@@ -553,26 +561,29 @@ layer_peringatan = folium.FeatureGroup(name="🚨 Peringatan Dini Cuaca", show=F
 with st.spinner("🚨 Mengecek Peringatan Dini Cuaca NTB..."):
     data_peringatan = ambil_peringatan_dini()
 
-# LOGIKA NOTIFIKASI & PENGGAMBARAN
 if data_peringatan and len(data_peringatan) > 0:
-    # MUNCUL NOTIF MERAH KALAU ADA BADAI
     st.toast(f"⚠️ Ada {len(data_peringatan)} Peringatan Dini Cuaca aktif di NTB!", icon="🚨")
     
     for alert in data_peringatan:
-        for poly in alert['polygons']:
+        for poly_dict in alert['polygons_data']:
+            warna = poly_dict['warna']
+            
+            # Kalau orange (Peringatan) dibikin lebih pekat, kalau kuning (Meluas) lebih transparan
+            opacity = 0.6 if warna == 'orange' else 0.4
+            
             folium.Polygon(
-                locations=poly,
-                color='red',           
+                locations=poly_dict['coords'],
+                color=warna,           
                 weight=2,
                 fill=True,
-                fill_color='red',      
-                fill_opacity=0.3,      
-                tooltip=f"<b>🚨 {alert['event']}</b> (Klik untuk detail)",
+                fill_color=warna,      
+                fill_opacity=opacity,      
+                tooltip=f"<b>🚨 {alert['event']}</b><br>{poly_dict['nama_area']}",
                 popup=folium.Popup(
                     f"""
                     <div style='min-width: 280px; max-height: 250px; overflow-y: auto;'>
                         <h4 style='color: #cc0000; margin-top:0;'>🚨 {alert['event']}</h4>
-                        <b>{alert['headline']}</b><br><br>
+                        <b>{poly_dict['nama_area']}</b><br><br>
                         <span style='font-size: 12px; color: #333;'>{alert['description']}</span><br><br>
                         <hr style='margin: 5px 0;'>
                         <small style='color: #555;'>
@@ -585,7 +596,6 @@ if data_peringatan and len(data_peringatan) > 0:
                 )
             ).add_to(layer_peringatan)
 else:
-    # MUNCUL NOTIF HIJAU KALAU CUACA AMAN
     st.toast("✅ Cuaca NTB Aman! Tidak ada Peringatan Dini Cuaca saat ini.", icon="🟢")
 
 layer_peringatan.add_to(m)
