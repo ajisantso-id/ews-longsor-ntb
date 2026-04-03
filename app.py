@@ -493,7 +493,7 @@ def ambil_peringatan_dini():
     return peringatan_aktif
 
 # ==========================================
-# FUNGSI NARIK DATA PERINGATAN DINI (HACKER MODE BMKG)
+# FUNGSI NARIK DATA PERINGATAN DINI (FIX KETIMPA / Z-INDEX)
 # ==========================================
 @st.cache_data(ttl=60) 
 def ambil_peringatan_dini():
@@ -525,10 +525,13 @@ def ambil_peringatan_dini():
                             cap_text = re.sub(r' xmlns="[^"]+"', '', res_cap.text)
                             cap_root = ET.fromstring(cap_text)
                             
-                            # FILTER BAHASA: Ambil yang id-ID aja biar poligon gak numpuk/dobel!
-                            info_blocks = [i for i in cap_root.findall('.//info') if i.findtext('language', 'id-ID') == 'id-ID']
+                            # 1. Kumpulin wadah <info> yang bahasa Indonesia
+                            info_blocks = []
+                            for info in cap_root.findall('.//info'):
+                                if 'id' in info.findtext('language', '').lower():
+                                    info_blocks.append(info)
                             
-                            # LOOP WADAH INFO (Wadah 1 = Oren, Wadah 2 = Kuning)
+                            # 2. Wadah 0 = Inti (Oren), Wadah 1 = Meluas (Kuning)
                             for idx_info, info in enumerate(info_blocks):
                                 event = info.findtext('event', 'Peringatan Dini Cuaca')
                                 headline = info.findtext('headline', '-')
@@ -536,7 +539,6 @@ def ambil_peringatan_dini():
                                 effective = info.findtext('effective', '-')
                                 expires = info.findtext('expires', '-')
                                 
-                                # JURUS SAKTI: Blok pertama (0) pasti Inti (Oren), sisanya Meluas (Kuning)
                                 warna_poly = 'orange' if idx_info == 0 else 'yellow'
                                 opacity_poly = 0.6 if warna_poly == 'orange' else 0.4
                                 
@@ -562,6 +564,12 @@ def ambil_peringatan_dini():
                                                     'effective': effective,
                                                     'expires': expires
                                                 })
+                                                
+            # 3. INI DIA OBATNYA (Z-INDEX FIX)
+            # Karena Folium ngegambar berurutan, kita paksa Kuning digambar duluan (Sebagai Alas)!
+            # Kalo Oren digambar duluan, dia bakal "ketelan" sama Kuning yang ukurannya lebih gede.
+            peringatan_aktif.sort(key=lambda x: 1 if x['warna'] == 'yellow' else 2)
+            
     except Exception as e:
         pass 
         
