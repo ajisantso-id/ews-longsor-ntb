@@ -404,7 +404,7 @@ if data_cuaca_bmkg:
 layer_prakiraan.add_to(m)
 
 # ==========================================
-# FUNGSI NARIK DATA PERINGATAN DINI (OFFICIAL GITHUB BMKG + Z-INDEX FIX)
+# FUNGSI NARIK DATA PERINGATAN DINI (ANTI JEBAKAN KATA "POTENSI")
 # ==========================================
 @st.cache_data(ttl=60) 
 def ambil_peringatan_dini():
@@ -436,35 +436,32 @@ def ambil_peringatan_dini():
                             cap_text = re.sub(r' xmlns="[^"]+"', '', res_cap.text)
                             cap_root = ET.fromstring(cap_text)
                             
-                            # LOOP SEMUA WADAH <info>
+                            # 1. KUMPULIN SEMUA WADAH <info> BAHASA INDONESIA AJA
+                            info_blocks = []
                             for info in cap_root.findall('.//info'):
-                                # 1. FILTER BAHASA: Cuma ambil id-ID, buang yang en-US biar poligon gak dobel!
-                                if 'en' in info.findtext('language', '').lower():
-                                    continue
-                                    
+                                if 'id-id' in info.findtext('language', '').lower():
+                                    info_blocks.append(info)
+                            
+                            # 2. LOOP WADAHNYA (Wadah 0 = Inti, Wadah 1 dst = Meluas)
+                            for idx_info, info in enumerate(info_blocks):
                                 event = info.findtext('event', 'Peringatan Dini Cuaca')
                                 headline = info.findtext('headline', '-')
                                 desc = info.findtext('description', '-')
                                 effective = info.findtext('effective', '-')
                                 expires = info.findtext('expires', '-')
                                 
-                                # 2. BACA SEVERITY RESMI DARI PUSAT
-                                severity = info.findtext('severity', '').lower()
-                                warna_poly = 'orange' # Default
-                                opacity_poly = 0.6
-                                
-                                if severity in ['moderate', 'minor']:
-                                    warna_poly = 'yellow'
-                                    opacity_poly = 0.4 # Kuning dibikin agak transparan
-                                elif severity == 'extreme':
-                                    warna_poly = 'red'
-                                    opacity_poly = 0.7
-                                elif severity == 'severe':
-                                    warna_poly = 'orange'
-                                    opacity_poly = 0.6
+                                # LOGIKA PASTI: Wadah pertama = Oren, sisanya = Kuning
+                                warna_poly = 'orange' if idx_info == 0 else 'yellow'
+                                opacity_poly = 0.6 if warna_poly == 'orange' else 0.4
                                 
                                 for area in info.findall('.//area'):
                                     area_desc = area.findtext('areaDesc', 'Wilayah Terdampak')
+                                    
+                                    # PENGAMAN: Cuma berubah kuning kalo ada kalimat LENGKAP "potensi meluas"
+                                    if 'potensi meluas' in area_desc.lower():
+                                        warna_poly = 'yellow'
+                                        opacity_poly = 0.4
+                                        
                                     for poly in area.findall('.//polygon'):
                                         poly_text = poly.text
                                         if poly_text:
@@ -486,15 +483,15 @@ def ambil_peringatan_dini():
                                                     'expires': expires
                                                 })
                                                 
-        # 3. JURUS ANTI KETIMPA (Z-INDEX): 
-        # Urutin datanya! Kuning digambar duluan (sebagai alas), baru Oren, baru Merah (paling atas).
-        urutan_warna = {'yellow': 1, 'orange': 2, 'red': 3}
-        peringatan_aktif.sort(key=lambda x: urutan_warna.get(x['warna'], 0))
-        
+            # 3. JURUS Z-INDEX (ANTI KETIMPA): 
+            # Urutin array-nya. Kuning digambar duluan sebagai alas, baru Oren di atasnya!
+            peringatan_aktif.sort(key=lambda x: 1 if x['warna'] == 'yellow' else 2)
+            
     except Exception as e:
         pass 
         
     return peringatan_aktif
+
 # ==========================================
 # FUNGSI NARIK DATA PERINGATAN DINI (HACKER MODE BMKG)
 # ==========================================
