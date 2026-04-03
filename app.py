@@ -289,34 +289,7 @@ for item in data_sensor:
         continue
 
 # ==========================================
-# BIKIN LEGEND MENGAMBANG (KIRI & KANAN BAWAH)
-# ==========================================
-
-# ==========================================
-# 1. KOTAK LEGEND BAHAYA (Pindah ke KIRI BAWAH)
-# ==========================================
-legend_bahaya = '''
-<div style="
-    position: fixed; 
-    bottom: 30px; left: 30px; width: 230px; height: auto; /* <--- UBAH DI SINI: left 30px & bottom 30px */
-    background-color: rgba(255, 255, 255, 0.9); 
-    border: 2px solid grey; z-index: 9999; 
-    font-size: 12px; padding: 10px; border-radius: 8px; 
-    box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;
-">
-    <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center; color: black;"><b>Kategori Bahaya</b></h4>
-    <div style="margin-bottom: 5px;"><b>Kerentanan Gerakan Tanah:</b></div>
-    <div style="margin-bottom: 2px;"><i style="background: #cc0000; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Sangat Tinggi</div>
-    <div style="margin-bottom: 2px;"><i style="background: #ff3385; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Tinggi</div>
-    <div style="margin-bottom: 2px;"><i style="background: #ffff00; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Menengah</div>
-    <div style="margin-bottom: 2px;"><i style="background: #00cc00; opacity: 0.3; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Rendah</div>
-    <div style="margin-bottom: 6px;"><i style="background: #00ccff; opacity: 0.3; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Sangat Rendah</div>
-    <div style="margin-top: 8px;"><strong>Kerentanan Banjir:</strong><br><i style="background:#00008B; width:15px; height:15px; float:left; margin-right:8px; opacity:0.7; border: 1px solid #0000FF;"></i> Rawan Banjir (InaRISK)<br></div>
-</div>
-'''
-
-# ==========================================
-# BIKIN LEGEND DINAMIS (JAVASCRIPT SAKTI)
+# BIKIN LEGEND DINAMIS (JAVASCRIPT DOM OBSERVER SAKTI)
 # ==========================================
 legend_html = '''
 <div id="legend_hujan" style="position: fixed; bottom: 30px; right: 30px; width: 230px; background-color: rgba(255, 255, 255, 0.9); border: 2px solid grey; z-index: 9999; font-size: 12px; padding: 10px; border-radius: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;">
@@ -336,8 +309,8 @@ legend_html = '''
 
 <div id="legend_nowcast" style="display: none; position: fixed; bottom: 310px; right: 30px; width: 230px; background-color: rgba(255, 255, 255, 0.9); border: 2px solid darkorange; z-index: 9999; font-size: 12px; padding: 10px; border-radius: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;">
     <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center;"><b>Peringatan Dini (Nowcast)</b></h4>
-    <div style="margin-bottom: 4px; height: 14px;"><i style="background: orange; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i><span>Wilayah Peringatan Dini</span></div>
-    <div style="margin-bottom: 4px; height: 14px;"><i style="background: yellow; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i><span>Wilayah Potensi Meluas</span></div>
+    <div style="margin-bottom: 4px; height: 14px;"><i style="background: orange; border: 1px solid darkorange; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i><span>Wilayah Peringatan Dini</span></div>
+    <div style="margin-bottom: 4px; height: 14px;"><i style="background: yellow; border: 1px solid gold; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i><span>Wilayah Potensi Meluas</span></div>
 </div>
 
 <div id="legend_longsor" style="display: none; position: fixed; bottom: 30px; left: 30px; width: 230px; background-color: rgba(255, 255, 255, 0.9); border: 2px solid grey; z-index: 9999; font-size: 12px; padding: 10px; border-radius: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;">
@@ -355,37 +328,35 @@ legend_html = '''
 </div>
 
 <script>
-    window.addEventListener('load', function() {
-        setTimeout(function() {
-            for (let key in window) {
-                if (window[key] && window[key].hasOwnProperty('_layers')) {
-                    let map = window[key];
+    // Gunakan setInterval buat nge-loop tiap 1 detik (Karena Streamlit suka telat render peta)
+    var cekLayer = setInterval(function() {
+        // Cari semua tombol checkbox bawaan Folium/Leaflet
+        var layerCheckboxes = document.querySelectorAll('.leaflet-control-layers-selector');
+        
+        if (layerCheckboxes.length > 0) {
+            layerCheckboxes.forEach(function(cb) {
+                // Pasang kuping (listener) di tiap checkbox, kalau belum dipasang
+                if (!cb.hasAttribute('data-legend-bound')) {
+                    cb.setAttribute('data-legend-bound', 'true');
                     
-                    // Kalau layer di-centang (nyala)
-                    map.on('overlayadd', function(e) {
-                        if (e.name === '🚨 Peringatan Dini Cuaca') {
-                            document.getElementById('legend_nowcast').style.display = 'block';
-                        } else if (e.name === 'Zona Kerentanan Gerakan Tanah') {
-                            document.getElementById('legend_longsor').style.display = 'block';
-                        } else if (e.name === 'Zona Rawan Banjir (InaRISK)') {
-                            document.getElementById('legend_banjir').style.display = 'block';
+                    cb.addEventListener('change', function() {
+                        var namaLayer = this.nextElementSibling.textContent.trim();
+                        
+                        // Logika Nyala-Mati Legend
+                        if (namaLayer.includes('Peringatan Dini Cuaca')) {
+                            document.getElementById('legend_nowcast').style.display = this.checked ? 'block' : 'none';
                         }
-                    });
-                    
-                    // Kalau layer di-uncentang (mati)
-                    map.on('overlayremove', function(e) {
-                        if (e.name === '🚨 Peringatan Dini Cuaca') {
-                            document.getElementById('legend_nowcast').style.display = 'none';
-                        } else if (e.name === 'Zona Kerentanan Gerakan Tanah') {
-                            document.getElementById('legend_longsor').style.display = 'none';
-                        } else if (e.name === 'Zona Rawan Banjir (InaRISK)') {
-                            document.getElementById('legend_banjir').style.display = 'none';
+                        else if (namaLayer.includes('Gerakan Tanah')) {
+                            document.getElementById('legend_longsor').style.display = this.checked ? 'block' : 'none';
+                        }
+                        else if (namaLayer.includes('Banjir (InaRISK)')) {
+                            document.getElementById('legend_banjir').style.display = this.checked ? 'block' : 'none';
                         }
                     });
                 }
-            }
-        }, 1500); // Tunggu peta kelar loading dulu
-    });
+            });
+        }
+    }, 1000); 
 </script>
 '''
 
