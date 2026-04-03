@@ -404,7 +404,7 @@ if data_cuaca_bmkg:
 layer_prakiraan.add_to(m)
 
 # ==========================================
-# FUNGSI NARIK DATA PERINGATAN DINI (FINAL BOSS: SEVERITY + SPLIT RENDER)
+# FUNGSI NARIK DATA PERINGATAN DINI (ANTI JEBAKAN SEVERITY)
 # ==========================================
 @st.cache_data(ttl=60) 
 def ambil_peringatan_dini():
@@ -436,35 +436,36 @@ def ambil_peringatan_dini():
                             cap_text = re.sub(r' xmlns="[^"]+"', '', res_cap.text)
                             cap_root = ET.fromstring(cap_text)
                             
-                            # BACA SEMUA WADAH <info>
+                            # Cuma ambil bahasa Indonesia
+                            info_blocks = []
                             for info in cap_root.findall('.//info'):
-                                # Filter: Cuma ambil Bahasa Indonesia
-                                if 'en' in info.findtext('language', '').lower():
-                                    continue
-                                    
+                                if 'id' in info.findtext('language', '').lower():
+                                    info_blocks.append(info)
+                            
+                            for info in info_blocks:
                                 event = info.findtext('event', 'Peringatan Dini Cuaca')
                                 headline = info.findtext('headline', '-')
                                 desc = info.findtext('description', '-')
                                 effective = info.findtext('effective', '-')
                                 expires = info.findtext('expires', '-')
                                 
-                                # KUNCI UTAMA: BACA SEVERITY RESMI DARI BMKG
-                                severity = info.findtext('severity', '').lower()
-                                warna_poly = 'orange' 
-                                opacity_poly = 0.6
-                                
-                                if severity in ['moderate', 'minor']:
-                                    warna_poly = 'yellow'
-                                    opacity_poly = 0.4 
-                                elif severity == 'extreme':
-                                    warna_poly = 'red'
-                                    opacity_poly = 0.7
-                                elif severity == 'severe':
+                                # LOOP AREA: Disini rahasianya! BUKAN pake severity.
+                                areas = info.findall('.//area')
+                                for idx_area, area in enumerate(areas):
+                                    area_desc = area.findtext('areaDesc', '').lower()
+                                    
+                                    # Defaultnya pasti Oren (Daerah Inti)
                                     warna_poly = 'orange'
                                     opacity_poly = 0.6
-                                
-                                for area in info.findall('.//area'):
-                                    area_desc = area.findtext('areaDesc', 'Wilayah Terdampak')
+                                    
+                                    # Kalo ada kata "meluas/potensi" ATAU dia area kedua -> Kuning!
+                                    if 'meluas' in area_desc or 'potensi' in area_desc:
+                                        warna_poly = 'yellow'
+                                        opacity_poly = 0.4
+                                    elif idx_area > 0:
+                                        warna_poly = 'yellow'
+                                        opacity_poly = 0.4
+                                        
                                     for poly in area.findall('.//polygon'):
                                         poly_text = poly.text
                                         if poly_text:
@@ -479,7 +480,7 @@ def ambil_peringatan_dini():
                                                     'coords': coords,
                                                     'warna': warna_poly,
                                                     'opacity': opacity_poly,
-                                                    'nama_area': area_desc,
+                                                    'nama_area': area.findtext('areaDesc', 'Wilayah Terdampak'),
                                                     'event': event,
                                                     'description': desc,
                                                     'effective': effective,
@@ -500,11 +501,11 @@ with st.spinner("🚨 Mengecek Peringatan Dini Cuaca NTB..."):
 
 if data_peringatan and len(data_peringatan) > 0:
     
-    # JURUS PEMISAHAN ALAM SEMESTA: Pisahin data Kuning dan Oren!
+    # JURUS Z-INDEX: PISAHIN KARPET KUNING SAMA KARPET OREN
     data_kuning = [p for p in data_peringatan if p['warna'] == 'yellow']
-    data_oren = [p for p in data_peringatan if p['warna'] == 'orange' or p['warna'] == 'red']
+    data_oren = [p for p in data_peringatan if p['warna'] == 'orange']
     
-    # 1. MENGGAMBAR ALAS: Gambar SEMUA poligon kuning duluan!
+    # 1. GELAR KARPET KUNING DULUAN (Sebagai Alas)
     for poly_dict in data_kuning:
         folium.Polygon(
             locations=poly_dict['coords'],
@@ -520,7 +521,7 @@ if data_peringatan and len(data_peringatan) > 0:
             )
         ).add_to(layer_peringatan)
 
-    # 2. MENGGAMBAR INTI: Gambar SEMUA poligon oren di atas si kuning!
+    # 2. GELAR KARPET OREN DI ATASNYA (Biar gak ketelan!)
     for poly_dict in data_oren:
         folium.Polygon(
             locations=poly_dict['coords'],
@@ -537,6 +538,7 @@ if data_peringatan and len(data_peringatan) > 0:
         ).add_to(layer_peringatan)
 
 layer_peringatan.add_to(m)
+
 # ==========================================
 # TOMBOL REFRESH MENGAMBANG DI PETA
 # ==========================================
