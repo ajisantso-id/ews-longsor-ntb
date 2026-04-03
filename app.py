@@ -10,6 +10,7 @@ import pytz
 import xml.etree.ElementTree as ET
 from streamlit_autorefresh import st_autorefresh
 import time
+from branca.element import MacroElement, Template
 
 # ==========================================
 # ATUR JUDUL TAB BROWSER & BIKIN FULL LAYAR
@@ -403,27 +404,15 @@ if data_cuaca_bmkg:
 layer_prakiraan.add_to(m)
 
 # ==========================================
-# TOMBOL REFRESH CACHE MANUAL (TAMPIL DI WEB)
+# FUNGSI NARIK DATA PERINGATAN DINI (LOGIKA SNIPER WARNA)
 # ==========================================
-st.markdown("<br>", unsafe_allow_html=True)
-col_kosong, col_refresh = st.columns([4, 1])
-with col_refresh:
-    # Tombol ini bakal ngehancurin memori Streamlit seketika
-    if st.button("🔄 Refresh Data BMKG", use_container_width=True):
-        st.cache_data.clear()
-        st.rerun()
-
-# ==========================================
-# FUNGSI NARIK DATA PERINGATAN DINI (ANTI-BASI & FIX WARNA)
-# ==========================================
-@st.cache_data(ttl=300) 
-def ambil_peringatan_dini(waktu_sekarang): # Parameter buat maksa fungsi jalan ulang
+@st.cache_data(ttl=60) # Cache dipendekin jadi 60 detik biar gampang di-refresh
+def ambil_peringatan_dini():
     peringatan_aktif = []
     session = requests.Session()
     session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
     
     try:
-        # Pake timestamp biar browser & ISP gak ngasih file XML yang basi!
         url_rss = f"https://www.bmkg.go.id/alerts/nowcast/id/rss.xml?t={int(time.time())}"
         res_rss = session.get(url_rss, timeout=10)
         
@@ -436,10 +425,8 @@ def ambil_peringatan_dini(waktu_sekarang): # Parameter buat maksa fungsi jalan u
             
             for item in root_rss.findall('.//item'):
                 title = item.findtext('title', '')
-                
                 if 'Nusa Tenggara Barat' in title or 'NTB' in title or 'NUSA TENGGARA BARAT' in title:
                     link_detail = item.findtext('link', '')
-                    
                     if link_detail:
                         link_fresh = f"{link_detail}?t={int(time.time())}"
                         res_cap = session.get(link_fresh, timeout=10)
@@ -458,14 +445,11 @@ def ambil_peringatan_dini(waktu_sekarang): # Parameter buat maksa fungsi jalan u
                                 
                                 polygons_data = []
                                 
+                                # LOGIKA SNIPER: Poligon pertama = Oren, sisanya = Kuning
+                                is_first_polygon = True 
+                                
                                 for area in info.findall('.//area'):
                                     area_desc = area.findtext('areaDesc', 'Wilayah Terdampak')
-                                    
-                                    # LOGIKA WARNA YANG BENER: Murni ngikutin teks dari Pusat BMKG!
-                                    warna_poly = 'orange' 
-                                    if 'meluas' in area_desc.lower() or 'potensi' in area_desc.lower():
-                                        warna_poly = 'yellow' 
-                                        
                                     for poly in area.findall('.//polygon'):
                                         poly_text = poly.text
                                         if poly_text:
@@ -476,6 +460,9 @@ def ambil_peringatan_dini(waktu_sekarang): # Parameter buat maksa fungsi jalan u
                                                     coords.append((float(lat_s), float(lon_s)))
                                             
                                             if coords:
+                                                warna_poly = 'orange' if is_first_polygon else 'yellow'
+                                                is_first_polygon = False # Matikan setelah poligon pertama
+                                                
                                                 polygons_data.append({
                                                     'coords': coords,
                                                     'warna': warna_poly,
@@ -502,8 +489,7 @@ def ambil_peringatan_dini(waktu_sekarang): # Parameter buat maksa fungsi jalan u
 layer_peringatan = folium.FeatureGroup(name="🚨 Peringatan Dini Cuaca", show=False)
 
 with st.spinner("🚨 Mengecek Peringatan Dini Cuaca NTB..."):
-    # Pakai timestamp pembagi 300 detik (5 menit) biar otomatis refresh di background
-    data_peringatan = ambil_peringatan_dini(int(time.time() / 300))
+    data_peringatan = ambil_peringatan_dini()
 
 if data_peringatan and len(data_peringatan) > 0:
     for alert in data_peringatan:
@@ -539,7 +525,19 @@ if data_peringatan and len(data_peringatan) > 0:
 layer_peringatan.add_to(m)
 
 # ==========================================
-# BIKIN LEGEND DINAMIS (MATA-MATA DOM INVINCIBLE)
+# TOMBOL REFRESH MENGAMBANG DI PETA
+# ==========================================
+tombol_refresh_html = """
+<div style="position: absolute; top: 80px; left: 10px; z-index: 1000;">
+    <button onclick="window.parent.location.reload(true);" title="Refresh Data BMKG" style="background-color: white; border: 2px solid rgba(0,0,0,0.2); border-radius: 4px; width: 34px; height: 34px; font-size: 18px; cursor: pointer; box-shadow: 0 1px 5px rgba(0,0,0,0.65); display: flex; justify-content: center; align-items: center;">
+        🔄
+    </button>
+</div>
+"""
+m.get_root().html.add_child(folium.Element(tombol_refresh_html))
+
+# ==========================================
+# HTML LEGEND KOTAK-KOTAK
 # ==========================================
 legend_html = '''
 <div id="legend_hujan" style="position: fixed; bottom: 30px; right: 30px; width: 230px; background-color: rgba(255, 255, 255, 0.9); border: 2px solid grey; z-index: 9999; font-size: 12px; padding: 10px; border-radius: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;">
@@ -577,43 +575,47 @@ legend_html = '''
     <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center;"><b>Kerentanan Banjir</b></h4>
     <div style="margin-bottom: 4px;"><i style="background:#00008B; width:15px; height:15px; float:left; margin-right:8px; opacity:0.5;"></i> Rawan Banjir (InaRISK)</div>
 </div>
+'''
+m.get_root().html.add_child(folium.Element(legend_html))
 
-<script>
-    setInterval(function() {
-        var labels = document.querySelectorAll('.leaflet-control-layers-overlays label');
-        var showNowcast = false;
-        var showLongsor = false;
-        var showBanjir = false;
-
-        labels.forEach(function(label) {
-            var cb = label.querySelector('input[type="checkbox"]');
-            var span = label.querySelector('span');
-            
-            if (cb && span) {
-                var text = span.textContent || span.innerText;
-                if (text.includes('Peringatan Dini Cuaca') && cb.checked) showNowcast = true;
-                if (text.includes('Gerakan Tanah') && cb.checked) showLongsor = true;
-                if (text.includes('Banjir') && cb.checked) showBanjir = true;
+# ==========================================
+# MACRO ELEMENT LEAFLET (SUNTIKAN NATIVE ANTI-GAGAL)
+# ==========================================
+class LegendDinamis(MacroElement):
+    def __init__(self):
+        super(LegendDinamis, self).__init__()
+        self._template = Template(u"""
+        {% macro script(this, kwargs) %}
+        var mapInstance = {{this._parent.get_name()}};
+        
+        mapInstance.on('overlayadd', function(e) {
+            if (e.name.includes('Peringatan Dini Cuaca')) {
+                document.getElementById('legend_nowcast').style.display = 'block';
+            } else if (e.name.includes('Gerakan Tanah')) {
+                document.getElementById('legend_longsor').style.display = 'block';
+            } else if (e.name.includes('Banjir (InaRISK)')) {
+                document.getElementById('legend_banjir').style.display = 'block';
             }
         });
+        
+        mapInstance.on('overlayremove', function(e) {
+            if (e.name.includes('Peringatan Dini Cuaca')) {
+                document.getElementById('legend_nowcast').style.display = 'none';
+            } else if (e.name.includes('Gerakan Tanah')) {
+                document.getElementById('legend_longsor').style.display = 'none';
+            } else if (e.name.includes('Banjir (InaRISK)')) {
+                document.getElementById('legend_banjir').style.display = 'none';
+            }
+        });
+        {% endmacro %}
+        """)
 
-        var elNowcast = document.getElementById('legend_nowcast');
-        var elLongsor = document.getElementById('legend_longsor');
-        var elBanjir = document.getElementById('legend_banjir');
-
-        if (elNowcast) elNowcast.style.display = showNowcast ? 'block' : 'none';
-        if (elLongsor) elLongsor.style.display = showLongsor ? 'block' : 'none';
-        if (elBanjir) elBanjir.style.display = showBanjir ? 'block' : 'none';
-
-    }, 500); // Ngecek tiap setengah detik, gak peduli mau petanya error atau dirender ulang!
-</script>
-'''
-
-m.get_root().html.add_child(folium.Element(legend_html))
+m.add_child(LegendDinamis())
 folium.LayerControl().add_to(m)
 
 # TAMPILKAN PETA UTAMA
 st_folium(m, height=650, width="stretch", returned_objects=[])
+
 
 # ==========================================
 # PANEL TOMBOL (DOWNLOAD & KONTROL WAKTU SEJAJAR)
