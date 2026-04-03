@@ -404,7 +404,7 @@ if data_cuaca_bmkg:
 layer_prakiraan.add_to(m)
 
 # ==========================================
-# FUNGSI NARIK DATA PERINGATAN DINI (ANTI JEBAKAN KATA "POTENSI")
+# FUNGSI NARIK DATA PERINGATAN DINI (FINAL BOSS: SEVERITY + SPLIT RENDER)
 # ==========================================
 @st.cache_data(ttl=60) 
 def ambil_peringatan_dini():
@@ -436,111 +436,32 @@ def ambil_peringatan_dini():
                             cap_text = re.sub(r' xmlns="[^"]+"', '', res_cap.text)
                             cap_root = ET.fromstring(cap_text)
                             
-                            # 1. KUMPULIN SEMUA WADAH <info> BAHASA INDONESIA AJA
-                            info_blocks = []
+                            # BACA SEMUA WADAH <info>
                             for info in cap_root.findall('.//info'):
-                                if 'id-id' in info.findtext('language', '').lower():
-                                    info_blocks.append(info)
-                            
-                            # 2. LOOP WADAHNYA (Wadah 0 = Inti, Wadah 1 dst = Meluas)
-                            for idx_info, info in enumerate(info_blocks):
-                                event = info.findtext('event', 'Peringatan Dini Cuaca')
-                                headline = info.findtext('headline', '-')
-                                desc = info.findtext('description', '-')
-                                effective = info.findtext('effective', '-')
-                                expires = info.findtext('expires', '-')
-                                
-                                # LOGIKA PASTI: Wadah pertama = Oren, sisanya = Kuning
-                                warna_poly = 'orange' if idx_info == 0 else 'yellow'
-                                opacity_poly = 0.6 if warna_poly == 'orange' else 0.4
-                                
-                                for area in info.findall('.//area'):
-                                    area_desc = area.findtext('areaDesc', 'Wilayah Terdampak')
+                                # Filter: Cuma ambil Bahasa Indonesia
+                                if 'en' in info.findtext('language', '').lower():
+                                    continue
                                     
-                                    # PENGAMAN: Cuma berubah kuning kalo ada kalimat LENGKAP "potensi meluas"
-                                    if 'potensi meluas' in area_desc.lower():
-                                        warna_poly = 'yellow'
-                                        opacity_poly = 0.4
-                                        
-                                    for poly in area.findall('.//polygon'):
-                                        poly_text = poly.text
-                                        if poly_text:
-                                            coords = []
-                                            for pt in poly_text.strip().split():
-                                                if ',' in pt:
-                                                    lat_s, lon_s = pt.split(',')
-                                                    coords.append((float(lat_s), float(lon_s)))
-                                            
-                                            if coords:
-                                                peringatan_aktif.append({
-                                                    'coords': coords,
-                                                    'warna': warna_poly,
-                                                    'opacity': opacity_poly,
-                                                    'nama_area': area_desc,
-                                                    'event': event,
-                                                    'description': desc,
-                                                    'effective': effective,
-                                                    'expires': expires
-                                                })
-                                                
-            # 3. JURUS Z-INDEX (ANTI KETIMPA): 
-            # Urutin array-nya. Kuning digambar duluan sebagai alas, baru Oren di atasnya!
-            peringatan_aktif.sort(key=lambda x: 1 if x['warna'] == 'yellow' else 2)
-            
-    except Exception as e:
-        pass 
-        
-    return peringatan_aktif
-
-# ==========================================
-# FUNGSI NARIK DATA PERINGATAN DINI (FIX KETIMPA / Z-INDEX)
-# ==========================================
-@st.cache_data(ttl=60) 
-def ambil_peringatan_dini():
-    peringatan_aktif = []
-    session = requests.Session()
-    session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
-    
-    try:
-        url_rss = f"https://www.bmkg.go.id/alerts/nowcast/id/rss.xml?t={int(time.time())}"
-        res_rss = session.get(url_rss, timeout=10)
-        
-        if res_rss.status_code == 200:
-            import xml.etree.ElementTree as ET
-            import re
-            
-            rss_text = re.sub(r' xmlns="[^"]+"', '', res_rss.text)
-            root_rss = ET.fromstring(rss_text)
-            
-            for item in root_rss.findall('.//item'):
-                title = item.findtext('title', '')
-                
-                if 'Nusa Tenggara Barat' in title or 'NTB' in title or 'NUSA TENGGARA BARAT' in title:
-                    link_detail = item.findtext('link', '')
-                    if link_detail:
-                        link_fresh = f"{link_detail}?t={int(time.time())}"
-                        res_cap = session.get(link_fresh, timeout=10)
-                        
-                        if res_cap.status_code == 200:
-                            cap_text = re.sub(r' xmlns="[^"]+"', '', res_cap.text)
-                            cap_root = ET.fromstring(cap_text)
-                            
-                            # 1. Kumpulin wadah <info> yang bahasa Indonesia
-                            info_blocks = []
-                            for info in cap_root.findall('.//info'):
-                                if 'id' in info.findtext('language', '').lower():
-                                    info_blocks.append(info)
-                            
-                            # 2. Wadah 0 = Inti (Oren), Wadah 1 = Meluas (Kuning)
-                            for idx_info, info in enumerate(info_blocks):
                                 event = info.findtext('event', 'Peringatan Dini Cuaca')
                                 headline = info.findtext('headline', '-')
                                 desc = info.findtext('description', '-')
                                 effective = info.findtext('effective', '-')
                                 expires = info.findtext('expires', '-')
                                 
-                                warna_poly = 'orange' if idx_info == 0 else 'yellow'
-                                opacity_poly = 0.6 if warna_poly == 'orange' else 0.4
+                                # KUNCI UTAMA: BACA SEVERITY RESMI DARI BMKG
+                                severity = info.findtext('severity', '').lower()
+                                warna_poly = 'orange' 
+                                opacity_poly = 0.6
+                                
+                                if severity in ['moderate', 'minor']:
+                                    warna_poly = 'yellow'
+                                    opacity_poly = 0.4 
+                                elif severity == 'extreme':
+                                    warna_poly = 'red'
+                                    opacity_poly = 0.7
+                                elif severity == 'severe':
+                                    warna_poly = 'orange'
+                                    opacity_poly = 0.6
                                 
                                 for area in info.findall('.//area'):
                                     area_desc = area.findtext('areaDesc', 'Wilayah Terdampak')
@@ -564,12 +485,6 @@ def ambil_peringatan_dini():
                                                     'effective': effective,
                                                     'expires': expires
                                                 })
-                                                
-            # 3. INI DIA OBATNYA (Z-INDEX FIX)
-            # Karena Folium ngegambar berurutan, kita paksa Kuning digambar duluan (Sebagai Alas)!
-            # Kalo Oren digambar duluan, dia bakal "ketelan" sama Kuning yang ukurannya lebih gede.
-            peringatan_aktif.sort(key=lambda x: 1 if x['warna'] == 'yellow' else 2)
-            
     except Exception as e:
         pass 
         
@@ -584,7 +499,13 @@ with st.spinner("🚨 Mengecek Peringatan Dini Cuaca NTB..."):
     data_peringatan = ambil_peringatan_dini()
 
 if data_peringatan and len(data_peringatan) > 0:
-    for poly_dict in data_peringatan:
+    
+    # JURUS PEMISAHAN ALAM SEMESTA: Pisahin data Kuning dan Oren!
+    data_kuning = [p for p in data_peringatan if p['warna'] == 'yellow']
+    data_oren = [p for p in data_peringatan if p['warna'] == 'orange' or p['warna'] == 'red']
+    
+    # 1. MENGGAMBAR ALAS: Gambar SEMUA poligon kuning duluan!
+    for poly_dict in data_kuning:
         folium.Polygon(
             locations=poly_dict['coords'],
             color=poly_dict['warna'],           
@@ -594,24 +515,28 @@ if data_peringatan and len(data_peringatan) > 0:
             fill_opacity=poly_dict['opacity'],      
             tooltip=f"<b>🚨 {poly_dict['event']}</b><br>{poly_dict['nama_area']}",
             popup=folium.Popup(
-                f"""
-                <div style='min-width: 280px; max-height: 250px; overflow-y: auto;'>
-                    <h4 style='color: #cc0000; margin-top:0;'>🚨 {poly_dict['event']}</h4>
-                    <b>{poly_dict['nama_area']}</b><br><br>
-                    <span style='font-size: 12px; color: #333;'>{poly_dict['description']}</span><br><br>
-                    <hr style='margin: 5px 0;'>
-                    <small style='color: #555;'>
-                    <b>Mulai:</b> {poly_dict['effective']}<br>
-                    <b>Berakhir:</b> {poly_dict['expires']}
-                    </small>
-                </div>
-                """, 
+                f"<div style='min-width: 280px; max-height: 250px; overflow-y: auto;'><h4 style='color: #cc0000; margin-top:0;'>🚨 {poly_dict['event']}</h4><b>{poly_dict['nama_area']}</b><br><br><span style='font-size: 12px; color: #333;'>{poly_dict['description']}</span><br><br><hr style='margin: 5px 0;'><small style='color: #555;'><b>Mulai:</b> {poly_dict['effective']}<br><b>Berakhir:</b> {poly_dict['expires']}</small></div>", 
+                max_width=350
+            )
+        ).add_to(layer_peringatan)
+
+    # 2. MENGGAMBAR INTI: Gambar SEMUA poligon oren di atas si kuning!
+    for poly_dict in data_oren:
+        folium.Polygon(
+            locations=poly_dict['coords'],
+            color=poly_dict['warna'],           
+            weight=2,
+            fill=True,
+            fill_color=poly_dict['warna'],      
+            fill_opacity=poly_dict['opacity'],      
+            tooltip=f"<b>🚨 {poly_dict['event']}</b><br>{poly_dict['nama_area']}",
+            popup=folium.Popup(
+                f"<div style='min-width: 280px; max-height: 250px; overflow-y: auto;'><h4 style='color: #cc0000; margin-top:0;'>🚨 {poly_dict['event']}</h4><b>{poly_dict['nama_area']}</b><br><br><span style='font-size: 12px; color: #333;'>{poly_dict['description']}</span><br><br><hr style='margin: 5px 0;'><small style='color: #555;'><b>Mulai:</b> {poly_dict['effective']}<br><b>Berakhir:</b> {poly_dict['expires']}</small></div>", 
                 max_width=350
             )
         ).add_to(layer_peringatan)
 
 layer_peringatan.add_to(m)
-
 # ==========================================
 # TOMBOL REFRESH MENGAMBANG DI PETA
 # ==========================================
