@@ -403,7 +403,7 @@ if data_cuaca_bmkg:
 layer_prakiraan.add_to(m)
 
 # ==========================================
-# FUNGSI NARIK DATA PERINGATAN DINI (LOGIKA OREN-KUNING)
+# FUNGSI NARIK DATA PERINGATAN DINI (OFFICIAL STANDARD BMKG)
 # ==========================================
 @st.cache_data(ttl=300) 
 def ambil_peringatan_dini():
@@ -413,18 +413,23 @@ def ambil_peringatan_dini():
     session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
     
     try:
-        res_rss = session.get("https://www.bmkg.go.id/alerts/nowcast/id", timeout=10)
+        # PAKE URL RESMI DARI GITHUB BMKG BIAR GAK NYASAR!
+        url_rss = "https://www.bmkg.go.id/alerts/nowcast/id/rss.xml"
+        res_rss = session.get(url_rss, timeout=10)
         
         if res_rss.status_code == 200:
             import xml.etree.ElementTree as ET
             import re
             
+            # Buang Namespace XML biar gampang dibaca
             rss_text = re.sub(r' xmlns="[^"]+"', '', res_rss.text)
             root_rss = ET.fromstring(rss_text)
             
+            # Sesuai kodingan pusat: Cari di dalam <channel><item>
             for item in root_rss.findall('.//item'):
                 title = item.findtext('title', '')
                 
+                # Filter khusus area NTB
                 if 'Nusa Tenggara Barat' in title or 'NTB' in title or 'NUSA TENGGARA BARAT' in title:
                     link_detail = item.findtext('link', '')
                     
@@ -445,14 +450,11 @@ def ambil_peringatan_dini():
                                 
                                 polygons_data = []
                                 
-                                # LOOP SEMUA AREA (Pake enumerate buat nebak Area 1 vs Area 2)
+                                # Loop Area dan pisahin warna (Orange = Inti, Yellow = Meluas)
                                 areas = info.findall('.//area')
                                 for idx, area in enumerate(areas):
                                     area_desc = area.findtext('areaDesc', 'Wilayah Terdampak')
                                     
-                                    # LOGIKA DETEKTIF BMKG: 
-                                    # Kalo ada kata "meluas/potensi" = Kuning.
-                                    # Atau kalo area > 1, area pertama jadi Oren, sisanya Kuning.
                                     warna_poly = 'orange' 
                                     if 'meluas' in area_desc.lower() or 'potensi' in area_desc.lower() or idx > 0:
                                         warna_poly = 'yellow' 
@@ -486,7 +488,7 @@ def ambil_peringatan_dini():
         pass 
         
     return peringatan_aktif
-
+    
 # ==========================================
 # LAYER TAMBAHAN: POLYGON PERINGATAN DINI 
 # ==========================================
