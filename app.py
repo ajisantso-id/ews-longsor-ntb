@@ -287,9 +287,8 @@ for item in data_sensor:
 
     except Exception as e:
         continue
-
 # ==========================================
-# BIKIN LEGEND DINAMIS (JAVASCRIPT DOM OBSERVER SAKTI)
+# BIKIN LEGEND DINAMIS (JAVASCRIPT SAKTI)
 # ==========================================
 legend_html = '''
 <div id="legend_hujan" style="position: fixed; bottom: 30px; right: 30px; width: 230px; background-color: rgba(255, 255, 255, 0.9); border: 2px solid grey; z-index: 9999; font-size: 12px; padding: 10px; border-radius: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;">
@@ -299,7 +298,10 @@ legend_html = '''
     <div style="margin-bottom: 6px; height: 18px;"><div style="background: green; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;">🌧</div><span style="line-height: 18px;">Ringan (0.1 - 20 mm)</span></div>
     <div style="margin-bottom: 6px; height: 18px;"><div style="background: beige; border-radius: 50%; width: 18px; height: 18px; color: black; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px; border: 1px solid #ccc;">🌧</div><span style="line-height: 18px;">Sedang (20 - 50 mm)</span></div>
     <div style="margin-bottom: 6px; height: 18px;"><div style="background: orange; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;">⚠</div><span style="line-height: 18px;">Lebat (50 - 100 mm)</span> </div>
-    <div style="margin-bottom: 6px; height: 18px;"><div style="background: red; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;">⚠</div><span style="line-height: 18px;">Sangat Lebat (> 100 mm)</span></div>
+    <div style="margin-bottom: 6px; height: 18px;"><div style="background: red; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;">⚠</div><span style="line-height: 18px;">Sgt Lebat (100 - 150 mm)</span></div>
+    
+    <div style="margin-bottom: 6px; height: 18px;"><div style="background: darkred; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;">⚡</div><span style="line-height: 18px;">Ekstrem (> 150 mm)</span></div>
+    
     <hr style="margin: 8px 0; border-top: 1px dashed #999;">
     <div style="margin-bottom: 5px; font-weight: bold;">Level Peringatan Area AWS:</div>
     <div style="margin-bottom: 4px; height: 14px;"><i style="background: orange; width: 12px; height: 12px; float: left; margin-right: 8px; border-radius: 2px;"></i><span>Waspada</span></div>
@@ -307,7 +309,7 @@ legend_html = '''
     <div style="margin-bottom: 0px; height: 14px;"><i style="background: darkred; width: 12px; height: 12px; float: left; margin-right: 8px; border-radius: 2px;"></i><span>Awas</span></div>
 </div>
 
-<div id="legend_nowcast" style="display: none; position: fixed; bottom: 310px; right: 30px; width: 230px; background-color: rgba(255, 255, 255, 0.9); border: 2px solid darkorange; z-index: 9999; font-size: 12px; padding: 10px; border-radius: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;">
+<div id="legend_nowcast" style="display: none; position: fixed; bottom: 335px; right: 30px; width: 230px; background-color: rgba(255, 255, 255, 0.9); border: 2px solid darkorange; z-index: 9999; font-size: 12px; padding: 10px; border-radius: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;">
     <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center;"><b>Peringatan Dini (Nowcast)</b></h4>
     <div style="margin-bottom: 4px; height: 14px;"><i style="background: orange; border: 1px solid darkorange; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i><span>Wilayah Peringatan Dini</span></div>
     <div style="margin-bottom: 4px; height: 14px;"><i style="background: yellow; border: 1px solid gold; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i><span>Wilayah Potensi Meluas</span></div>
@@ -328,35 +330,26 @@ legend_html = '''
 </div>
 
 <script>
-    // Gunakan setInterval buat nge-loop tiap 1 detik (Karena Streamlit suka telat render peta)
-    var cekLayer = setInterval(function() {
-        // Cari semua tombol checkbox bawaan Folium/Leaflet
-        var layerCheckboxes = document.querySelectorAll('.leaflet-control-layers-selector');
-        
-        if (layerCheckboxes.length > 0) {
-            layerCheckboxes.forEach(function(cb) {
-                // Pasang kuping (listener) di tiap checkbox, kalau belum dipasang
-                if (!cb.hasAttribute('data-legend-bound')) {
-                    cb.setAttribute('data-legend-bound', 'true');
+    setInterval(function() {
+        var checkboxes = document.querySelectorAll('input.leaflet-control-layers-selector');
+        checkboxes.forEach(function(cb) {
+            if (!cb.dataset.hooked) {
+                cb.dataset.hooked = 'true';
+                cb.addEventListener('change', function() {
+                    // Pakai .includes biar kebal sama spasi / enter dari Streamlit
+                    var text = this.nextElementSibling ? this.nextElementSibling.innerText || this.nextElementSibling.textContent : "";
                     
-                    cb.addEventListener('change', function() {
-                        var namaLayer = this.nextElementSibling.textContent.trim();
-                        
-                        // Logika Nyala-Mati Legend
-                        if (namaLayer.includes('Peringatan Dini Cuaca')) {
-                            document.getElementById('legend_nowcast').style.display = this.checked ? 'block' : 'none';
-                        }
-                        else if (namaLayer.includes('Gerakan Tanah')) {
-                            document.getElementById('legend_longsor').style.display = this.checked ? 'block' : 'none';
-                        }
-                        else if (namaLayer.includes('Banjir (InaRISK)')) {
-                            document.getElementById('legend_banjir').style.display = this.checked ? 'block' : 'none';
-                        }
-                    });
-                }
-            });
-        }
-    }, 1000); 
+                    if (text.includes("Peringatan Dini Cuaca")) {
+                        document.getElementById("legend_nowcast").style.display = this.checked ? "block" : "none";
+                    } else if (text.includes("Gerakan Tanah")) {
+                        document.getElementById("legend_longsor").style.display = this.checked ? "block" : "none";
+                    } else if (text.includes("Banjir")) {
+                        document.getElementById("legend_banjir").style.display = this.checked ? "block" : "none";
+                    }
+                });
+            }
+        });
+    }, 1000);
 </script>
 '''
 
@@ -476,7 +469,7 @@ if data_cuaca_bmkg:
 layer_prakiraan.add_to(m)
 
 # ==========================================
-# FUNGSI NARIK DATA PERINGATAN DINI (FIX MULTI-POLYGON)
+# FUNGSI NARIK DATA PERINGATAN DINI (NOWCAST - MULTI POLIGON & WARNA)
 # ==========================================
 @st.cache_data(ttl=300) # Update tiap 5 menit
 def ambil_peringatan_dini():
@@ -518,14 +511,14 @@ def ambil_peringatan_dini():
                                 
                                 polygons_data = []
                                 
-                                # LOOP SEMUA AREA
+                                # LOOP SEMUA AREA BUAT MISAHIN WARNA
                                 for area in info.findall('.//area'):
                                     area_desc = area.findtext('areaDesc', 'Wilayah Terdampak')
                                     warna_poly = 'orange' 
                                     if 'meluas' in area_desc.lower() or 'potensi' in area_desc.lower():
                                         warna_poly = 'yellow' 
                                         
-                                    # INI OBATNYA: Loop SEMUA poligon di dalam area tersebut!
+                                    # LOOP SEMUA POLIGON DI DALAM AREA TERSEBUT
                                     for poly in area.findall('.//polygon'):
                                         poly_text = poly.text
                                         if poly_text:
@@ -555,7 +548,7 @@ def ambil_peringatan_dini():
         pass 
         
     return peringatan_aktif
-    
+
 # ==========================================
 # LAYER TAMBAHAN: POLYGON PERINGATAN DINI 
 # ==========================================
@@ -570,8 +563,6 @@ if data_peringatan and len(data_peringatan) > 0:
     for alert in data_peringatan:
         for poly_dict in alert['polygons_data']:
             warna = poly_dict['warna']
-            
-            # Kalau orange (Peringatan) dibikin lebih pekat, kalau kuning (Meluas) lebih transparan
             opacity = 0.6 if warna == 'orange' else 0.4
             
             folium.Polygon(
