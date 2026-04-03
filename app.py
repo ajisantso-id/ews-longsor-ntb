@@ -462,65 +462,76 @@ if data_cuaca_bmkg:
 layer_prakiraan.add_to(m)
 
 # ==========================================
-# FUNGSI NARIK DATA PERINGATAN DINI (CAP NOWCAST XML)
+# FUNGSI NARIK DATA PERINGATAN DINI (KEBAL BADAI & NAMESPACE)
 # ==========================================
 @st.cache_data(ttl=300) # Update tiap 5 menit
 def ambil_peringatan_dini():
     peringatan_aktif = []
     
     session = requests.Session()
-    session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+    session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'})
     
     try:
         # Tarik RSS Feed Peringatan Dini BMKG
-        res_rss = session.get("https://www.bmkg.go.id/alerts/nowcast/id", timeout=10)
+        res_rss = session.get("https://www.bmkg.go.id/alerts/nowcast/id", timeout=15)
         
         if res_rss.status_code == 200:
             import xml.etree.ElementTree as ET
-            import re
             
-            # JURUS SAKTI: Hancurkan Namespace XML biar gampang di-search!
-            rss_text = re.sub(r' xmlns="[^"]+"', '', res_rss.text)
-            root_rss = ET.fromstring(rss_text)
+            # Pake content biar gak bentrok format huruf
+            root_rss = ET.fromstring(res_rss.content)
             
-            # Cari di daftar RSS, ada badai di NTB gak hari ini?
-            for item in root_rss.findall('.//item'):
-                title = item.findtext('title', '')
-                
-                # Filter khusus NTB
-                if 'Nusa Tenggara Barat' in title or 'NTB' in title:
-                    link_detail = item.findtext('link', '')
+            # Kita pake .iter() biar kebal dari sistem Namespace XML BMKG yang ribet
+            for item in root_rss.iter():
+                if item.tag.endswith('item'):
+                    title = ""
+                    link_detail = ""
                     
-                    if link_detail:
-                        # Masuk ke link detail peringatan dininya
-                        res_cap = session.get(link_detail, timeout=10)
-                        
-                        if res_cap.status_code == 200:
-                            cap_text = re.sub(r' xmlns="[^"]+"', '', res_cap.text)
-                            cap_root = ET.fromstring(cap_text)
+                    for child in item.iter():
+                        if child.tag.endswith('title'): title = child.text
+                        if child.tag.endswith('link'): link_detail = child.text
+                    
+                    # FILTER SAKTI: Ubah ke huruf kecil semua (.lower()) biar ke-baca robot!
+                    if title and link_detail:
+                        teks_judul = title.lower()
+                        if 'nusa tenggara barat' in teks_judul or 'ntb' in teks_judul:
                             
-                            info = cap_root.find('.//info')
-                            if info is not None:
-                                event = info.findtext('event', 'Peringatan Dini Cuaca')
-                                headline = info.findtext('headline', '-')
-                                desc = info.findtext('description', '-')
-                                effective = info.findtext('effective', '-')
-                                expires = info.findtext('expires', '-')
+                            # Masuk ke link detail CAP XML
+                            res_cap = session.get(link_detail, timeout=15)
+                            
+                            if res_cap.status_code == 200:
+                                cap_root = ET.fromstring(res_cap.content)
+                                
+                                # Fungsi pencari teks kebal namespace
+                                def ambil_teks(elemen_root, nama_tag, default="-"):
+                                    for el in elemen_root.iter():
+                                        if el.tag.endswith(nama_tag):
+                                            return el.text
+                                    return default
+
+                                event = ambil_teks(cap_root, 'event', 'Peringatan Dini Cuaca')
+                                headline = ambil_teks(cap_root, 'headline', '-')
+                                desc = ambil_teks(cap_root, 'description', '-')
+                                effective = ambil_teks(cap_root, 'effective', '-')
+                                expires = ambil_teks(cap_root, 'expires', '-')
                                 
                                 # Tarik Koordinat Poligon Area Terdampak
                                 polygons = []
-                                for area in info.findall('.//area'):
-                                    poly_text = area.findtext('polygon')
-                                    if poly_text:
-                                        coords = []
-                                        # Format BMKG: lat,lon lat,lon
-                                        for pt in poly_text.strip().split():
-                                            if ',' in pt:
-                                                lat_s, lon_s = pt.split(',')
-                                                coords.append((float(lat_s), float(lon_s)))
-                                        if coords:
-                                            polygons.append(coords)
-                                            
+                                for elem in cap_root.iter():
+                                    if elem.tag.endswith('polygon'):
+                                        poly_text = elem.text
+                                        if poly_text:
+                                            coords = []
+                                            # Format BMKG: lat,lon lat,lon
+                                            for pt in poly_text.strip().split():
+                                                if ',' in pt:
+                                                    try:
+                                                        lat_s, lon_s = pt.split(',')
+                                                        coords.append((float(lat_s), float(lon_s)))
+                                                    except: pass
+                                            if coords:
+                                                polygons.append(coords)
+                                                
                                 if polygons:
                                     peringatan_aktif.append({
                                         'event': event,
@@ -534,7 +545,6 @@ def ambil_peringatan_dini():
         pass 
         
     return peringatan_aktif
-
 # ==========================================
 # LAYER TAMBAHAN: POLYGON PERINGATAN DINI 
 # ==========================================
