@@ -404,7 +404,7 @@ if data_cuaca_bmkg:
 layer_prakiraan.add_to(m)
 
 # ==========================================
-# FUNGSI NARIK DATA PERINGATAN DINI (ANTI JEBAKAN SEVERITY)
+# FUNGSI NARIK DATA PERINGATAN DINI (THE ULTIMATE FIX)
 # ==========================================
 @st.cache_data(ttl=60) 
 def ambil_peringatan_dini():
@@ -436,36 +436,32 @@ def ambil_peringatan_dini():
                             cap_text = re.sub(r' xmlns="[^"]+"', '', res_cap.text)
                             cap_root = ET.fromstring(cap_text)
                             
-                            # Cuma ambil bahasa Indonesia
-                            info_blocks = []
-                            for info in cap_root.findall('.//info'):
-                                if 'id' in info.findtext('language', '').lower():
-                                    info_blocks.append(info)
+                            # 1. Ambil HANYA wadah <info> Bahasa Indonesia
+                            info_blocks = [i for i in cap_root.findall('.//info') if 'id' in i.findtext('language', '').lower()]
                             
-                            for info in info_blocks:
+                            # 2. LOOP WADAH (KUNCI: WARNA DITENTUKAN DI SINI, BUKAN DI DALAM KECAMATAN!)
+                            for idx_info, info in enumerate(info_blocks):
                                 event = info.findtext('event', 'Peringatan Dini Cuaca')
                                 headline = info.findtext('headline', '-')
                                 desc = info.findtext('description', '-')
                                 effective = info.findtext('effective', '-')
                                 expires = info.findtext('expires', '-')
                                 
-                                # LOOP AREA: Disini rahasianya! BUKAN pake severity.
-                                areas = info.findall('.//area')
-                                for idx_area, area in enumerate(areas):
-                                    area_desc = area.findtext('areaDesc', '').lower()
-                                    
-                                    # Defaultnya pasti Oren (Daerah Inti)
+                                # Logika Murni Pusat: Wadah 1 (index 0) = Oren, Wadah 2 (index 1) = Kuning
+                                warna_poly = 'orange' if idx_info == 0 else 'yellow'
+                                
+                                # Backup validasi pakai Severity resmi CAP Internasional
+                                severity = info.findtext('severity', '').lower()
+                                if severity in ['moderate', 'minor']:
+                                    warna_poly = 'yellow'
+                                elif severity in ['severe', 'extreme']:
                                     warna_poly = 'orange'
-                                    opacity_poly = 0.6
                                     
-                                    # Kalo ada kata "meluas/potensi" ATAU dia area kedua -> Kuning!
-                                    if 'meluas' in area_desc or 'potensi' in area_desc:
-                                        warna_poly = 'yellow'
-                                        opacity_poly = 0.4
-                                    elif idx_area > 0:
-                                        warna_poly = 'yellow'
-                                        opacity_poly = 0.4
-                                        
+                                opacity_poly = 0.6 if warna_poly == 'orange' else 0.4
+                                
+                                # 3. LOOP AREA/KECAMATAN (Haram ganti warna poly di dalam sini!)
+                                for area in info.findall('.//area'):
+                                    area_desc = area.findtext('areaDesc', 'Wilayah Terdampak')
                                     for poly in area.findall('.//polygon'):
                                         poly_text = poly.text
                                         if poly_text:
@@ -480,12 +476,16 @@ def ambil_peringatan_dini():
                                                     'coords': coords,
                                                     'warna': warna_poly,
                                                     'opacity': opacity_poly,
-                                                    'nama_area': area.findtext('areaDesc', 'Wilayah Terdampak'),
+                                                    'nama_area': area_desc,
                                                     'event': event,
                                                     'description': desc,
                                                     'effective': effective,
                                                     'expires': expires
                                                 })
+                                                
+            # 4. JURUS Z-INDEX (KARPET KUNING DIGELAR DULUAN, OREN DI ATASNYA)
+            peringatan_aktif.sort(key=lambda x: 1 if x['warna'] == 'yellow' else 2)
+            
     except Exception as e:
         pass 
         
@@ -500,29 +500,7 @@ with st.spinner("🚨 Mengecek Peringatan Dini Cuaca NTB..."):
     data_peringatan = ambil_peringatan_dini()
 
 if data_peringatan and len(data_peringatan) > 0:
-    
-    # JURUS Z-INDEX: PISAHIN KARPET KUNING SAMA KARPET OREN
-    data_kuning = [p for p in data_peringatan if p['warna'] == 'yellow']
-    data_oren = [p for p in data_peringatan if p['warna'] == 'orange']
-    
-    # 1. GELAR KARPET KUNING DULUAN (Sebagai Alas)
-    for poly_dict in data_kuning:
-        folium.Polygon(
-            locations=poly_dict['coords'],
-            color=poly_dict['warna'],           
-            weight=2,
-            fill=True,
-            fill_color=poly_dict['warna'],      
-            fill_opacity=poly_dict['opacity'],      
-            tooltip=f"<b>🚨 {poly_dict['event']}</b><br>{poly_dict['nama_area']}",
-            popup=folium.Popup(
-                f"<div style='min-width: 280px; max-height: 250px; overflow-y: auto;'><h4 style='color: #cc0000; margin-top:0;'>🚨 {poly_dict['event']}</h4><b>{poly_dict['nama_area']}</b><br><br><span style='font-size: 12px; color: #333;'>{poly_dict['description']}</span><br><br><hr style='margin: 5px 0;'><small style='color: #555;'><b>Mulai:</b> {poly_dict['effective']}<br><b>Berakhir:</b> {poly_dict['expires']}</small></div>", 
-                max_width=350
-            )
-        ).add_to(layer_peringatan)
-
-    # 2. GELAR KARPET OREN DI ATASNYA (Biar gak ketelan!)
-    for poly_dict in data_oren:
+    for poly_dict in data_peringatan:
         folium.Polygon(
             locations=poly_dict['coords'],
             color=poly_dict['warna'],           
