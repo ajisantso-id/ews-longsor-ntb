@@ -404,9 +404,9 @@ if data_cuaca_bmkg:
 layer_prakiraan.add_to(m)
 
 # ==========================================
-# FUNGSI NARIK DATA PERINGATAN DINI (LOGIKA SNIPER WARNA)
+# FUNGSI NARIK DATA PERINGATAN DINI (LOGIKA WARNA MURNI TEKS)
 # ==========================================
-@st.cache_data(ttl=60) # Cache dipendekin jadi 60 detik biar gampang di-refresh
+@st.cache_data(ttl=60) 
 def ambil_peringatan_dini():
     peringatan_aktif = []
     session = requests.Session()
@@ -425,6 +425,7 @@ def ambil_peringatan_dini():
             
             for item in root_rss.findall('.//item'):
                 title = item.findtext('title', '')
+                
                 if 'Nusa Tenggara Barat' in title or 'NTB' in title or 'NUSA TENGGARA BARAT' in title:
                     link_detail = item.findtext('link', '')
                     if link_detail:
@@ -445,11 +446,15 @@ def ambil_peringatan_dini():
                                 
                                 polygons_data = []
                                 
-                                # LOGIKA SNIPER: Poligon pertama = Oren, sisanya = Kuning
-                                is_first_polygon = True 
-                                
+                                # LOGIKA WARNA: Balik ke murni teks! 
+                                # Kalo teks dari BMKG bilang "meluas", baru dikasih Kuning!
                                 for area in info.findall('.//area'):
                                     area_desc = area.findtext('areaDesc', 'Wilayah Terdampak')
+                                    warna_poly = 'orange' 
+                                    
+                                    if 'meluas' in area_desc.lower() or 'potensi' in area_desc.lower():
+                                        warna_poly = 'yellow' 
+                                        
                                     for poly in area.findall('.//polygon'):
                                         poly_text = poly.text
                                         if poly_text:
@@ -460,9 +465,6 @@ def ambil_peringatan_dini():
                                                     coords.append((float(lat_s), float(lon_s)))
                                             
                                             if coords:
-                                                warna_poly = 'orange' if is_first_polygon else 'yellow'
-                                                is_first_polygon = False # Matikan setelah poligon pertama
-                                                
                                                 polygons_data.append({
                                                     'coords': coords,
                                                     'warna': warna_poly,
@@ -537,43 +539,52 @@ tombol_refresh_html = """
 m.get_root().html.add_child(folium.Element(tombol_refresh_html))
 
 # ==========================================
-# HTML LEGEND KOTAK-KOTAK
+# HTML LEGEND (FLEXBOX DESIGN: RAPI & DINAMIS!)
 # ==========================================
 legend_html = '''
-<div id="legend_hujan" style="position: fixed; bottom: 30px; right: 30px; width: 230px; background-color: rgba(255, 255, 255, 0.9); border: 2px solid grey; z-index: 9999; font-size: 12px; padding: 10px; border-radius: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;">
-    <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center;"><b>Status Peringatan AWS</b></h4>
-    <div style="margin-bottom: 5px; font-weight: bold;">Intensitas Hujan (24 Jam):</div>
-    <div style="margin-bottom: 6px; height: 18px;"><div style="background: blue; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;">☁</div><span style="line-height: 18px;">Cerah (0 mm)</span></div>
-    <div style="margin-bottom: 6px; height: 18px;"><div style="background: green; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;">🌧</div><span style="line-height: 18px;">Ringan (0.1 - 20 mm)</span></div>
-    <div style="margin-bottom: 6px; height: 18px;"><div style="background: beige; border-radius: 50%; width: 18px; height: 18px; color: black; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px; border: 1px solid #ccc;">🌧</div><span style="line-height: 18px;">Sedang (20 - 50 mm)</span></div>
-    <div style="margin-bottom: 6px; height: 18px;"><div style="background: orange; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;">⚠</div><span style="line-height: 18px;">Lebat (50 - 100 mm)</span> </div>
-    <div style="margin-bottom: 6px; height: 18px;"><div style="background: red; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;">⚠</div><span style="line-height: 18px;">Sangat Lebat (100 - 150 mm)</span></div>
-    <div style="margin-bottom: 6px; height: 18px;"><div style="background: darkred; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;">⚡</div><span style="line-height: 18px;">Ekstrem (> 150 mm)</span></div>
-    <hr style="margin: 8px 0; border-top: 1px dashed #999;">
-    <div style="margin-bottom: 5px; font-weight: bold;">Level Peringatan Area AWS:</div>
-    <div style="margin-bottom: 4px; height: 14px;"><i style="background: orange; width: 12px; height: 12px; float: left; margin-right: 8px; border-radius: 2px;"></i><span>Waspada</span></div>
-    <div style="margin-bottom: 4px; height: 14px;"><i style="background: red; width: 12px; height: 12px; float: left; margin-right: 8px; border-radius: 2px;"></i><span>Siaga</span></div>
-    <div style="margin-bottom: 0px; height: 14px;"><i style="background: darkred; width: 12px; height: 12px; float: left; margin-right: 8px; border-radius: 2px;"></i><span>Awas</span></div>
+<div style="position: fixed; bottom: 30px; left: 30px; display: flex; gap: 15px; z-index: 9999; align-items: flex-end;">
+    
+    <div id="legend_longsor" style="display: none; width: 210px; background-color: rgba(255, 255, 255, 0.9); border: 2px solid grey; font-size: 12px; padding: 10px; border-radius: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;">
+        <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center;"><b>Kerentanan Gerakan Tanah</b></h4>
+        <div style="margin-bottom: 2px;"><i style="background: #cc0000; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Sangat Tinggi</div>
+        <div style="margin-bottom: 2px;"><i style="background: #ff3385; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Tinggi</div>
+        <div style="margin-bottom: 2px;"><i style="background: #ffff00; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Menengah</div>
+        <div style="margin-bottom: 2px;"><i style="background: #00cc00; opacity: 0.3; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Rendah</div>
+        <div style="margin-bottom: 2px;"><i style="background: #00ccff; opacity: 0.3; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Sangat Rendah</div>
+    </div>
+    
+    <div id="legend_banjir" style="display: none; width: 190px; background-color: rgba(255, 255, 255, 0.9); border: 2px solid #0000FF; font-size: 12px; padding: 10px; border-radius: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;">
+        <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center;"><b>Kerentanan Banjir</b></h4>
+        <div style="margin-bottom: 4px;"><i style="background:#00008B; width:15px; height:15px; float:left; margin-right:8px; opacity:0.5;"></i> Rawan Banjir (InaRISK)</div>
+    </div>
 </div>
 
-<div id="legend_nowcast" style="display: none; position: fixed; bottom: 335px; right: 30px; width: 230px; background-color: rgba(255, 255, 255, 0.9); border: 2px solid darkorange; z-index: 9999; font-size: 12px; padding: 10px; border-radius: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;">
-    <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center;"><b>Peringatan Dini (Nowcast)</b></h4>
-    <div style="margin-bottom: 4px; height: 14px;"><i style="background: orange; border: 1px solid darkorange; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i><span>Wilayah Peringatan Dini</span></div>
-    <div style="margin-bottom: 4px; height: 14px;"><i style="background: yellow; border: 1px solid gold; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i><span>Wilayah Potensi Meluas</span></div>
-</div>
+<div style="position: fixed; bottom: 30px; right: 30px; display: flex; flex-direction: row-reverse; gap: 15px; z-index: 9999; align-items: flex-end;">
+    
+    <div id="legend_hujan" style="width: 220px; background-color: rgba(255, 255, 255, 0.9); border: 2px solid grey; font-size: 12px; padding: 10px; border-radius: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;">
+        <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center;"><b>Status Peringatan AWS</b></h4>
+        <div style="margin-bottom: 5px; font-weight: bold;">Intensitas Hujan (24 Jam):</div>
+        <div style="margin-bottom: 6px; height: 18px;"><div style="background: blue; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;">☁</div><span style="line-height: 18px;">Cerah (0 mm)</span></div>
+        <div style="margin-bottom: 6px; height: 18px;"><div style="background: green; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;">🌧</div><span style="line-height: 18px;">Ringan (0.1 - 20 mm)</span></div>
+        <div style="margin-bottom: 6px; height: 18px;"><div style="background: beige; border-radius: 50%; width: 18px; height: 18px; color: black; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px; border: 1px solid #ccc;">🌧</div><span style="line-height: 18px;">Sedang (20 - 50 mm)</span></div>
+        <div style="margin-bottom: 6px; height: 18px;"><div style="background: orange; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;">⚠</div><span style="line-height: 18px;">Lebat (50 - 100 mm)</span> </div>
+        <div style="margin-bottom: 6px; height: 18px;"><div style="background: red; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;">⚠</div><span style="line-height: 18px;">Sangat Lebat (100 - 150 mm)</span></div>
+        <div style="margin-bottom: 6px; height: 18px;"><div style="background: darkred; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;">⚡</div><span style="line-height: 18px;">Ekstrem (> 150 mm)</span></div>
+    </div>
 
-<div id="legend_longsor" style="display: none; position: fixed; bottom: 30px; left: 30px; width: 230px; background-color: rgba(255, 255, 255, 0.9); border: 2px solid grey; z-index: 9999; font-size: 12px; padding: 10px; border-radius: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;">
-    <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center;"><b>Kerentanan Gerakan Tanah</b></h4>
-    <div style="margin-bottom: 2px;"><i style="background: #cc0000; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Sangat Tinggi</div>
-    <div style="margin-bottom: 2px;"><i style="background: #ff3385; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Tinggi</div>
-    <div style="margin-bottom: 2px;"><i style="background: #ffff00; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Menengah</div>
-    <div style="margin-bottom: 2px;"><i style="background: #00cc00; opacity: 0.3; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Rendah</div>
-    <div style="margin-bottom: 2px;"><i style="background: #00ccff; opacity: 0.3; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Sangat Rendah</div>
-</div>
+    <div id="legend_nowcast" style="display: none; width: 210px; background-color: rgba(255, 255, 255, 0.9); border: 2px solid darkorange; font-size: 12px; padding: 10px; border-radius: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;">
+        <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center;"><b>Peringatan Dini (Nowcast)</b></h4>
+        <div style="margin-bottom: 4px; height: 14px;"><i style="background: orange; border: 1px solid darkorange; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i><span>Wilayah Peringatan Dini</span></div>
+        <div style="margin-bottom: 4px; height: 14px;"><i style="background: yellow; border: 1px solid gold; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i><span>Wilayah Potensi Meluas</span></div>
+    </div>
+    
+    <div id="legend_area_aws" style="width: 190px; background-color: rgba(255, 255, 255, 0.9); border: 2px solid grey; font-size: 12px; padding: 10px; border-radius: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;">
+        <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center;"><b>Peringatan Area AWS</b></h4>
+        <div style="margin-bottom: 4px; height: 14px;"><i style="background: orange; width: 12px; height: 12px; float: left; margin-right: 8px; border-radius: 2px;"></i><span>Waspada</span></div>
+        <div style="margin-bottom: 4px; height: 14px;"><i style="background: red; width: 12px; height: 12px; float: left; margin-right: 8px; border-radius: 2px;"></i><span>Siaga</span></div>
+        <div style="margin-bottom: 0px; height: 14px;"><i style="background: darkred; width: 12px; height: 12px; float: left; margin-right: 8px; border-radius: 2px;"></i><span>Awas</span></div>
+    </div>
 
-<div id="legend_banjir" style="display: none; position: fixed; bottom: 200px; left: 30px; width: 230px; background-color: rgba(255, 255, 255, 0.9); border: 2px solid #0000FF; z-index: 9999; font-size: 12px; padding: 10px; border-radius: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;">
-    <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center;"><b>Kerentanan Banjir</b></h4>
-    <div style="margin-bottom: 4px;"><i style="background:#00008B; width:15px; height:15px; float:left; margin-right:8px; opacity:0.5;"></i> Rawan Banjir (InaRISK)</div>
 </div>
 '''
 m.get_root().html.add_child(folium.Element(legend_html))
