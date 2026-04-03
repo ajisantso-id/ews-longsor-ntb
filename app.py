@@ -483,6 +483,81 @@ def ambil_peringatan_dini():
     return peringatan_aktif
 
 # ==========================================
+# FUNGSI NARIK DATA PERINGATAN DINI (HACKER MODE BMKG)
+# ==========================================
+@st.cache_data(ttl=60) 
+def ambil_peringatan_dini():
+    peringatan_aktif = []
+    session = requests.Session()
+    session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+    
+    try:
+        url_rss = f"https://www.bmkg.go.id/alerts/nowcast/id/rss.xml?t={int(time.time())}"
+        res_rss = session.get(url_rss, timeout=10)
+        
+        if res_rss.status_code == 200:
+            import xml.etree.ElementTree as ET
+            import re
+            
+            rss_text = re.sub(r' xmlns="[^"]+"', '', res_rss.text)
+            root_rss = ET.fromstring(rss_text)
+            
+            for item in root_rss.findall('.//item'):
+                title = item.findtext('title', '')
+                
+                if 'Nusa Tenggara Barat' in title or 'NTB' in title or 'NUSA TENGGARA BARAT' in title:
+                    link_detail = item.findtext('link', '')
+                    if link_detail:
+                        link_fresh = f"{link_detail}?t={int(time.time())}"
+                        res_cap = session.get(link_fresh, timeout=10)
+                        
+                        if res_cap.status_code == 200:
+                            cap_text = re.sub(r' xmlns="[^"]+"', '', res_cap.text)
+                            cap_root = ET.fromstring(cap_text)
+                            
+                            # FILTER BAHASA: Ambil yang id-ID aja biar poligon gak numpuk/dobel!
+                            info_blocks = [i for i in cap_root.findall('.//info') if i.findtext('language', 'id-ID') == 'id-ID']
+                            
+                            # LOOP WADAH INFO (Wadah 1 = Oren, Wadah 2 = Kuning)
+                            for idx_info, info in enumerate(info_blocks):
+                                event = info.findtext('event', 'Peringatan Dini Cuaca')
+                                headline = info.findtext('headline', '-')
+                                desc = info.findtext('description', '-')
+                                effective = info.findtext('effective', '-')
+                                expires = info.findtext('expires', '-')
+                                
+                                # JURUS SAKTI: Blok pertama (0) pasti Inti (Oren), sisanya Meluas (Kuning)
+                                warna_poly = 'orange' if idx_info == 0 else 'yellow'
+                                opacity_poly = 0.6 if warna_poly == 'orange' else 0.4
+                                
+                                for area in info.findall('.//area'):
+                                    area_desc = area.findtext('areaDesc', 'Wilayah Terdampak')
+                                    for poly in area.findall('.//polygon'):
+                                        poly_text = poly.text
+                                        if poly_text:
+                                            coords = []
+                                            for pt in poly_text.strip().split():
+                                                if ',' in pt:
+                                                    lat_s, lon_s = pt.split(',')
+                                                    coords.append((float(lat_s), float(lon_s)))
+                                            
+                                            if coords:
+                                                peringatan_aktif.append({
+                                                    'coords': coords,
+                                                    'warna': warna_poly,
+                                                    'opacity': opacity_poly,
+                                                    'nama_area': area_desc,
+                                                    'event': event,
+                                                    'description': desc,
+                                                    'effective': effective,
+                                                    'expires': expires
+                                                })
+    except Exception as e:
+        pass 
+        
+    return peringatan_aktif
+
+# ==========================================
 # LAYER TAMBAHAN: POLYGON PERINGATAN DINI 
 # ==========================================
 layer_peringatan = folium.FeatureGroup(name="🚨 Peringatan Dini Cuaca", show=False)
@@ -492,16 +567,13 @@ with st.spinner("🚨 Mengecek Peringatan Dini Cuaca NTB..."):
 
 if data_peringatan and len(data_peringatan) > 0:
     for poly_dict in data_peringatan:
-        warna = poly_dict['warna']
-        opacity = 0.6 if warna == 'orange' else 0.4
-        
         folium.Polygon(
             locations=poly_dict['coords'],
-            color=warna,           
+            color=poly_dict['warna'],           
             weight=2,
             fill=True,
-            fill_color=warna,      
-            fill_opacity=opacity,      
+            fill_color=poly_dict['warna'],      
+            fill_opacity=poly_dict['opacity'],      
             tooltip=f"<b>🚨 {poly_dict['event']}</b><br>{poly_dict['nama_area']}",
             popup=folium.Popup(
                 f"""
