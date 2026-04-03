@@ -403,38 +403,46 @@ if data_cuaca_bmkg:
 layer_prakiraan.add_to(m)
 
 # ==========================================
-# FUNGSI NARIK DATA PERINGATAN DINI (OFFICIAL STANDARD BMKG)
+# TOMBOL REFRESH CACHE MANUAL (TAMPIL DI WEB)
+# ==========================================
+st.markdown("<br>", unsafe_allow_html=True)
+col_kosong, col_refresh = st.columns([4, 1])
+with col_refresh:
+    # Tombol ini bakal ngehancurin memori Streamlit seketika
+    if st.button("🔄 Refresh Data BMKG", use_container_width=True):
+        st.cache_data.clear()
+        st.rerun()
+
+# ==========================================
+# FUNGSI NARIK DATA PERINGATAN DINI (ANTI-BASI & FIX WARNA)
 # ==========================================
 @st.cache_data(ttl=300) 
-def ambil_peringatan_dini():
+def ambil_peringatan_dini(waktu_sekarang): # Parameter buat maksa fungsi jalan ulang
     peringatan_aktif = []
-    
     session = requests.Session()
     session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
     
     try:
-        # PAKE URL RESMI DARI GITHUB BMKG BIAR GAK NYASAR!
-        url_rss = "https://www.bmkg.go.id/alerts/nowcast/id/rss.xml"
+        # Pake timestamp biar browser & ISP gak ngasih file XML yang basi!
+        url_rss = f"https://www.bmkg.go.id/alerts/nowcast/id/rss.xml?t={int(time.time())}"
         res_rss = session.get(url_rss, timeout=10)
         
         if res_rss.status_code == 200:
             import xml.etree.ElementTree as ET
             import re
             
-            # Buang Namespace XML biar gampang dibaca
             rss_text = re.sub(r' xmlns="[^"]+"', '', res_rss.text)
             root_rss = ET.fromstring(rss_text)
             
-            # Sesuai kodingan pusat: Cari di dalam <channel><item>
             for item in root_rss.findall('.//item'):
                 title = item.findtext('title', '')
                 
-                # Filter khusus area NTB
                 if 'Nusa Tenggara Barat' in title or 'NTB' in title or 'NUSA TENGGARA BARAT' in title:
                     link_detail = item.findtext('link', '')
                     
                     if link_detail:
-                        res_cap = session.get(link_detail, timeout=10)
+                        link_fresh = f"{link_detail}?t={int(time.time())}"
+                        res_cap = session.get(link_fresh, timeout=10)
                         
                         if res_cap.status_code == 200:
                             cap_text = re.sub(r' xmlns="[^"]+"', '', res_cap.text)
@@ -450,13 +458,12 @@ def ambil_peringatan_dini():
                                 
                                 polygons_data = []
                                 
-                                # Loop Area dan pisahin warna (Orange = Inti, Yellow = Meluas)
-                                areas = info.findall('.//area')
-                                for idx, area in enumerate(areas):
+                                for area in info.findall('.//area'):
                                     area_desc = area.findtext('areaDesc', 'Wilayah Terdampak')
                                     
+                                    # LOGIKA WARNA YANG BENER: Murni ngikutin teks dari Pusat BMKG!
                                     warna_poly = 'orange' 
-                                    if 'meluas' in area_desc.lower() or 'potensi' in area_desc.lower() or idx > 0:
+                                    if 'meluas' in area_desc.lower() or 'potensi' in area_desc.lower():
                                         warna_poly = 'yellow' 
                                         
                                     for poly in area.findall('.//polygon'):
@@ -488,95 +495,6 @@ def ambil_peringatan_dini():
         pass 
         
     return peringatan_aktif
-    
-# ==========================================
-# FUNGSI NARIK DATA PERINGATAN DINI (LOGIKA WARNA BAR-BAR)
-# ==========================================
-@st.cache_data(ttl=300) 
-def ambil_peringatan_dini():
-    peringatan_aktif = []
-    session = requests.Session()
-    session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
-    
-    try:
-        # Pake URL Official BMKG
-        url_rss = "https://www.bmkg.go.id/alerts/nowcast/id/rss.xml"
-        res_rss = session.get(url_rss, timeout=10)
-        
-        if res_rss.status_code == 200:
-            import xml.etree.ElementTree as ET
-            import re
-            
-            rss_text = re.sub(r' xmlns="[^"]+"', '', res_rss.text)
-            root_rss = ET.fromstring(rss_text)
-            
-            for item in root_rss.findall('.//item'):
-                title = item.findtext('title', '')
-                
-                if 'Nusa Tenggara Barat' in title or 'NTB' in title or 'NUSA TENGGARA BARAT' in title:
-                    link_detail = item.findtext('link', '')
-                    
-                    if link_detail:
-                        res_cap = session.get(link_detail, timeout=10)
-                        
-                        if res_cap.status_code == 200:
-                            cap_text = re.sub(r' xmlns="[^"]+"', '', res_cap.text)
-                            cap_root = ET.fromstring(cap_text)
-                            
-                            info = cap_root.find('.//info')
-                            if info is not None:
-                                event = info.findtext('event', 'Peringatan Dini Cuaca')
-                                headline = info.findtext('headline', '-')
-                                desc = info.findtext('description', '-')
-                                effective = info.findtext('effective', '-')
-                                expires = info.findtext('expires', '-')
-                                
-                                polygons_data = []
-                                
-                                areas = info.findall('.//area')
-                                for idx_area, area in enumerate(areas):
-                                    area_desc = area.findtext('areaDesc', 'Wilayah Terdampak')
-                                    polygons = area.findall('.//polygon')
-                                    
-                                    for idx_poly, poly in enumerate(polygons):
-                                        poly_text = poly.text
-                                        if poly_text:
-                                            coords = []
-                                            for pt in poly_text.strip().split():
-                                                if ',' in pt:
-                                                    lat_s, lon_s = pt.split(',')
-                                                    coords.append((float(lat_s), float(lon_s)))
-                                            
-                                            if coords:
-                                                # JURUS PAKSA WARNA KUNING!
-                                                warna_poly = 'orange' 
-                                                if 'meluas' in area_desc.lower() or 'potensi' in area_desc.lower():
-                                                    warna_poly = 'yellow' 
-                                                elif idx_area > 0:
-                                                    warna_poly = 'yellow' 
-                                                # Kalau BMKG nyatuin semua di 1 area, paksa poligon ke-2 dst jadi kuning!
-                                                elif len(areas) == 1 and idx_poly > 0:
-                                                    warna_poly = 'yellow'
-                                                    
-                                                polygons_data.append({
-                                                    'coords': coords,
-                                                    'warna': warna_poly,
-                                                    'nama_area': area_desc
-                                                })
-                                            
-                                if polygons_data:
-                                    peringatan_aktif.append({
-                                        'event': event,
-                                        'headline': headline,
-                                        'description': desc,
-                                        'effective': effective,
-                                        'expires': expires,
-                                        'polygons_data': polygons_data
-                                    })
-    except Exception as e:
-        pass 
-        
-    return peringatan_aktif
 
 # ==========================================
 # LAYER TAMBAHAN: POLYGON PERINGATAN DINI 
@@ -584,7 +502,8 @@ def ambil_peringatan_dini():
 layer_peringatan = folium.FeatureGroup(name="🚨 Peringatan Dini Cuaca", show=False)
 
 with st.spinner("🚨 Mengecek Peringatan Dini Cuaca NTB..."):
-    data_peringatan = ambil_peringatan_dini()
+    # Pakai timestamp pembagi 300 detik (5 menit) biar otomatis refresh di background
+    data_peringatan = ambil_peringatan_dini(int(time.time() / 300))
 
 if data_peringatan and len(data_peringatan) > 0:
     for alert in data_peringatan:
@@ -620,7 +539,7 @@ if data_peringatan and len(data_peringatan) > 0:
 layer_peringatan.add_to(m)
 
 # ==========================================
-# BIKIN LEGEND DINAMIS (LEAFLET CORE ENGINE)
+# BIKIN LEGEND DINAMIS (MATA-MATA DOM INVINCIBLE)
 # ==========================================
 legend_html = '''
 <div id="legend_hujan" style="position: fixed; bottom: 30px; right: 30px; width: 230px; background-color: rgba(255, 255, 255, 0.9); border: 2px solid grey; z-index: 9999; font-size: 12px; padding: 10px; border-radius: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;">
@@ -660,46 +579,33 @@ legend_html = '''
 </div>
 
 <script>
-    var mapHook = setInterval(function() {
-        var map_obj = null;
-        // Cari objek Leaflet asli yang ke-generate sama Folium
-        for (var key in window) {
-            if (key.indexOf("map_") === 0 && window[key] && typeof window[key].on === 'function') {
-                map_obj = window[key];
-                break;
+    setInterval(function() {
+        var labels = document.querySelectorAll('.leaflet-control-layers-overlays label');
+        var showNowcast = false;
+        var showLongsor = false;
+        var showBanjir = false;
+
+        labels.forEach(function(label) {
+            var cb = label.querySelector('input[type="checkbox"]');
+            var span = label.querySelector('span');
+            
+            if (cb && span) {
+                var text = span.textContent || span.innerText;
+                if (text.includes('Peringatan Dini Cuaca') && cb.checked) showNowcast = true;
+                if (text.includes('Gerakan Tanah') && cb.checked) showLongsor = true;
+                if (text.includes('Banjir') && cb.checked) showBanjir = true;
             }
-        }
-        
-        if (map_obj) {
-            clearInterval(mapHook); // Stop nyari, kita udah dapet jantung petanya!
-            
-            // Mesin Peta: "Woy ada layer baru di-ceklis nih!"
-            map_obj.on('overlayadd', function(e) {
-                if (e.name.indexOf("Peringatan Dini Cuaca") !== -1) {
-                    document.getElementById("legend_nowcast").style.display = "block";
-                }
-                if (e.name.indexOf("Gerakan Tanah") !== -1) {
-                    document.getElementById("legend_longsor").style.display = "block";
-                }
-                if (e.name.indexOf("Banjir") !== -1) {
-                    document.getElementById("legend_banjir").style.display = "block";
-                }
-            });
-            
-            // Mesin Peta: "Woy layernya di-uncheck!"
-            map_obj.on('overlayremove', function(e) {
-                if (e.name.indexOf("Peringatan Dini Cuaca") !== -1) {
-                    document.getElementById("legend_nowcast").style.display = "none";
-                }
-                if (e.name.indexOf("Gerakan Tanah") !== -1) {
-                    document.getElementById("legend_longsor").style.display = "none";
-                }
-                if (e.name.indexOf("Banjir") !== -1) {
-                    document.getElementById("legend_banjir").style.display = "none";
-                }
-            });
-        }
-    }, 500); 
+        });
+
+        var elNowcast = document.getElementById('legend_nowcast');
+        var elLongsor = document.getElementById('legend_longsor');
+        var elBanjir = document.getElementById('legend_banjir');
+
+        if (elNowcast) elNowcast.style.display = showNowcast ? 'block' : 'none';
+        if (elLongsor) elLongsor.style.display = showLongsor ? 'block' : 'none';
+        if (elBanjir) elBanjir.style.display = showBanjir ? 'block' : 'none';
+
+    }, 500); // Ngecek tiap setengah detik, gak peduli mau petanya error atau dirender ulang!
 </script>
 '''
 
