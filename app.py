@@ -404,9 +404,9 @@ if data_cuaca_bmkg:
 layer_prakiraan.add_to(m)
 
 # ==========================================
-# FUNGSI NARIK DATA PERINGATAN DINI (LOGIKA WARNA MURNI TEKS)
+# FUNGSI NARIK DATA PERINGATAN DINI (FIX BACA SEMUA WADAH <INFO>)
 # ==========================================
-@st.cache_data(ttl=60) 
+@st.cache_data(ttl=60) # Cache 60 detik
 def ambil_peringatan_dini():
     peringatan_aktif = []
     session = requests.Session()
@@ -436,24 +436,27 @@ def ambil_peringatan_dini():
                             cap_text = re.sub(r' xmlns="[^"]+"', '', res_cap.text)
                             cap_root = ET.fromstring(cap_text)
                             
-                            info = cap_root.find('.//info')
-                            if info is not None:
+                            # INI DIA OBATNYA! Pake .findall() biar semua wadah <info> (Oren & Kuning) keambil!
+                            for info in cap_root.findall('.//info'):
                                 event = info.findtext('event', 'Peringatan Dini Cuaca')
                                 headline = info.findtext('headline', '-')
                                 desc = info.findtext('description', '-')
                                 effective = info.findtext('effective', '-')
                                 expires = info.findtext('expires', '-')
                                 
-                                polygons_data = []
+                                # Cek standar CAP Internasional: Severe (Oren), Moderate/Minor (Kuning)
+                                severity = info.findtext('severity', '').lower()
+                                warna_dasar = 'orange'
+                                if severity in ['moderate', 'minor']:
+                                    warna_dasar = 'yellow'
                                 
-                                # LOGIKA WARNA: Balik ke murni teks! 
-                                # Kalo teks dari BMKG bilang "meluas", baru dikasih Kuning!
                                 for area in info.findall('.//area'):
                                     area_desc = area.findtext('areaDesc', 'Wilayah Terdampak')
-                                    warna_poly = 'orange' 
                                     
+                                    # Backup filter warna pake teks
+                                    warna_poly = warna_dasar
                                     if 'meluas' in area_desc.lower() or 'potensi' in area_desc.lower():
-                                        warna_poly = 'yellow' 
+                                        warna_poly = 'yellow'
                                         
                                     for poly in area.findall('.//polygon'):
                                         poly_text = poly.text
@@ -465,21 +468,15 @@ def ambil_peringatan_dini():
                                                     coords.append((float(lat_s), float(lon_s)))
                                             
                                             if coords:
-                                                polygons_data.append({
+                                                peringatan_aktif.append({
                                                     'coords': coords,
                                                     'warna': warna_poly,
-                                                    'nama_area': area_desc
+                                                    'nama_area': area_desc,
+                                                    'event': event,
+                                                    'description': desc,
+                                                    'effective': effective,
+                                                    'expires': expires
                                                 })
-                                            
-                                if polygons_data:
-                                    peringatan_aktif.append({
-                                        'event': event,
-                                        'headline': headline,
-                                        'description': desc,
-                                        'effective': effective,
-                                        'expires': expires,
-                                        'polygons_data': polygons_data
-                                    })
     except Exception as e:
         pass 
         
@@ -494,35 +491,34 @@ with st.spinner("🚨 Mengecek Peringatan Dini Cuaca NTB..."):
     data_peringatan = ambil_peringatan_dini()
 
 if data_peringatan and len(data_peringatan) > 0:
-    for alert in data_peringatan:
-        for poly_dict in alert['polygons_data']:
-            warna = poly_dict['warna']
-            opacity = 0.6 if warna == 'orange' else 0.4
-            
-            folium.Polygon(
-                locations=poly_dict['coords'],
-                color=warna,           
-                weight=2,
-                fill=True,
-                fill_color=warna,      
-                fill_opacity=opacity,      
-                tooltip=f"<b>🚨 {alert['event']}</b><br>{poly_dict['nama_area']}",
-                popup=folium.Popup(
-                    f"""
-                    <div style='min-width: 280px; max-height: 250px; overflow-y: auto;'>
-                        <h4 style='color: #cc0000; margin-top:0;'>🚨 {alert['event']}</h4>
-                        <b>{poly_dict['nama_area']}</b><br><br>
-                        <span style='font-size: 12px; color: #333;'>{alert['description']}</span><br><br>
-                        <hr style='margin: 5px 0;'>
-                        <small style='color: #555;'>
-                        <b>Mulai:</b> {alert['effective']}<br>
-                        <b>Berakhir:</b> {alert['expires']}
-                        </small>
-                    </div>
-                    """, 
-                    max_width=350
-                )
-            ).add_to(layer_peringatan)
+    for poly_dict in data_peringatan:
+        warna = poly_dict['warna']
+        opacity = 0.6 if warna == 'orange' else 0.4
+        
+        folium.Polygon(
+            locations=poly_dict['coords'],
+            color=warna,           
+            weight=2,
+            fill=True,
+            fill_color=warna,      
+            fill_opacity=opacity,      
+            tooltip=f"<b>🚨 {poly_dict['event']}</b><br>{poly_dict['nama_area']}",
+            popup=folium.Popup(
+                f"""
+                <div style='min-width: 280px; max-height: 250px; overflow-y: auto;'>
+                    <h4 style='color: #cc0000; margin-top:0;'>🚨 {poly_dict['event']}</h4>
+                    <b>{poly_dict['nama_area']}</b><br><br>
+                    <span style='font-size: 12px; color: #333;'>{poly_dict['description']}</span><br><br>
+                    <hr style='margin: 5px 0;'>
+                    <small style='color: #555;'>
+                    <b>Mulai:</b> {poly_dict['effective']}<br>
+                    <b>Berakhir:</b> {poly_dict['expires']}
+                    </small>
+                </div>
+                """, 
+                max_width=350
+            )
+        ).add_to(layer_peringatan)
 
 layer_peringatan.add_to(m)
 
