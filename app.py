@@ -124,7 +124,7 @@ st.markdown(f"""
             <img src="https://www.bmkg.go.id/asset/img/logo/logo-bmkg.png">
             <div class="ofs-title">
                 <h3>Stasiun Meteorologi ZAM Lombok</h3>
-                <p>Dashboard Peringatan Dini Longsor dan Banjir NTB</p>
+                <p>Dashboard Peringatan Dini Longsor dan Banjir Nusa Tenggara Barat</p>
             </div>
         </div>
         <hr class="garis-biru">
