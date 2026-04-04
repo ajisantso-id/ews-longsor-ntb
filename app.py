@@ -16,7 +16,7 @@ from branca.element import MacroElement, Template
 # ATUR JUDUL TAB BROWSER & BIKIN FULL LAYAR
 # ==========================================
 st.set_page_config(
-    page_title="Dashboard Peringatan Dini Longsor dan Banjir NTB",
+    page_title="Dashboard Peringatan Dini Longsor dan Banjir Nusa Tenggara Barat",
     page_icon="https://www.bmkg.go.id/asset/img/logo/logo-bmkg.png",
     layout="wide"
 )
