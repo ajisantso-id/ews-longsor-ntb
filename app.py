@@ -384,7 +384,7 @@ def ambil_cuaca_bmkg():
     return data_cuaca_gabungan
 
 # ==========================================
-# LAYER TAMBAHAN: PRAKIRAAN CUACA BMKG
+# LAYER TAMBAHAN: PRAKIRAAN CUACA BMKG (MULTI-TIME 8 PERIODE)
 # ==========================================
 layer_prakiraan = folium.FeatureGroup(name="🌤️ Prakiraan Cuaca BMKG (Se-NTB)", show=False)
 
@@ -414,25 +414,65 @@ if data_cuaca_bmkg:
             if lat == 0 and lon == 0: continue
             
             cuaca_list = item.get('cuaca', [])
-            keterangan = "Berawan"
             
+            # 1. AMBIL CUACA SAAT INI (Buat icon yang tampil di peta)
+            keterangan_sekarang = "Berawan"
             if cuaca_list and len(cuaca_list) > 0 and isinstance(cuaca_list[0], list):
                 if len(cuaca_list[0]) > 0:
-                    data_saat_ini = cuaca_list[0][0]
-                    keterangan = data_saat_ini.get('weather_desc', 'Berawan')
+                    keterangan_sekarang = cuaca_list[0][0].get('weather_desc', 'Berawan')
 
-            emoji = icon_cuaca.get(keterangan, "☁️")
+            emoji_sekarang = icon_cuaca.get(keterangan_sekarang, "☁️")
             
             html_icon = f"""
             <div style="font-size:16px; background:rgba(255,255,255,0.85); border-radius:50%; width:26px; height:26px; display:flex; justify-content:center; align-items:center; box-shadow:1px 1px 3px rgba(0,0,0,0.5); border:1px solid #777;">
-                {emoji}
+                {emoji_sekarang}
             </div>
             """
             
+            # 2. BIKIN TABEL 8 PRAKIRAAN UNTUK DI DALAM POPUP!
+            tabel_html = ""
+            if cuaca_list and len(cuaca_list) > 0 and isinstance(cuaca_list[0], list):
+                # Kita looping 8 data ramalan cuaca hari ini (per 3 jam)
+                for ramalan in cuaca_list[0][:8]: 
+                    waktu_raw = ramalan.get('local_datetime', '')
+                    
+                    try:
+                        # Potong teks biar sisa jamnya aja (Misal: "2026-04-05 08:00:00" -> "08:00")
+                        jam = waktu_raw.split(" ")[1][:5]
+                    except:
+                        jam = waktu_raw
+                        
+                    desc = ramalan.get('weather_desc', 'Berawan')
+                    emj = icon_cuaca.get(desc, "☁️")
+                    
+                    tabel_html += f"""
+                    <tr>
+                        <td style='padding: 5px; border-bottom: 1px solid #ddd; text-align: center;'><b>{jam}</b></td>
+                        <td style='padding: 5px; border-bottom: 1px solid #ddd; text-align: left;'>{emj} {desc}</td>
+                    </tr>
+                    """
+            
+            # 3. RAKIT HTML POPUP-NYA
+            popup_html = f"""
+            <div style='min-width: 200px; max-height: 250px; overflow-y: auto; text-align: center; font-family: sans-serif;'>
+                <h4 style='margin: 5px 0 0 0; color: #002B5B;'>📍 Kec. {nama_kec}</h4>
+                <small style='color: gray;'>{nama_kab}</small>
+                <hr style='margin: 8px 0;'>
+                <table style='width: 100%; font-size: 12px; border-collapse: collapse;'>
+                    <tr style='background: #f0f0f0;'>
+                        <th style='padding: 5px; border-bottom: 1px solid #ccc; text-align: center;'>Waktu WITA</th>
+                        <th style='padding: 5px; border-bottom: 1px solid #ccc; text-align: center;'>Prakiraan Cuaca</th>
+                    </tr>
+                    {tabel_html}
+                </table>
+            </div>
+            """
+            
+            # 4. TEMPEL KE PETA
             folium.Marker(
                 location=[lat, lon], 
-                tooltip=f"<b>Kec. {nama_kec}</b>: {keterangan}",
-                popup=f"<div style='min-width: 140px; text-align:center;'><b>📍 Kec. {nama_kec}</b><br><span style='font-size:35px;'>{emoji}</span><br><b>{keterangan}</b><br><small>{nama_kab}</small></div>",
+                tooltip=f"<b>Kec. {nama_kec}</b>: {keterangan_sekarang}",
+                popup=folium.Popup(popup_html, max_width=300),
                 icon=folium.DivIcon(html=html_icon)
             ).add_to(layer_prakiraan)
             
