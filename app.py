@@ -235,11 +235,11 @@ folium.TileLayer(
 # ==========================================
 def style_kerentanan(feature):
     kategori = str(feature['properties'].get('REMARK', '')).upper()
-    if 'SANGAT TINGGI' in kategori: res = {'fillColor': '#cc0000', 'color': '#cc0000', 'weight': 1, 'fillOpacity': 0.6}
-    elif 'TINGGI' in kategori: res = {'fillColor': '#ff3385', 'color': '#ff3385', 'weight': 1, 'fillOpacity': 0.6}
-    elif 'MENENGAH' in kategori or 'SEDANG' in kategori: res = {'fillColor': '#ffff00', 'color': '#ffff00', 'weight': 1, 'fillOpacity': 0.6}
-    elif 'SANGAT RENDAH' in kategori: res = {'fillColor': '#00ccff', 'color': '#00ccff', 'weight': 1, 'fillOpacity': 0.3}
-    else: res = {'fillColor': '#00cc00', 'color': '#00cc00', 'weight': 1, 'fillOpacity': 0.3}
+    if 'SANGAT TINGGI' in kategori: res = {'fillColor': '#cc0000', 'color': '#cc0000', 'weight': 0.5, 'fillOpacity': 0.4}
+    elif 'TINGGI' in kategori: res = {'fillColor': '#ff3385', 'color': '#ff3385', 'weight': 0.5, 'fillOpacity': 0.4}
+    elif 'MENENGAH' in kategori or 'SEDANG' in kategori: res = {'fillColor': '#ffff00', 'color': '#ffff00', 'weight': 0.5, 'fillOpacity': 0.4}
+    elif 'SANGAT RENDAH' in kategori: res = {'fillColor': '#00ccff', 'color': '#00ccff', 'weight': 0.5, 'fillOpacity': 0.4}
+    else: res = {'fillColor': '#00cc00', 'color': '#00cc00', 'weight': 0.5, 'fillOpacity': 0.2}
     res['interactive'] = False 
     return res
 
