@@ -63,11 +63,12 @@ st.markdown(f"""
             color: #0056b3; font-weight: bold; letter-spacing: 0.5px;
         }}
 
-        /* 3. PAKSA PETA JADI FULL LAYAR (Tinggi layar dikurangi baris waktu) */
+        /* 3. PAKSA PETA JADI FULL LAYAR (Betot ke atas!) */
         iframe[title="streamlit_folium.st_folium"] {{
             height: calc(100vh - 28px) !important; 
             width: 100vw !important;
             border: none !important;
+            margin-top: -35px !important; /* <--- INI OBATNYA BRO! Makan sisa spasi putihnya */
         }}
         
         /* 4. JURUS SAKTI: Bikin Panel Tombol Streamlit Melayang di Atas Peta! */
