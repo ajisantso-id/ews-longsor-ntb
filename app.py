@@ -255,7 +255,7 @@ try: folium.GeoJson("banjir_ntb.geojson", name="Zona Rawan Banjir (InaRISK)", st
 except: pass
 
 # ==========================================
-# PEMBUATAN PIN SENSOR
+# PEMBUATAN PIN SENSOR (HACK DIVICON - ALWAYS ON TOP)
 # ==========================================
 for item in data_sensor:
     try:
@@ -275,11 +275,19 @@ for item in data_sensor:
             elif 0 < curah <= 20: kategori, status_area, fill_warna = "Hujan Ringan", "Aman", "green"
             else: kategori, status_area, fill_warna = "Hujan Sedang", "Aman", "#F5DEB3" 
 
-            folium.CircleMarker(
-                location=[lat, lon], radius=6, color='black', weight=1.5, fill_color=fill_warna, fill_opacity=0.9,
-                popup=f"<div style='min-width: 150px;'><b>{nama}</b><br>Curah Hujan: <b>{curah} mm</b><br>Kategori: <b>{kategori}</b><br>Status Area: <b>{status_area}</b><br><small>Update: {tanggal} UTC</small></div>", tooltip=f"{nama}: {curah} mm ({kategori})",
-            pane='lantai_titik_aws'
+            # INI DIA OBATNYA BRO! Kita bikin titik buletnya pake CSS HTML murni!
+            html_dot = f'''
+            <div style="background-color: {fill_warna}; border-radius: 50%; width: 12px; height: 12px; border: 2px solid black; box-shadow: 1px 1px 4px rgba(0,0,0,0.6);"></div>
+            '''
+
+            # Karena pakenya folium.Marker + DivIcon, dia OTOMATIS pindah ke Lantai Atas!
+            folium.Marker(
+                location=[lat, lon],
+                popup=f"<div style='min-width: 150px;'><b>{nama}</b><br>Curah Hujan: <b>{curah} mm</b><br>Kategori: <b>{kategori}</b><br>Status Area: <b>{status_area}</b><br><small>Update: {tanggal} UTC</small></div>", 
+                tooltip=f"{nama}: {curah} mm ({kategori})",
+                icon=folium.DivIcon(html=html_dot)
             ).add_to(m)
+            
         else:
             if 50 <= curah <= 100: kategori, status_area, warna, ikon, warna_ikon = "Hujan Lebat", "WASPADA", "orange", "info-sign", "white"
             elif 100 < curah <= 150: kategori, status_area, warna, ikon, warna_ikon = "Hujan Sangat Lebat", "SIAGA", "red", "warning-sign", "white"
@@ -291,7 +299,7 @@ for item in data_sensor:
 
     except Exception as e:
         continue
-
+        
 # ==========================================
 # FUNGSI NARIK DATA CUACA BMKG (SESUAI ATURAN RESMI PUSAT)
 # ==========================================
