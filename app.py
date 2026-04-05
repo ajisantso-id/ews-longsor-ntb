@@ -104,7 +104,7 @@ st.markdown(f"""
         
         /* 4. GARIS BIRU: Kasih jarak bawah biar nggak ditelan peta */
         .garis-biru {{
-            margin: 0 30px 5px 30px !important; /* Kasih 10px di bawah garis */
+            margin: 0 30px 0px 30px !important; /* Kasih 10px di bawah garis */
             border: none !important;
             border-bottom: 2px solid #002B5B !important;
         }}
