@@ -519,15 +519,16 @@ if data_cuaca_bmkg:
 layer_prakiraan.add_to(m)
 
 # ==========================================
-# FUNGSI NARIK DATA PERINGATAN DINI (THE ULTIMATE FIX)
+# FUNGSI NARIK DATA PERINGATAN DINI (100% REAL-TIME ANTI NGADAT)
 # ==========================================
-@st.cache_data(ttl=60) 
+# 🚨 Gembok Cache Sengaja Dihapus Biar Langsung Tembak Server Tiap Refresh! 🚨
 def ambil_peringatan_dini():
     peringatan_aktif = []
     session = requests.Session()
     session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
     
     try:
+        # Tembak langsung ke BMKG pake timestamp detik ini juga biar gak dikasih file basi
         url_rss = f"https://www.bmkg.go.id/alerts/nowcast/id/rss.xml?t={int(time.time())}"
         res_rss = session.get(url_rss, timeout=10)
         
@@ -539,11 +540,14 @@ def ambil_peringatan_dini():
             root_rss = ET.fromstring(rss_text)
             
             for item in root_rss.findall('.//item'):
-                title = item.findtext('title', '')
+                title = item.findtext('title', '').upper()
                 
-                if 'Nusa Tenggara Barat' in title or 'NTB' in title or 'NUSA TENGGARA BARAT' in title:
+                # Filter nama wilayah yang lebih kebal (Antisipasi Typo BMKG)
+                if 'NUSA TENGGARA BARAT' in title or 'NTB' in title:
                     link_detail = item.findtext('link', '')
                     if link_detail:
+                        # Paksa pake HTTPS biar aman dari blokir browser
+                        link_detail = link_detail.replace('http://', 'https://')
                         link_fresh = f"{link_detail}?t={int(time.time())}"
                         res_cap = session.get(link_fresh, timeout=10)
                         
@@ -554,7 +558,7 @@ def ambil_peringatan_dini():
                             # 1. Ambil HANYA wadah <info> Bahasa Indonesia
                             info_blocks = [i for i in cap_root.findall('.//info') if 'id' in i.findtext('language', '').lower()]
                             
-                            # 2. LOOP WADAH (KUNCI: WARNA DITENTUKAN DI SINI, BUKAN DI DALAM KECAMATAN!)
+                            # 2. LOOP WADAH (KUNCI WARNA)
                             for idx_info, info in enumerate(info_blocks):
                                 event = info.findtext('event', 'Peringatan Dini Cuaca')
                                 headline = info.findtext('headline', '-')
@@ -562,7 +566,7 @@ def ambil_peringatan_dini():
                                 effective = info.findtext('effective', '-')
                                 expires = info.findtext('expires', '-')
                                 
-                                # Logika Murni Pusat: Wadah 1 (index 0) = Oren, Wadah 2 (index 1) = Kuning
+                                # Logika Murni Pusat: Wadah 1 = Oren, Wadah 2 = Kuning
                                 warna_poly = 'orange' if idx_info == 0 else 'yellow'
                                 
                                 # Backup validasi pakai Severity resmi CAP Internasional
@@ -574,7 +578,7 @@ def ambil_peringatan_dini():
                                     
                                 opacity_poly = 0.6 if warna_poly == 'orange' else 0.4
                                 
-                                # 3. LOOP AREA/KECAMATAN (Haram ganti warna poly di dalam sini!)
+                                # 3. LOOP AREA/KECAMATAN
                                 for area in info.findall('.//area'):
                                     area_desc = area.findtext('areaDesc', 'Wilayah Terdampak')
                                     for poly in area.findall('.//polygon'):
@@ -605,7 +609,7 @@ def ambil_peringatan_dini():
         pass 
         
     return peringatan_aktif
-
+    
 # ==========================================
 # LAYER TAMBAHAN: POLYGON PERINGATAN DINI 
 # ==========================================
