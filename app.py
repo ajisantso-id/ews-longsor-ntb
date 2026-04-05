@@ -44,9 +44,10 @@ waktu_utc_str = utc_now.strftime("%H:%M:%S UTC")
 # ==========================================
 st.markdown(f"""
     <style>
-        /* 1. Musnahkan semua padding dan margin bawaan Streamlit */
-        .block-container {{
-            padding: 28px 0rem 0rem 0rem !important; 
+        /* 1. Hancurkan semua batas suci Streamlit */
+        .appview-container .main .block-container {{
+            padding: 0 !important; 
+            margin: 0 !important;
             max-width: 100% !important;
             overflow: hidden !important;
         }}
@@ -54,24 +55,27 @@ st.markdown(f"""
         [data-testid="stToolbar"] {{display: none !important;}} 
         footer {{display: none !important;}}
         
-        /* 2. Baris Waktu di Paling Atas */
+        /* 2. Baris Waktu di Pucuk */
         .top-time-bar {{
             position: fixed; top: 0; left: 0; width: 100%; height: 28px;
             background-color: #ffffff; border-bottom: 1px solid #e0e0e0;
-            z-index: 99999; display: flex; justify-content: space-between;
+            z-index: 999999; display: flex; justify-content: space-between;
             align-items: center; padding: 0 30px; font-size: 11px;
             color: #0056b3; font-weight: bold; letter-spacing: 0.5px;
         }}
 
-        /* 3. PAKSA PETA JADI FULL LAYAR (Betot ke atas!) */
+        /* 3. JURUS DEWA: Peta Dicopot & Dipaku ke Monitor! */
         iframe[title="streamlit_folium.st_folium"] {{
-            height: calc(100vh - 28px) !important; 
-            width: 100vw !important;
+            position: fixed !important;
+            top: 28px !important; /* Nempel pas di bawah garis jam */
+            left: 0 !important;
+            width: 100vw !important; /* Lebar mentok 100% layar */
+            height: calc(100vh - 28px) !important; /* Tinggi mentok sampe dasar monitor */
             border: none !important;
-            margin-top: -35px !important; /* <--- INI OBATNYA BRO! Makan sisa spasi putihnya */
+            z-index: 1 !important; /* Ditaruh paling belakang biar tombol gak ketutup */
         }}
         
-        /* 4. JURUS SAKTI: Bikin Panel Tombol Streamlit Melayang di Atas Peta! */
+        /* 4. Panel Tombol Melayang */
         div[data-testid="stHorizontalBlock"]:has(.jangkar-tombol) {{
             position: fixed;
             bottom: 25px;
@@ -644,7 +648,7 @@ layer_peringatan.add_to(m)
 # HTML LEGEND (FLEXBOX DESIGN: RAPI & DINAMIS!)
 # ==========================================
 legend_html = '''
-<div style="position: fixed; bottom: 30px; left: 30px; display: flex; gap: 15px; z-index: 9999; align-items: flex-end;">
+<div style="position: fixed; bottom: 45px; left: 30px; display: flex; gap: 15px; z-index: 9999; align-items: flex-end;">
     
     <div id="legend_prakiraan" style="display: none; width: 180px; background-color: rgba(255, 255, 255, 0.9); border: 2px solid #00aaff; font-size: 12px; padding: 10px; border-radius: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;">
         <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center;"><b>Prakiraan Cuaca</b></h4>
@@ -673,7 +677,7 @@ legend_html = '''
     </div>
 </div>
 
-<div style="position: fixed; bottom: 30px; right: 30px; display: flex; flex-direction: row-reverse; gap: 15px; z-index: 9999; align-items: flex-end;">
+<div style="position: fixed; bottom: 45px; right: 30px; display: flex; flex-direction: row-reverse; gap: 15px; z-index: 9999; align-items: flex-end;">
     
     <div id="legend_hujan" style="width: 220px; background-color: rgba(255, 255, 255, 0.9); border: 2px solid grey; font-size: 12px; padding: 10px; border-radius: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;">
         <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center;"><b>Status Peringatan AWS</b></h4>
