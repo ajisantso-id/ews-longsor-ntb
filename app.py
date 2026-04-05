@@ -519,25 +519,21 @@ if data_cuaca_bmkg:
 layer_prakiraan.add_to(m)
 
 # ==========================================
-# FUNGSI NARIK DATA PERINGATAN DINI (BYPASS SSL & ANTI TIMEOUT)
+# FUNGSI NARIK DATA PERINGATAN DINI (STERIL DARI ERROR CACHE)
 # ==========================================
 import urllib3
-# Matiin peringatan merah dari Python soal nembus SSL
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 @st.cache_data(ttl=30) 
 def ambil_peringatan_dini():
     peringatan_aktif = []
     session = requests.Session()
-    # Nyamar jadi browser Chrome beneran
     session.headers.update({
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
     })
     
     try:
         url_rss = f"https://www.bmkg.go.id/alerts/nowcast/id/rss.xml?t={int(time.time())}"
-        
-        # JURUS SAKTI: verify=False buat nembus SSL yang dianggap expired di tahun 2026!
         res_rss = session.get(url_rss, timeout=30, verify=False) 
         
         if res_rss.status_code == 200:
@@ -553,10 +549,7 @@ def ambil_peringatan_dini():
                 if 'NUSA TENGGARA BARAT' in title or 'NTB' in title:
                     link_detail = item.findtext('link', '')
                     if link_detail:
-                        # Bersihin link dari spasi nyasar
                         link_detail = link_detail.replace('http://', 'https://').strip()
-                        
-                        # Tembak file detail XML-nya (Tetep pake verify=False dan timeout 30)
                         res_cap = session.get(link_detail, timeout=30, verify=False)
                         
                         if res_cap.status_code == 200:
@@ -608,10 +601,10 @@ def ambil_peringatan_dini():
             peringatan_aktif.sort(key=lambda x: 1 if x['warna'] == 'yellow' else 2)
             
     except Exception as e:
-        # SEKARANG KALO ADA ERROR, BAKAL MUNCUL NOTIF DI LAYAR LU!
-        st.toast(f"🚨 Gagal narik BMKG: {str(e)}", icon='⚠️') 
+        pass # <-- KUNCI SUKSES: JANGAN ADA ST.TOAST DI DALAM SINI!
         
     return peringatan_aktif
+
     
 # ==========================================
 # LAYER TAMBAHAN: POLYGON PERINGATAN DINI 
