@@ -11,6 +11,7 @@ import xml.etree.ElementTree as ET
 from streamlit_autorefresh import st_autorefresh
 import time
 from branca.element import MacroElement, Template
+import streamlit.components.v1 as components
 
 # ==========================================
 # ATUR JUDUL TAB BROWSER & BIKIN FULL LAYAR
@@ -116,7 +117,7 @@ st.markdown(f"""
 
     <div class="top-time-bar">
         <div>{tanggal_str}</div>
-        <div>STANDAR WAKTU INDONESIA &nbsp;&nbsp;:&nbsp;&nbsp; {waktu_utc_str}</div>
+        <div id="jam-live">STANDAR WAKTU INDONESIA &nbsp;&nbsp;:&nbsp;&nbsp; {waktu_utc_str}</div>
     </div>
     
     <div class="ofs-header-container">
@@ -130,6 +131,30 @@ st.markdown(f"""
         <hr class="garis-biru">
     </div>
 """, unsafe_allow_html=True)
+
+# ==========================================
+# JURUS JAVASCRIPT: BIKIN JAM BERDETAK TIAP DETIK
+# ==========================================
+components.html("""
+<script>
+    setInterval(function() {
+        var now = new Date();
+        
+        // Ambil jam UTC (karena lu pakenya format UTC di atas)
+        var h = now.getUTCHours().toString().padStart(2, '0');
+        var m = now.getUTCMinutes().toString().padStart(2, '0');
+        var s = now.getUTCSeconds().toString().padStart(2, '0');
+        
+        var jamStr = "STANDAR WAKTU INDONESIA &nbsp;&nbsp;:&nbsp;&nbsp; " + h + ":" + m + ":" + s + " UTC";
+        
+        // Tembak langsung ke ID 'jam-live' di layar utama Streamlit
+        var clockEl = window.parent.document.getElementById('jam-live');
+        if (clockEl) {
+            clockEl.innerHTML = jamStr;
+        }
+    }, 1000); // 1000 milidetik = 1 detik
+</script>
+""", height=0, width=0)
 
 # ==========================================
 # OTAK MESIN WAKTU 
