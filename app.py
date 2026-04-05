@@ -40,78 +40,53 @@ tanggal_str = wita_now.strftime("%A, %d %B %Y").upper()
 waktu_utc_str = utc_now.strftime("%H:%M:%S UTC")
 
 # ==========================================
-# CSS HACK: BIKIN HEADER ALA OFS BMKG & ILANGIN SPACE KOSONG
+# CSS HACK: BIKIN FULL SCREEN & HEADER NATIVE APP
 # ==========================================
 st.markdown(f"""
     <style>
-        /* 1. Ngilangin Padding Kosong Bawaan Streamlit */
+        /* 1. Hancurin semua margin bawaan Streamlit biar Full Screen! */
         .block-container {{
-            padding-top: 28px !important; /* Tinggi fix untuk top-time-bar */
-            padding-bottom: 0rem !important;
+            padding: 28px 0rem 0rem 0rem !important; 
+            max-width: 100% !important;
+            overflow: hidden !important;
         }}
         header {{display: none !important;}} 
         [data-testid="stToolbar"] {{display: none !important;}} 
+        footer {{display: none !important;}}
         
         /* 2. Bikin Baris Waktu di Paling Atas (Fixed) */
         .top-time-bar {{
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 28px;
-            background-color: #ffffff;
-            border-bottom: 1px solid #e0e0e0;
-            z-index: 99999;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 30px;
-            font-size: 11px;
-            color: #0056b3;
-            font-weight: bold;
-            letter-spacing: 0.5px;
+            position: fixed; top: 0; left: 0; width: 100%; height: 28px;
+            background-color: #ffffff; border-bottom: 1px solid #e0e0e0;
+            z-index: 99999; display: flex; justify-content: space-between;
+            align-items: center; padding: 0 30px; font-size: 11px;
+            color: #0056b3; font-weight: bold; letter-spacing: 0.5px;
         }}
         
-        /* 3. WADAH HEADER: KITA BETOT KE ATAS! */
+        /* 3. WADAH HEADER: Dikasih background putih biar elegan */
         .ofs-header-container {{
-            margin-top: -20px !important; /* <--- JURUS BETOT: Tarik logo ke atas nabrak baris waktu */
+            background: white;
+            padding: 10px 30px 0px 30px;
+            position: relative;
+            z-index: 999;
         }}
-
         .ofs-header {{
-            display: flex;
-            align-items: center;
-            padding: 0px 30px 5px 30px;
+            display: flex; align-items: center;
         }}
-        .ofs-header img {{
-            width: 50px;
-            margin-right: 15px;
-        }}
-        .ofs-title h3 {{
-            margin: 0 !important;
-            padding: 0 !important;
-            color: #002B5B; 
-            font-size: 20px;
-            font-weight: 800;
-            line-height: 1.2;
-        }}
-        .ofs-title p {{
-            margin: 0 !important;
-            padding: 0 !important;
-            color: #444;
-            font-size: 15px;
-            line-height: 1.2;
-        }}
+        .ofs-header img {{ width: 50px; margin-right: 15px; }}
+        .ofs-title h3 {{ margin: 0 !important; color: #002B5B; font-size: 20px; font-weight: 800; line-height: 1.2; }}
+        .ofs-title p {{ margin: 0 !important; color: #444; font-size: 15px; line-height: 1.2; }}
         
-        /* 4. GARIS BIRU: Kasih jarak bawah biar nggak ditelan peta */
         .garis-biru {{
-            margin: 0 30px 0px 30px !important; /* Kasih 10px di bawah garis */
-            border: none !important;
-            border-bottom: 2px solid #002B5B !important;
+            margin: 10px 0px 0px 0px !important; 
+            border: none !important; border-bottom: 2px solid #002B5B !important;
         }}
 
-        /* 5. NORMALIASI PETA: Jangan ditarik ke atas lagi! */
+        /* 4. PAKSA PETA JADI FULL LAYAR (Nyesuaiin sisa layar bawah) */
         iframe[title="streamlit_folium.st_folium"] {{
-            margin-top: 0px !important; /* <--- OBAT GARIS KETUTUP: Bikin 0 biar garis birunya kelihatan */
+            height: calc(100vh - 90px) !important; 
+            width: 100vw !important;
+            margin-bottom: -10px !important;
         }}
     </style>
 
@@ -131,6 +106,48 @@ st.markdown(f"""
         <hr class="garis-biru">
     </div>
 """, unsafe_allow_html=True)
+
+# ==========================================
+# FUNGSI POP-UP TABEL (MUNCUL KALAU TOMBOL DIKLIK)
+# ==========================================
+@st.dialog("📋 Tabel Detail Monitoring Stasiun AWS", width="large")
+def tampilkan_tabel_popup():
+    if data_sensor:
+        tabel_data = []
+        for item in data_sensor:
+            curah_str = str(item['curah']).replace(',', '.')
+            curah = float(curah_str) if curah_str.strip() != "" else 0.0
+
+            if curah == 0: kategori_teks, status_teks = 'Cerah/Berawan', '🟢 Aman'
+            elif 0 < curah <= 20: kategori_teks, status_teks = 'Hujan Ringan', '🟢 Aman'
+            elif 20 < curah <= 50: kategori_teks, status_teks = 'Hujan Sedang', '🔵 Aman'
+            elif 50 < curah <= 100: kategori_teks, status_teks = 'Hujan Lebat', '🟠 WASPADA'
+            elif 100 < curah <= 150: kategori_teks, status_teks = 'Sangat Lebat', '🔴 SIAGA'
+            else: kategori_teks, status_teks = 'Ekstrem', '⚫ AWAS'
+
+            tabel_data.append({
+                'Stasiun': item['name_station'],
+                'Kab/Kota': item['nama_kota'],
+                'Hujan (mm)': curah,
+                'Intensitas': kategori_teks,
+                'Status Area': status_teks,
+                'Update Terakhir (UTC)': item['tanggal']
+            })
+
+        df = pd.DataFrame(tabel_data)
+        df = df.sort_values(by="Hujan (mm)", ascending=False)
+
+        kolom_center = ["Kab/Kota", "Hujan (mm)", "Intensitas", "Status Area"]
+        styled_df = df.style.set_properties(
+            subset=kolom_center, 
+            **{'text-align': 'center'}
+        ).set_table_styles([
+            {'selector': 'th', 'props': [('text-align', 'center')]}
+        ]).format({"Hujan (mm)": "{:.1f}"})
+
+        st.dataframe(styled_df, use_container_width=True, hide_index=True)
+    else:
+        st.warning("Data API masih kosong / belum ketarik.")
 
 # ==========================================
 # JURUS JAVASCRIPT: BIKIN JAM BERDETAK TIAP DETIK
@@ -767,97 +784,55 @@ class LegendDinamis(MacroElement):
 m.add_child(LegendDinamis())
 folium.LayerControl().add_to(m)
 
-# TAMPILKAN PETA UTAMA
-st_folium(m, height=650, width="stretch", returned_objects=[])
-
+# TAMPILKAN PETA UTAMA (DIBIKIN FULL HEIGHT!)
+st_folium(m, height=750, width="100%", returned_objects=[])
 
 # ==========================================
-# PANEL TOMBOL (DOWNLOAD & KONTROL WAKTU SEJAJAR)
+# JURUS SAKTI: PANEL TOMBOL MELAYANG DI TENGAH BAWAH PETA
 # ==========================================
-# 1. Save peta yang udah jadi ke dalam file sementara
 nama_file_peta = "Peta_EWS_NTB_Terbaru.html"
 m.save(nama_file_peta)
 
-st.markdown("<br>", unsafe_allow_html=True) # Spasi enter dikit aja biar gak nabrak peta banget
+# Bikin jangkar transparan buat nargetin CSS ke tombol Streamlit
+st.markdown('<div id="panel-jangkar"></div>', unsafe_allow_html=True)
+st.markdown("""
+<style>
+/* Nargetin kolom tombol tepat di bawah div panel-jangkar biar MELAYANG */
+#panel-jangkar + div[data-testid="stHorizontalBlock"] {
+    position: fixed;
+    bottom: 30px; /* Melayang di bawah, sejajar sama Legend */
+    left: 50%;
+    transform: translateX(-50%); /* Bikin persis di tengah */
+    z-index: 99999;
+    background-color: rgba(255, 255, 255, 0.95);
+    padding: 10px 15px;
+    border-radius: 12px;
+    box-shadow: 0px 4px 15px rgba(0,0,0,0.5);
+    border: 2px solid #002B5B;
+    width: max-content;
+    gap: 10px;
+}
+/* Bikin tombolnya sejajar rapat dan rapi */
+#panel-jangkar + div[data-testid="stHorizontalBlock"] > div {
+    width: auto !important;
+    flex: none !important;
+}
+</style>
+""", unsafe_allow_html=True)
 
-# 2. Bikin 4 Kolom Sejajar. Kolom pertama (rasio 2) agak lebar buat nampung teks Download.
-col_dl, col_btn1, col_btn2, col_btn3 = st.columns([1.5, 1, 1, 1])
+# Bikin 5 tombol berjejer
+col_dl, col_h2, col_h1, col_h0, col_tab = st.columns(5)
 
 with col_dl:
     with open(nama_file_peta, "rb") as file:
-        st.download_button(
-            label="📥 Download Peta EWS (Interactive HTML)",
-            data=file,
-            file_name=nama_file_peta,
-            mime="text/html",
-            help="Download peta ini untuk dibuka secara offline di browser",
-            use_container_width=True # Biar tombolnya nge-full penuhin kolom
-        )
-
-with col_btn1:
-    st.button("⏮️ Data H-2", on_click=set_hari, args=(2,), use_container_width=True) 
-with col_btn2:
-    st.button("⏪ Data H-1", on_click=set_hari, args=(1,), use_container_width=True)
-with col_btn3:
-    st.button("✅ Data Hari Ini", on_click=set_hari, args=(0,), use_container_width=True)
-
-# ==========================================
-# TEKS INFO TANGGAL 
-# ==========================================
-tanggal_pilih = date.today() - timedelta(days=st.session_state.offset_hari)
-
-if st.session_state.offset_hari == 0:
-    label = f"Menampilkan Data Hari ini ({tanggal_pilih.strftime('%d %B %Y')})"
-elif st.session_state.offset_hari == 1:
-    label = f"Menampilkan Data Kemarin ({tanggal_pilih.strftime('%d %B %Y')})"
-else:
-    label = f"Menampilkan Data Selumbari ({tanggal_pilih.strftime('%d %B %Y')})"
-
-st.markdown(f"<h5 style='text-align: center; color: #1f77b4; margin-top: 15px;'>📅 {label}</h5>", unsafe_allow_html=True)
-st.markdown("<br>", unsafe_allow_html=True) 
-
-# ==========================================
-# BAGIAN 2: TABEL DI BAWAH PETA
-# ==========================================
-st.subheader("📋 Tabel Detail Monitoring Stasiun")
-
-if data_sensor:
-    tabel_data = []
-    for item in data_sensor:
-        curah_str = str(item['curah']).replace(',', '.')
-        curah = float(curah_str) if curah_str.strip() != "" else 0.0
-
-        if curah == 0: kategori_teks, status_teks = 'Cerah/Berawan', '🔵 Aman'
-        elif 0 < curah <= 20: kategori_teks, status_teks = 'Hujan Ringan', '🟢 Aman'
-        elif 20 < curah <= 50: kategori_teks, status_teks = 'Hujan Sedang', '🟡 Aman'
-        elif 50 < curah <= 100: kategori_teks, status_teks = 'Hujan Lebat', '🟠 WASPADA'
-        elif 100 < curah <= 150: kategori_teks, status_teks = 'Sangat Lebat', '🔴 SIAGA'
-        else: kategori_teks, status_teks = 'Ekstrem', '⚫ AWAS'
-
-        tabel_data.append({
-            'Stasiun': item['name_station'],
-            'Kab/Kota': item['nama_kota'],
-            'Hujan (mm)': curah,
-            'Intensitas': kategori_teks,
-            'Status Area': status_teks,
-            'Update Terakhir (UTC)': item['tanggal']
-        })
-
-    # Pembuatan DataFrame wajib di dalam blok if data_sensor ini
-    df = pd.DataFrame(tabel_data)
-    df = df.sort_values(by="Hujan (mm)", ascending=False)
-
-    kolom_center = ["Kab/Kota", "Hujan (mm)", "Intensitas", "Status Area"]
-    styled_df = df.style.set_properties(
-        subset=kolom_center, 
-        **{'text-align': 'center'}
-    ).set_table_styles([
-        {'selector': 'th', 'props': [('text-align', 'center')]}
-    ]).format(
-        {"Hujan (mm)": "{:.1f}"} 
-    )
-
-    st.dataframe(styled_df, use_container_width=True, hide_index=True)
-
-else:
-    st.warning("Data API masih kosong / belum ketarik.")
+        st.download_button("📥 Download HTML", data=file, file_name=nama_file_peta, mime="text/html")
+with col_h2:
+    st.button("⏮️ H-2", on_click=set_hari, args=(2,)) 
+with col_h1:
+    st.button("⏪ H-1", on_click=set_hari, args=(1,))
+with col_h0:
+    st.button("✅ Hari Ini", on_click=set_hari, args=(0,))
+with col_tab:
+    # JURUS POP-UP: Kalau diklik, fungsi tabel melayang dipanggil!
+    if st.button("📋 Lihat Tabel"):
+        tampilkan_tabel_popup()
