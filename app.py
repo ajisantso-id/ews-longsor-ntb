@@ -384,7 +384,7 @@ def ambil_cuaca_bmkg():
     return data_cuaca_gabungan
 
 # ==========================================
-# LAYER TAMBAHAN: PRAKIRAAN CUACA BMKG (MULTI-TIME 8 PERIODE)
+# LAYER TAMBAHAN: PRAKIRAAN CUACA BMKG (4 PERIODE: PAGI, SIANG, MALAM, DINI HARI)
 # ==========================================
 layer_prakiraan = folium.FeatureGroup(name="🌤️ Prakiraan Cuaca BMKG (Se-NTB)", show=False)
 
@@ -415,11 +415,10 @@ if data_cuaca_bmkg:
             
             cuaca_list = item.get('cuaca', [])
             
-            # 1. AMBIL CUACA SAAT INI (Buat icon yang tampil di peta)
+            # 1. AMBIL CUACA SAAT INI (Buat icon bulet yang nangkring di peta)
             keterangan_sekarang = "Berawan"
-            if cuaca_list and len(cuaca_list) > 0 and isinstance(cuaca_list[0], list):
-                if len(cuaca_list[0]) > 0:
-                    keterangan_sekarang = cuaca_list[0][0].get('weather_desc', 'Berawan')
+            if cuaca_list and len(cuaca_list) > 0 and isinstance(cuaca_list[0], list) and len(cuaca_list[0]) > 0:
+                keterangan_sekarang = cuaca_list[0][0].get('weather_desc', 'Berawan')
 
             emoji_sekarang = icon_cuaca.get(keterangan_sekarang, "☁️")
             
@@ -429,46 +428,69 @@ if data_cuaca_bmkg:
             </div>
             """
             
-            # 2. BIKIN TABEL 8 PRAKIRAAN UNTUK DI DALAM POPUP!
-            tabel_html = ""
-            if cuaca_list and len(cuaca_list) > 0 and isinstance(cuaca_list[0], list):
-                # Kita looping 8 data ramalan cuaca hari ini (per 3 jam)
-                for ramalan in cuaca_list[0][:8]: 
-                    waktu_raw = ramalan.get('local_datetime', '')
+            # 2. LOGIKA 4 WAKTU (Pagi, Siang, Malam, Dini Hari)
+            semua_ramalan = []
+            # BMKG ngasih array dalam array (per hari), kita leburin jadi satu list panjang
+            for hari in cuaca_list: 
+                if isinstance(hari, list):
+                    semua_ramalan.extend(hari)
                     
-                    try:
-                        # Potong teks biar sisa jamnya aja (Misal: "2026-04-05 08:00:00" -> "08:00")
-                        jam = waktu_raw.split(" ")[1][:5]
-                    except:
-                        jam = waktu_raw
-                        
-                    desc = ramalan.get('weather_desc', 'Berawan')
-                    emj = icon_cuaca.get(desc, "☁️")
-                    
-                    tabel_html += f"""
-                    <tr>
-                        <td style='padding: 5px; border-bottom: 1px solid #ddd; text-align: center;'><b>{jam}</b></td>
-                        <td style='padding: 5px; border-bottom: 1px solid #ddd; text-align: left;'>{emj} {desc}</td>
-                    </tr>
-                    """
+            forecast_4_waktu = {"Pagi Hari": None, "Siang Hari": None, "Malam Hari": None, "Dini Hari": None}
             
-            # 3. RAKIT HTML POPUP-NYA
+            for ramalan in semua_ramalan:
+                waktu_raw = ramalan.get('local_datetime', '')
+                try:
+                    # Ambil jamnya aja (Contoh: "2026-04-05 08:00:00" -> 8)
+                    jam = int(waktu_raw.split(" ")[1][:2])
+                except:
+                    continue
+                    
+                desc = ramalan.get('weather_desc', 'Berawan')
+                emj = icon_cuaca.get(desc, "☁️")
+                
+                # Masukin ke keranjang sesuai jamnya (Cari yang pertama ketemu dari sekarang ke depan)
+                if 6 <= jam < 12 and forecast_4_waktu["Pagi Hari"] is None:
+                    forecast_4_waktu["Pagi Hari"] = f"{emj} {desc}"
+                elif 12 <= jam < 18 and forecast_4_waktu["Siang Hari"] is None:
+                    forecast_4_waktu["Siang Hari"] = f"{emj} {desc}"
+                elif 18 <= jam <= 23 and forecast_4_waktu["Malam Hari"] is None:
+                    forecast_4_waktu["Malam Hari"] = f"{emj} {desc}"
+                elif 0 <= jam < 6 and forecast_4_waktu["Dini Hari"] is None:
+                    forecast_4_waktu["Dini Hari"] = f"{emj} {desc}"
+                    
+                # Kalau ke-4 keranjang udah penuh, stop scanning biar kodingan ngebut!
+                if all(forecast_4_waktu.values()):
+                    break 
+            
+            # 3. RAKIT TABEL HTML
+            tabel_html = ""
+            urutan_waktu = ["Pagi Hari", "Siang Hari", "Malam Hari", "Dini Hari"]
+            
+            for periode in urutan_waktu:
+                info_cuaca = forecast_4_waktu[periode]
+                # Kalo ada waktu yang kelewat dari API, tulis "-" aja
+                if info_cuaca is None: info_cuaca = "-" 
+                    
+                tabel_html += f"""
+                <tr>
+                    <td style='padding: 6px; border-bottom: 1px solid #ddd; text-align: left; font-weight: bold;'>{periode}</td>
+                    <td style='padding: 6px; border-bottom: 1px solid #ddd; text-align: right;'>{info_cuaca}</td>
+                </tr>
+                """
+            
+            # 4. RAKIT BUNGKUS POPUP-NYA
             popup_html = f"""
-            <div style='min-width: 200px; max-height: 250px; overflow-y: auto; text-align: center; font-family: sans-serif;'>
-                <h4 style='margin: 5px 0 0 0; color: #002B5B;'>📍 Kec. {nama_kec}</h4>
-                <small style='color: gray;'>{nama_kab}</small>
+            <div style='min-width: 220px; font-family: sans-serif;'>
+                <h4 style='margin: 5px 0 0 0; color: #002B5B; text-align: center;'>📍 Kec. {nama_kec}</h4>
+                <div style='text-align: center;'><small style='color: gray;'>{nama_kab}</small></div>
                 <hr style='margin: 8px 0;'>
-                <table style='width: 100%; font-size: 12px; border-collapse: collapse;'>
-                    <tr style='background: #f0f0f0;'>
-                        <th style='padding: 5px; border-bottom: 1px solid #ccc; text-align: center;'>Waktu WITA</th>
-                        <th style='padding: 5px; border-bottom: 1px solid #ccc; text-align: center;'>Prakiraan Cuaca</th>
-                    </tr>
+                <table style='width: 100%; font-size: 13px; border-collapse: collapse;'>
                     {tabel_html}
                 </table>
             </div>
             """
             
-            # 4. TEMPEL KE PETA
+            # 5. TEMPEL KE PETA
             folium.Marker(
                 location=[lat, lon], 
                 tooltip=f"<b>Kec. {nama_kec}</b>: {keterangan_sekarang}",
@@ -481,7 +503,6 @@ if data_cuaca_bmkg:
             
 # Masukin ke Peta
 layer_prakiraan.add_to(m)
-
 # ==========================================
 # FUNGSI NARIK DATA PERINGATAN DINI (THE ULTIMATE FIX)
 # ==========================================
