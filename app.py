@@ -651,7 +651,7 @@ legend_html = '''
 <div style="position: fixed; bottom: 45px; left: 30px; display: flex; gap: 15px; z-index: 9999; align-items: flex-end;">
     
     <div id="legend_prakiraan" style="display: none; width: 180px; background-color: rgba(255, 255, 255, 0.9); border: 2px solid #00aaff; font-size: 12px; padding: 10px; border-radius: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;">
-        <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center;"><b>Legend Prakiraan Cuaca</b></h4>
+        <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center;"><b>Prakiraan Cuaca</b></h4>
         <div style="margin-bottom: 4px;"><span style="font-size:14px; margin-right:8px;">☀️</span>Cerah</div>
         <div style="margin-bottom: 4px;"><span style="font-size:14px; margin-right:8px;">⛅</span>Cerah Berawan</div>
         <div style="margin-bottom: 4px;"><span style="font-size:14px; margin-right:8px;">☁️</span>Berawan</div>
@@ -663,7 +663,7 @@ legend_html = '''
     </div>
 
     <div id="legend_longsor" style="display: none; width: 210px; background-color: rgba(255, 255, 255, 0.9); border: 2px solid grey; font-size: 12px; padding: 10px; border-radius: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;">
-        <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center;"><b>Legend Zona Kerentanan Longsor (PVMBG)</b></h4>
+        <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center;"><b>Zona Kerentanan Gerakan Tanah (PVMBG)</b></h4>
         <div style="margin-bottom: 2px;"><i style="background: #cc0000; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Sangat Tinggi</div>
         <div style="margin-bottom: 2px;"><i style="background: #ff3385; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Tinggi</div>
         <div style="margin-bottom: 2px;"><i style="background: #ffff00; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Menengah</div>
@@ -672,7 +672,7 @@ legend_html = '''
     </div>
     
     <div id="legend_banjir" style="display: none; width: 190px; background-color: rgba(255, 255, 255, 0.9); border: 2px solid #0000FF; font-size: 12px; padding: 10px; border-radius: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;">
-        <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center;"><b>Legend Zona Kerentanan Banjir</b></h4>
+        <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center;"><b>Zona Kerentanan Banjir</b></h4>
         <div style="margin-bottom: 4px;"><i style="background:#00008B; width:15px; height:15px; float:left; margin-right:8px; opacity:0.5;"></i> Rawan Banjir (InaRISK)</div>
     </div>
 </div>
@@ -680,7 +680,7 @@ legend_html = '''
 <div style="position: fixed; bottom: 45px; right: 30px; display: flex; flex-direction: row-reverse; gap: 15px; z-index: 9999; align-items: flex-end;">
     
     <div id="legend_hujan" style="width: 220px; background-color: rgba(255, 255, 255, 0.9); border: 2px solid grey; font-size: 12px; padding: 10px; border-radius: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;">
-        <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center;"><b>Legend EWS Longsor & Banjir</b></h4>
+        <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center;"><b>Peringatan Longsor & Banjir</b></h4>
         <div style="margin-bottom: 5px; font-weight: bold;">Kategori Intensitas Hujan (24 Jam) dan Bahaya:</div>
         <div style="margin-bottom: 6px; height: 18px;"><div style="background: blue; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;"></div><span style="line-height: 18px;">Cerah (0 mm)</span></div>
         <div style="margin-bottom: 6px; height: 18px;"><div style="background: green; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;"></div><span style="line-height: 18px;">Ringan (0.1 - 20 mm)</span></div>
