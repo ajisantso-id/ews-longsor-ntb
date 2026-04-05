@@ -105,7 +105,7 @@ st.markdown(f"""
 # ==========================================
 # FUNGSI POP-UP TABEL (MUNCUL KALAU TOMBOL DIKLIK)
 # ==========================================
-@st.dialog("📋 Tabel Detail Monitoring Stasiun AWS", width="large")
+@st.dialog("📋 Tabel Detail Monitoring AWS/ARG", width="large")
 def tampilkan_tabel_popup():
     if data_sensor:
         tabel_data = []
@@ -113,9 +113,9 @@ def tampilkan_tabel_popup():
             curah_str = str(item['curah']).replace(',', '.')
             curah = float(curah_str) if curah_str.strip() != "" else 0.0
 
-            if curah == 0: kategori_teks, status_teks = 'Cerah/Berawan', '🟢 Aman'
+            if curah == 0: kategori_teks, status_teks = 'Cerah/Berawan', '🔵 Aman'
             elif 0 < curah <= 20: kategori_teks, status_teks = 'Hujan Ringan', '🟢 Aman'
-            elif 20 < curah <= 50: kategori_teks, status_teks = 'Hujan Sedang', '🔵 Aman'
+            elif 20 < curah <= 50: kategori_teks, status_teks = 'Hujan Sedang', '🟡 Aman'
             elif 50 < curah <= 100: kategori_teks, status_teks = 'Hujan Lebat', '🟠 WASPADA'
             elif 100 < curah <= 150: kategori_teks, status_teks = 'Sangat Lebat', '🔴 SIAGA'
             else: kategori_teks, status_teks = 'Ekstrem', '⚫ AWAS'
@@ -651,7 +651,7 @@ legend_html = '''
 <div style="position: fixed; bottom: 45px; left: 30px; display: flex; gap: 15px; z-index: 9999; align-items: flex-end;">
     
     <div id="legend_prakiraan" style="display: none; width: 180px; background-color: rgba(255, 255, 255, 0.9); border: 2px solid #00aaff; font-size: 12px; padding: 10px; border-radius: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;">
-        <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center;"><b>Prakiraan Cuaca</b></h4>
+        <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center;"><b>Legend Prakiraan Cuaca</b></h4>
         <div style="margin-bottom: 4px;"><span style="font-size:14px; margin-right:8px;">☀️</span>Cerah</div>
         <div style="margin-bottom: 4px;"><span style="font-size:14px; margin-right:8px;">⛅</span>Cerah Berawan</div>
         <div style="margin-bottom: 4px;"><span style="font-size:14px; margin-right:8px;">☁️</span>Berawan</div>
@@ -663,7 +663,7 @@ legend_html = '''
     </div>
 
     <div id="legend_longsor" style="display: none; width: 210px; background-color: rgba(255, 255, 255, 0.9); border: 2px solid grey; font-size: 12px; padding: 10px; border-radius: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;">
-        <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center;"><b>Kerentanan Gerakan Tanah</b></h4>
+        <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center;"><b>Legend Zona Kerentanan Longsor (PVMBG)</b></h4>
         <div style="margin-bottom: 2px;"><i style="background: #cc0000; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Sangat Tinggi</div>
         <div style="margin-bottom: 2px;"><i style="background: #ff3385; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Tinggi</div>
         <div style="margin-bottom: 2px;"><i style="background: #ffff00; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i>Menengah</div>
@@ -672,7 +672,7 @@ legend_html = '''
     </div>
     
     <div id="legend_banjir" style="display: none; width: 190px; background-color: rgba(255, 255, 255, 0.9); border: 2px solid #0000FF; font-size: 12px; padding: 10px; border-radius: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;">
-        <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center;"><b>Kerentanan Banjir</b></h4>
+        <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center;"><b>Legend Zona Kerentanan Banjir</b></h4>
         <div style="margin-bottom: 4px;"><i style="background:#00008B; width:15px; height:15px; float:left; margin-right:8px; opacity:0.5;"></i> Rawan Banjir (InaRISK)</div>
     </div>
 </div>
@@ -680,27 +680,20 @@ legend_html = '''
 <div style="position: fixed; bottom: 45px; right: 30px; display: flex; flex-direction: row-reverse; gap: 15px; z-index: 9999; align-items: flex-end;">
     
     <div id="legend_hujan" style="width: 220px; background-color: rgba(255, 255, 255, 0.9); border: 2px solid grey; font-size: 12px; padding: 10px; border-radius: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;">
-        <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center;"><b>Status Peringatan AWS</b></h4>
-        <div style="margin-bottom: 5px; font-weight: bold;">Intensitas Hujan (24 Jam):</div>
+        <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center;"><b>Legend EWS Longsor & Banjir</b></h4>
+        <div style="margin-bottom: 5px; font-weight: bold;">Kategori Intensitas Hujan (24 Jam) dan Bahaya:</div>
         <div style="margin-bottom: 6px; height: 18px;"><div style="background: blue; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;"></div><span style="line-height: 18px;">Cerah (0 mm)</span></div>
         <div style="margin-bottom: 6px; height: 18px;"><div style="background: green; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;"></div><span style="line-height: 18px;">Ringan (0.1 - 20 mm)</span></div>
         <div style="margin-bottom: 6px; height: 18px;"><div style="background: yellow; border-radius: 50%; width: 18px; height: 18px; color: black; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px; border: 1px solid #ccc;"></div><span style="line-height: 18px;">Sedang (20 - 50 mm)</span></div>
-        <div style="margin-bottom: 6px; height: 18px;"><div style="background: orange; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;">⚠</div><span style="line-height: 18px;">Lebat (50 - 100 mm)</span> </div>
-        <div style="margin-bottom: 6px; height: 18px;"><div style="background: red; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;">⚠</div><span style="line-height: 18px;">Sangat Lebat (100 - 150 mm)</span></div>
-        <div style="margin-bottom: 6px; height: 18px;"><div style="background: darkred; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;">⚡</div><span style="line-height: 18px;">Ekstrem (> 150 mm)</span></div>
+        <div style="margin-bottom: 6px; height: 18px;"><div style="background: orange; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;">⚠</div><span style="line-height: 18px;">Lebat - Waspada (50 - 100 mm)</span> </div>
+        <div style="margin-bottom: 6px; height: 18px;"><div style="background: red; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;">⚠</div><span style="line-height: 18px;">Sangat Lebat - Siaga (100 - 150 mm)</span></div>
+        <div style="margin-bottom: 6px; height: 18px;"><div style="background: darkred; border-radius: 50%; width: 18px; height: 18px; color: white; text-align: center; line-height: 18px; float: left; margin-right: 8px; font-size: 10px;">⚡</div><span style="line-height: 18px;">Ekstrem - Awas (> 150 mm)</span></div>
     </div>
 
     <div id="legend_nowcast" style="display: none; width: 210px; background-color: rgba(255, 255, 255, 0.9); border: 2px solid darkorange; font-size: 12px; padding: 10px; border-radius: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;">
-        <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center;"><b>Peringatan Dini (Nowcast)</b></h4>
+        <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center;"><b>Peringatan Dini Cuaca</b></h4>
         <div style="margin-bottom: 4px; height: 14px;"><i style="background: orange; border: 1px solid darkorange; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i><span>Wilayah Peringatan Dini</span></div>
         <div style="margin-bottom: 4px; height: 14px;"><i style="background: yellow; border: 1px solid gold; opacity: 0.6; width: 12px; height: 12px; float: left; margin-right: 8px;"></i><span>Wilayah Potensi Meluas</span></div>
-    </div>
-    
-    <div id="legend_area_aws" style="width: 190px; background-color: rgba(255, 255, 255, 0.9); border: 2px solid grey; font-size: 12px; padding: 10px; border-radius: 8px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: black;">
-        <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 14px; text-align: center;"><b>Peringatan Area AWS</b></h4>
-        <div style="margin-bottom: 4px; height: 14px;"><i style="background: orange; width: 12px; height: 12px; float: left; margin-right: 8px; border-radius: 2px;"></i><span>Waspada</span></div>
-        <div style="margin-bottom: 4px; height: 14px;"><i style="background: red; width: 12px; height: 12px; float: left; margin-right: 8px; border-radius: 2px;"></i><span>Siaga</span></div>
-        <div style="margin-bottom: 0px; height: 14px;"><i style="background: darkred; width: 12px; height: 12px; float: left; margin-right: 8px; border-radius: 2px;"></i><span>Awas</span></div>
     </div>
 
 </div>
@@ -784,7 +777,7 @@ judul_html = '''
 <div style="position: fixed; top: 15px; left: 60px; z-index: 9999; background: rgba(255,255,255,0.95); padding: 10px 20px; border-radius: 8px; box-shadow: 2px 2px 8px rgba(0,0,0,0.4); display: flex; align-items: center; border-left: 5px solid #002B5B; pointer-events: auto;">
     <img src="https://www.bmkg.go.id/asset/img/logo/logo-bmkg.png" style="width: 45px; margin-right: 15px;">
     <div>
-        <h3 style="margin: 0; color: #002B5B; font-size: 18px; font-weight: 800; font-family: sans-serif;">Stasiun Meteorologi ZAM Lombok</h3>
+        <h3 style="margin: 0; color: #002B5B; font-size: 18px; font-weight: 800; font-family: sans-serif;">Stasiun Meteorologi Zainuddin Abdul Madjid Lombok</h3>
         <p style="margin: 0; color: #444; font-size: 13px; font-family: sans-serif;">Dashboard Peringatan Dini Longsor dan Banjir Nusa Tenggara Barat</p>
     </div>
 </div>
