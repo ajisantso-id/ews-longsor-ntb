@@ -338,6 +338,7 @@ def ambil_cuaca_bmkg():
     lokasi_pilihan = [
         "52.71.01.1001", # Mataram
         "52.01.01.2001", # Gerung (Lobar)
+        "52.08.05.2004", # Malaka (Pusuk Gunung Sari)
         "52.08.01.2001", # Tanjung (KLU)
         "52.08.03.2001", # Bayan (KLU)
         "52.02.01.2001", # Praya (Loteng)
