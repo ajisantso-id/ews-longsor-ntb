@@ -12,6 +12,7 @@ from streamlit_autorefresh import st_autorefresh
 import time
 from branca.element import MacroElement, Template
 import streamlit.components.v1 as components
+import urllib3
 
 # ==========================================
 # ATUR JUDUL TAB BROWSER & BIKIN FULL LAYAR
@@ -519,17 +520,25 @@ if data_cuaca_bmkg:
 layer_prakiraan.add_to(m)
 
 # ==========================================
-# FUNGSI NARIK DATA PERINGATAN DINI (STERIL DARI ERROR CACHE)
+# TOMBOL REFRESH CACHE MANUAL (TAMPIL DI ATAS PETA)
 # ==========================================
-import urllib3
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+st.markdown("<br>", unsafe_allow_html=True)
+col_kosong, col_refresh = st.columns([4, 1])
+with col_refresh:
+    if st.button("🔄 Refresh Data BMKG", use_container_width=True):
+        st.cache_data.clear() # Ini jurus sakti pemusnah cache!
+        st.rerun()
 
-@st.cache_data(ttl=30) 
+# ==========================================
+# FUNGSI NARIK DATA PERINGATAN DINI (VERSI STABIL + ANTI SSL ERROR)
+# ==========================================
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+@st.cache_data(ttl=300) # Cache 5 menit biar aman dari blokir BMKG
 def ambil_peringatan_dini():
     peringatan_aktif = []
     session = requests.Session()
     session.headers.update({
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0'
     })
     
     try:
@@ -598,10 +607,11 @@ def ambil_peringatan_dini():
                                                     'expires': expires
                                                 })
                                                 
+            # Jurus Z-Index: Kuning alas, Oren di atas
             peringatan_aktif.sort(key=lambda x: 1 if x['warna'] == 'yellow' else 2)
             
     except Exception as e:
-        pass # <-- KUNCI SUKSES: JANGAN ADA ST.TOAST DI DALAM SINI!
+        pass 
         
     return peringatan_aktif
 
@@ -640,17 +650,6 @@ else:
     st.toast('ℹ️ Data BMKG: Saat ini tidak ada Peringatan Dini Cuaca (Nowcast) yang aktif untuk wilayah NTB.', icon='✅')
 
 layer_peringatan.add_to(m)
-# ==========================================
-# TOMBOL REFRESH MENGAMBANG DI PETA
-# ==========================================
-tombol_refresh_html = """
-<div style="position: absolute; top: 80px; left: 10px; z-index: 1000;">
-    <button onclick="window.parent.location.reload(true);" title="Refresh Data BMKG" style="background-color: white; border: 2px solid rgba(0,0,0,0.2); border-radius: 4px; width: 34px; height: 34px; font-size: 18px; cursor: pointer; box-shadow: 0 1px 5px rgba(0,0,0,0.65); display: flex; justify-content: center; align-items: center;">
-        🔄
-    </button>
-</div>
-"""
-m.get_root().html.add_child(folium.Element(tombol_refresh_html))
 
 # ==========================================
 # HTML LEGEND (FLEXBOX DESIGN: RAPI & DINAMIS!)
