@@ -346,6 +346,14 @@ def ambil_cuaca_bmkg():
         "52.06.11.2006", # Doro O'o (Langgudu)
         "52.06.15.2005", # Sai (Soromandi)
         "52.06.14.2003", # Kawinda Toi (Tambora)
+        "52.71.06.1003", # Bertais (Sandubaya)
+        "52.02.01.1001", # Praya (Praya)
+        "52.07.02.1005", # Kuang (Taliwang)
+        "52.04.02.2001", # Lunyuk Rea (Lunyuk)
+        "52.04.13.2004", # Plampang (Plampang)
+        "52.05.05.2005", # Wawonduru (Woja)
+        "52.06.18.2002", # Belo (Palibelo)
+        "52.72.01.1001", # Paruga (Kota Bima)
     ]
     
     session = requests.Session()
