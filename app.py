@@ -299,7 +299,7 @@ for item in data_sensor:
         if curah < 50:
             if curah == 0: kategori, status_area, fill_warna = "Cerah / Berawan", "Aman", "blue"
             elif 0 < curah <= 20: kategori, status_area, fill_warna = "Hujan Ringan", "Aman", "green"
-            else: kategori, status_area, fill_warna = "Hujan Sedang", "Aman", "beige" 
+            else: kategori, status_area, fill_warna = "Hujan Sedang", "Aman", "#F5F5DC" 
 
             # INI DIA OBATNYA BRO! Kita bikin titik buletnya pake CSS HTML murni!
             html_dot = f'''
