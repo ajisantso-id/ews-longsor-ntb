@@ -520,16 +520,6 @@ if data_cuaca_bmkg:
 layer_prakiraan.add_to(m)
 
 # ==========================================
-# TOMBOL REFRESH CACHE MANUAL (TAMPIL DI ATAS PETA)
-# ==========================================
-st.markdown("<br>", unsafe_allow_html=True)
-col_kosong, col_refresh = st.columns([4, 1])
-with col_refresh:
-    if st.button("🔄 Refresh Data BMKG", use_container_width=True):
-        st.cache_data.clear() # Ini jurus sakti pemusnah cache!
-        st.rerun()
-
-# ==========================================
 # FUNGSI NARIK DATA PERINGATAN DINI (VERSI STABIL + ANTI SSL ERROR)
 # ==========================================
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
