@@ -336,22 +336,16 @@ def ambil_cuaca_bmkg():
     
     # ATURAN 2: Pakai adm4. Kita set 15 Titik Merata se-NTB
     lokasi_pilihan = [
-        "52.71.01.1001", # Mataram
-        "52.01.01.2001", # Gerung (Lobar)
         "52.08.05.2004", # Malaka (Pusuk Gunung Sari)
-        "52.08.01.2001", # Tanjung (KLU)
-        "52.08.03.2001", # Bayan (KLU)
-        "52.02.01.2001", # Praya (Loteng)
-        "52.03.01.2001", # Selong (Lotim)
-        "52.03.18.2001", # Sembalun (Lotim)
-        "52.07.01.1001", # Taliwang (KSB)
-        "52.04.04.2001", # Sumbawa Besar
-        "52.04.08.2001", # Plampang (Sumbawa)
-        "52.05.01.1001", # Dompu
-        "52.05.05.2001", # Pekat / Gn. Tambora (Dompu)
-        "52.72.01.1001", # Raba (Kota Bima)
-        "52.06.02.2001", # Woha (Kab. Bima)
-        "52.06.08.2001"  # Sape (Kab. Bima)
+        "52.02.12.2006", # Aik Berik (Batukliang Utara)
+        "52.03.15.2001", # Sembalun Bumbung (Pusuk Sembalun)
+        "52.01.07.2002", # Sekotong Barat (Sekotong)
+        "52.07.04.2001", # Sekongkang Atas (Sekongkang Atas)
+        "52.04.07.2003", # Bao Desa (Batu Lanteh)
+        "52.04.11.2008", # Ropang (Ropang)
+        "52.06.11.2006", # Doro O'o (Langgudu)
+        "52.06.15.2005", # Sai (Soromandi)
+        "52.06.14.2003", # Kawinda Toi (Tambora)
     ]
     
     session = requests.Session()
