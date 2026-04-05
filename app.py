@@ -12,7 +12,6 @@ from streamlit_autorefresh import st_autorefresh
 import time
 from branca.element import MacroElement, Template
 import streamlit.components.v1 as components
-import urllib3
 
 # ==========================================
 # ATUR JUDUL TAB BROWSER & BIKIN FULL LAYAR
@@ -520,43 +519,42 @@ if data_cuaca_bmkg:
 layer_prakiraan.add_to(m)
 
 # ==========================================
-# FUNGSI NARIK DATA PERINGATAN DINI (VERSI STABIL + ANTI SSL ERROR)
+# FUNGSI NARIK DATA PERINGATAN DINI (THE ULTIMATE FIX)
 # ==========================================
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-@st.cache_data(ttl=300) # Cache 5 menit biar aman dari blokir BMKG
+@st.cache_data(ttl=60) 
 def ambil_peringatan_dini():
     peringatan_aktif = []
     session = requests.Session()
-    session.headers.update({
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0'
-    })
+    session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
     
     try:
         url_rss = f"https://www.bmkg.go.id/alerts/nowcast/id/rss.xml?t={int(time.time())}"
-        res_rss = session.get(url_rss, timeout=30, verify=False) 
+        res_rss = session.get(url_rss, timeout=10)
         
         if res_rss.status_code == 200:
             import xml.etree.ElementTree as ET
             import re
             
-            rss_text = re.sub(r'\s+xmlns(:\w+)?="[^"]+"', '', res_rss.text)
+            rss_text = re.sub(r' xmlns="[^"]+"', '', res_rss.text)
             root_rss = ET.fromstring(rss_text)
             
             for item in root_rss.findall('.//item'):
-                title = item.findtext('title', '').upper()
+                title = item.findtext('title', '')
                 
-                if 'NUSA TENGGARA BARAT' in title or 'NTB' in title:
+                if 'Nusa Tenggara Barat' in title or 'NTB' in title or 'NUSA TENGGARA BARAT' in title:
                     link_detail = item.findtext('link', '')
                     if link_detail:
-                        link_detail = link_detail.replace('http://', 'https://').strip()
-                        res_cap = session.get(link_detail, timeout=30, verify=False)
+                        link_fresh = f"{link_detail}?t={int(time.time())}"
+                        res_cap = session.get(link_fresh, timeout=10)
                         
                         if res_cap.status_code == 200:
-                            cap_text = re.sub(r'\s+xmlns(:\w+)?="[^"]+"', '', res_cap.text)
+                            cap_text = re.sub(r' xmlns="[^"]+"', '', res_cap.text)
                             cap_root = ET.fromstring(cap_text)
                             
-                            info_blocks = [i for i in cap_root.findall('.//info') if 'id' in i.findtext('language', 'id').lower()]
+                            # 1. Ambil HANYA wadah <info> Bahasa Indonesia
+                            info_blocks = [i for i in cap_root.findall('.//info') if 'id' in i.findtext('language', '').lower()]
                             
+                            # 2. LOOP WADAH (KUNCI: WARNA DITENTUKAN DI SINI, BUKAN DI DALAM KECAMATAN!)
                             for idx_info, info in enumerate(info_blocks):
                                 event = info.findtext('event', 'Peringatan Dini Cuaca')
                                 headline = info.findtext('headline', '-')
@@ -564,8 +562,10 @@ def ambil_peringatan_dini():
                                 effective = info.findtext('effective', '-')
                                 expires = info.findtext('expires', '-')
                                 
+                                # Logika Murni Pusat: Wadah 1 (index 0) = Oren, Wadah 2 (index 1) = Kuning
                                 warna_poly = 'orange' if idx_info == 0 else 'yellow'
                                 
+                                # Backup validasi pakai Severity resmi CAP Internasional
                                 severity = info.findtext('severity', '').lower()
                                 if severity in ['moderate', 'minor']:
                                     warna_poly = 'yellow'
@@ -574,6 +574,7 @@ def ambil_peringatan_dini():
                                     
                                 opacity_poly = 0.6 if warna_poly == 'orange' else 0.4
                                 
+                                # 3. LOOP AREA/KECAMATAN (Haram ganti warna poly di dalam sini!)
                                 for area in info.findall('.//area'):
                                     area_desc = area.findtext('areaDesc', 'Wilayah Terdampak')
                                     for poly in area.findall('.//polygon'):
@@ -597,7 +598,7 @@ def ambil_peringatan_dini():
                                                     'expires': expires
                                                 })
                                                 
-            # Jurus Z-Index: Kuning alas, Oren di atas
+            # 4. JURUS Z-INDEX (KARPET KUNING DIGELAR DULUAN, OREN DI ATASNYA)
             peringatan_aktif.sort(key=lambda x: 1 if x['warna'] == 'yellow' else 2)
             
     except Exception as e:
@@ -605,7 +606,6 @@ def ambil_peringatan_dini():
         
     return peringatan_aktif
 
-    
 # ==========================================
 # LAYER TAMBAHAN: POLYGON PERINGATAN DINI 
 # ==========================================
@@ -615,29 +615,20 @@ with st.spinner("🚨 Mengecek Peringatan Dini Cuaca NTB..."):
     data_peringatan = ambil_peringatan_dini()
 
 if data_peringatan and len(data_peringatan) > 0:
-    data_kuning = [p for p in data_peringatan if p['warna'] == 'yellow']
-    data_oren = [p for p in data_peringatan if p['warna'] == 'orange']
-    
-    # GELAR KUNING DULU
-    for poly_dict in data_kuning:
+    for poly_dict in data_peringatan:
         folium.Polygon(
-            locations=poly_dict['coords'], color=poly_dict['warna'], weight=2, fill=True,
-            fill_color=poly_dict['warna'], fill_opacity=poly_dict['opacity'],      
+            locations=poly_dict['coords'],
+            color=poly_dict['warna'],           
+            weight=2,
+            fill=True,
+            fill_color=poly_dict['warna'],      
+            fill_opacity=poly_dict['opacity'],      
             tooltip=f"<b>🚨 {poly_dict['event']}</b><br>{poly_dict['nama_area']}",
-            popup=folium.Popup(f"<div style='min-width: 280px; max-height: 250px; overflow-y: auto;'><h4 style='color: #cc0000; margin-top:0;'>🚨 {poly_dict['event']}</h4><b>{poly_dict['nama_area']}</b><br><br><span style='font-size: 12px; color: #333;'>{poly_dict['description']}</span><br><br><hr style='margin: 5px 0;'><small style='color: #555;'><b>Mulai:</b> {poly_dict['effective']}<br><b>Berakhir:</b> {poly_dict['expires']}</small></div>", max_width=350)
+            popup=folium.Popup(
+                f"<div style='min-width: 280px; max-height: 250px; overflow-y: auto;'><h4 style='color: #cc0000; margin-top:0;'>🚨 {poly_dict['event']}</h4><b>{poly_dict['nama_area']}</b><br><br><span style='font-size: 12px; color: #333;'>{poly_dict['description']}</span><br><br><hr style='margin: 5px 0;'><small style='color: #555;'><b>Mulai:</b> {poly_dict['effective']}<br><b>Berakhir:</b> {poly_dict['expires']}</small></div>", 
+                max_width=350
+            )
         ).add_to(layer_peringatan)
-
-    # GELAR OREN DI ATASNYA
-    for poly_dict in data_oren:
-        folium.Polygon(
-            locations=poly_dict['coords'], color=poly_dict['warna'], weight=2, fill=True,
-            fill_color=poly_dict['warna'], fill_opacity=poly_dict['opacity'],      
-            tooltip=f"<b>🚨 {poly_dict['event']}</b><br>{poly_dict['nama_area']}",
-            popup=folium.Popup(f"<div style='min-width: 280px; max-height: 250px; overflow-y: auto;'><h4 style='color: #cc0000; margin-top:0;'>🚨 {poly_dict['event']}</h4><b>{poly_dict['nama_area']}</b><br><br><span style='font-size: 12px; color: #333;'>{poly_dict['description']}</span><br><br><hr style='margin: 5px 0;'><small style='color: #555;'><b>Mulai:</b> {poly_dict['effective']}<br><b>Berakhir:</b> {poly_dict['expires']}</small></div>", max_width=350)
-        ).add_to(layer_peringatan)
-else:
-    # FITUR DEBUGGER: Munculin Pop-up kalau server BMKG emang lagi kosong/gak ada warning
-    st.toast('ℹ️ Data BMKG: Saat ini tidak ada Peringatan Dini Cuaca (Nowcast) yang aktif untuk wilayah NTB.', icon='✅')
 
 layer_peringatan.add_to(m)
 
