@@ -40,11 +40,11 @@ tanggal_str = wita_now.strftime("%A, %d %B %Y").upper()
 waktu_utc_str = utc_now.strftime("%H:%M:%S UTC")
 
 # ==========================================
-# CSS HACK: BIKIN FULL SCREEN & HEADER NATIVE APP
+# CSS HACK: ULTIMATE FULL SCREEN COMMAND CENTER
 # ==========================================
 st.markdown(f"""
     <style>
-        /* 1. Hancurin semua margin bawaan Streamlit biar Full Screen! */
+        /* 1. Musnahkan semua padding dan margin bawaan Streamlit */
         .block-container {{
             padding: 28px 0rem 0rem 0rem !important; 
             max-width: 100% !important;
@@ -54,7 +54,7 @@ st.markdown(f"""
         [data-testid="stToolbar"] {{display: none !important;}} 
         footer {{display: none !important;}}
         
-        /* 2. Bikin Baris Waktu di Paling Atas (Fixed) */
+        /* 2. Baris Waktu di Paling Atas */
         .top-time-bar {{
             position: fixed; top: 0; left: 0; width: 100%; height: 28px;
             background-color: #ffffff; border-bottom: 1px solid #e0e0e0;
@@ -62,48 +62,38 @@ st.markdown(f"""
             align-items: center; padding: 0 30px; font-size: 11px;
             color: #0056b3; font-weight: bold; letter-spacing: 0.5px;
         }}
-        
-        /* 3. WADAH HEADER: Dikasih background putih biar elegan */
-        .ofs-header-container {{
-            background: white;
-            padding: 10px 30px 0px 30px;
-            position: relative;
-            z-index: 999;
-        }}
-        .ofs-header {{
-            display: flex; align-items: center;
-        }}
-        .ofs-header img {{ width: 50px; margin-right: 15px; }}
-        .ofs-title h3 {{ margin: 0 !important; color: #002B5B; font-size: 20px; font-weight: 800; line-height: 1.2; }}
-        .ofs-title p {{ margin: 0 !important; color: #444; font-size: 15px; line-height: 1.2; }}
-        
-        .garis-biru {{
-            margin: 10px 0px 0px 0px !important; 
-            border: none !important; border-bottom: 2px solid #002B5B !important;
-        }}
 
-        /* 4. PAKSA PETA JADI FULL LAYAR (Nyesuaiin sisa layar bawah) */
+        /* 3. PAKSA PETA JADI FULL LAYAR (Tinggi layar dikurangi baris waktu) */
         iframe[title="streamlit_folium.st_folium"] {{
-            height: calc(100vh - 90px) !important; 
+            height: calc(100vh - 28px) !important; 
             width: 100vw !important;
-            margin-bottom: -10px !important;
+            border: none !important;
+        }}
+        
+        /* 4. JURUS SAKTI: Bikin Panel Tombol Streamlit Melayang di Atas Peta! */
+        div[data-testid="stHorizontalBlock"]:has(.jangkar-tombol) {{
+            position: fixed;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 99999;
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 10px 15px;
+            border-radius: 12px;
+            box-shadow: 0px 4px 15px rgba(0,0,0,0.5);
+            border: 2px solid #002B5B;
+            width: max-content;
+            gap: 10px;
+        }}
+        div[data-testid="stHorizontalBlock"]:has(.jangkar-tombol) > div {{
+            width: auto !important;
+            flex: none !important;
         }}
     </style>
 
     <div class="top-time-bar">
         <div>{tanggal_str}</div>
         <div id="jam-live">STANDAR WAKTU INDONESIA &nbsp;&nbsp;:&nbsp;&nbsp; {waktu_utc_str}</div>
-    </div>
-    
-    <div class="ofs-header-container">
-        <div class="ofs-header">
-            <img src="https://www.bmkg.go.id/asset/img/logo/logo-bmkg.png">
-            <div class="ofs-title">
-                <h3>Stasiun Meteorologi ZAM Lombok</h3>
-                <p>Dashboard Peringatan Dini Longsor dan Banjir Nusa Tenggara Barat</p>
-            </div>
-        </div>
-        <hr class="garis-biru">
     </div>
 """, unsafe_allow_html=True)
 
@@ -782,45 +772,32 @@ class LegendDinamis(MacroElement):
         """)
 
 m.add_child(LegendDinamis())
+# ==========================================
+# JUDUL MELAYANG DI DALAM PETA (KIRI ATAS)
+# ==========================================
+judul_html = '''
+<div style="position: fixed; top: 15px; left: 60px; z-index: 9999; background: rgba(255,255,255,0.95); padding: 10px 20px; border-radius: 8px; box-shadow: 2px 2px 8px rgba(0,0,0,0.4); display: flex; align-items: center; border-left: 5px solid #002B5B; pointer-events: auto;">
+    <img src="https://www.bmkg.go.id/asset/img/logo/logo-bmkg.png" style="width: 45px; margin-right: 15px;">
+    <div>
+        <h3 style="margin: 0; color: #002B5B; font-size: 18px; font-weight: 800; font-family: sans-serif;">Stasiun Meteorologi ZAM Lombok</h3>
+        <p style="margin: 0; color: #444; font-size: 13px; font-family: sans-serif;">Dashboard Peringatan Dini Longsor dan Banjir Nusa Tenggara Barat</p>
+    </div>
+</div>
+'''
+m.get_root().html.add_child(folium.Element(judul_html))
+
 folium.LayerControl().add_to(m)
 
-# TAMPILKAN PETA UTAMA (DIBIKIN FULL HEIGHT!)
-st_folium(m, height=750, width="100%", returned_objects=[])
+# TAMPILKAN PETA UTAMA
+# Height kita set tinggi, nanti CSS calc(100vh) yang bakal nge-press biar pas layar!
+st_folium(m, height=900, width="100%", returned_objects=[])
 
 # ==========================================
-# JURUS SAKTI: PANEL TOMBOL MELAYANG DI TENGAH BAWAH PETA
+# PANEL TOMBOL MELAYANG DI TENGAH BAWAH
 # ==========================================
 nama_file_peta = "Peta_EWS_NTB_Terbaru.html"
 m.save(nama_file_peta)
 
-# Bikin jangkar transparan buat nargetin CSS ke tombol Streamlit
-st.markdown('<div id="panel-jangkar"></div>', unsafe_allow_html=True)
-st.markdown("""
-<style>
-/* Nargetin kolom tombol tepat di bawah div panel-jangkar biar MELAYANG */
-#panel-jangkar + div[data-testid="stHorizontalBlock"] {
-    position: fixed;
-    bottom: 30px; /* Melayang di bawah, sejajar sama Legend */
-    left: 50%;
-    transform: translateX(-50%); /* Bikin persis di tengah */
-    z-index: 99999;
-    background-color: rgba(255, 255, 255, 0.95);
-    padding: 10px 15px;
-    border-radius: 12px;
-    box-shadow: 0px 4px 15px rgba(0,0,0,0.5);
-    border: 2px solid #002B5B;
-    width: max-content;
-    gap: 10px;
-}
-/* Bikin tombolnya sejajar rapat dan rapi */
-#panel-jangkar + div[data-testid="stHorizontalBlock"] > div {
-    width: auto !important;
-    flex: none !important;
-}
-</style>
-""", unsafe_allow_html=True)
-
-# Bikin 5 tombol berjejer
 col_dl, col_h2, col_h1, col_h0, col_tab = st.columns(5)
 
 with col_dl:
@@ -833,6 +810,8 @@ with col_h1:
 with col_h0:
     st.button("✅ Hari Ini", on_click=set_hari, args=(0,))
 with col_tab:
-    # JURUS POP-UP: Kalau diklik, fungsi tabel melayang dipanggil!
     if st.button("📋 Lihat Tabel"):
         tampilkan_tabel_popup()
+    
+    # INI DIA JANGKAR RAHASIANYA BIAR PANELNYA BISA MELAYANG!
+    st.markdown('<span class="jangkar-tombol"></span>', unsafe_allow_html=True)
