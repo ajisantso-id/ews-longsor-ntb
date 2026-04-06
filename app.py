@@ -801,51 +801,13 @@ nama_file_peta = "Peta_EWS_NTB_Terbaru.html"
 m.save(nama_file_peta)
 
 # ==========================================
-# FUNGSI CONVERT HTML KE JPG (HEADLESS BROWSER)
-# ==========================================
-@st.dialog("📸 Memproses Foto Peta...", width="small")
-def proses_download_jpg():
-    st.info("Robot sedang memotret peta (butuh waktu 5-10 detik)...")
-    with st.spinner("Membangunkan Browser Hantu..."):
-        try:
-            from html2image import Html2Image
-            import os
-            
-            # Panggil robotnya
-            hti = Html2Image()
-            # Settingan wajib biar Chrome bisa jalan di server Streamlit Cloud
-            hti.browser.flags = ['--no-sandbox', '--disable-setuid-sandbox', '--headless']
-            
-            nama_jpg = "Peta_Command_Center_NTB.jpg"
-            # Jepret file HTML-nya pake resolusi Full HD (1920x1080)
-            hti.screenshot(html_file=nama_file_peta, save_as=nama_jpg, size=(1920, 1080))
-            
-            st.success("✅ Peta berhasil difoto!")
-            
-            # Keluarin tombol asli buat nge-save ke laptop
-            with open(nama_jpg, "rb") as file:
-                st.download_button(
-                    label="📥 Save File JPG ke Laptop",
-                    data=file,
-                    file_name=nama_jpg,
-                    mime="image/jpeg",
-                    use_container_width=True,
-                    type="primary"
-                )
-        except Exception as e:
-            st.error(f"Gagal memotret! Pastikan packages.txt sudah dibuat di GitHub. Error: {e}")
-
-# ==========================================
 # PANEL TOMBOL MELAYANG
 # ==========================================
 col_dl, col_jpg, col_h2, col_h1, col_h0, col_tab = st.columns(6)
 
 with col_dl:
     with open(nama_file_peta, "rb") as file:
-        st.download_button("📥 HTML", data=file, file_name=nama_file_peta, mime="text/html")
-with col_jpg:
-    if st.button("📷 JPG"):
-        proses_download_jpg()  # <--- Ubah panggilannya jadi ini
+        st.download_button("📥 Download Peta", data=file, file_name=nama_file_peta, mime="text/html")
 with col_h2:
     st.button("⏮️ H-2", on_click=set_hari, args=(2,)) 
 with col_h1:
@@ -853,7 +815,7 @@ with col_h1:
 with col_h0:
     st.button("✅ Hari Ini", on_click=set_hari, args=(0,))
 with col_tab:
-    if st.button("📋 Tabel"):
+    if st.button("📋 Tabel Data"):
         tampilkan_tabel_popup()
         
     # KUNCI SUKSES: JANGKAR INI HARUS MASUK/MENJOROK KE DALAM "with col_tab:"
