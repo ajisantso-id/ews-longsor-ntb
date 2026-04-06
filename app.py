@@ -842,5 +842,6 @@ with col_tab:
     if st.button("📋 Tabel"):
         tampilkan_tabel_popup()
         
-# INI JANGKAR RAHASIANYA! (HARUS DI LUAR FUNGSI BIAR CSS BISA BACA)
-st.markdown('<span class="jangkar-tombol"></span>', unsafe_allow_html=True)
+    # KUNCI SUKSES: JANGKAR INI HARUS MASUK/MENJOROK KE DALAM "with col_tab:"
+    # Biar CSS tahu kalau satu baris tombol ini yang harus diterbangin!
+    st.markdown('<span class="jangkar-tombol"></span>', unsafe_allow_html=True)
