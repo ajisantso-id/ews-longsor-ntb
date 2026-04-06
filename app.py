@@ -790,17 +790,16 @@ folium.LayerControl().add_to(m)
 # Height kita set tinggi, nanti CSS calc(100vh) yang bakal nge-press biar pas layar!
 st_folium(m, height=900, width="100%", returned_objects=[])
 
-# ==========================================
-# PANEL TOMBOL MELAYANG DI TENGAH BAWAH
-# ==========================================
-nama_file_peta = "Peta_EWS_NTB_Terbaru.html"
-m.save(nama_file_peta)
-
-col_dl, col_h2, col_h1, col_h0, col_tab = st.columns(5)
+# Bikin 6 tombol berjejer sekarang
+col_dl, col_jpg, col_h2, col_h1, col_h0, col_tab = st.columns(6)
 
 with col_dl:
     with open(nama_file_peta, "rb") as file:
-        st.download_button("📥 Download HTML", data=file, file_name=nama_file_peta, mime="text/html")
+        st.download_button("📥 HTML", data=file, file_name=nama_file_peta, mime="text/html")
+with col_jpg:
+    # Ini tombol baru lu! Posisinya pas di sebelah Download HTML
+    if st.button("📷 JPG"):
+        tampilkan_cara_jpg()
 with col_h2:
     st.button("⏮️ H-2", on_click=set_hari, args=(2,)) 
 with col_h1:
@@ -808,8 +807,9 @@ with col_h1:
 with col_h0:
     st.button("✅ Hari Ini", on_click=set_hari, args=(0,))
 with col_tab:
-    if st.button("📋 Lihat Tabel"):
+    if st.button("📋 Tabel"):
         tampilkan_tabel_popup()
+        
 # ==========================================
 # FUNGSI POP-UP CARA DOWNLOAD JPG (SOLUSI HD)
 # ==========================================
