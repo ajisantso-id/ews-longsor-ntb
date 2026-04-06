@@ -786,6 +786,57 @@ m.get_root().html.add_child(folium.Element(judul_html))
 
 folium.LayerControl().add_to(m)
 
+# ==========================================
+# FITUR DOWNLOAD PETA JADI JPG (ROBOT FOTOGRAFER)
+# ==========================================
+script_jpg = '''
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<div style="position: fixed; top: 90px; left: 60px; z-index: 9999; pointer-events: auto;">
+    <button id="btn-download-jpg" onclick="downloadJPG()" style="background: #ffffff; border: 2px solid #002B5B; color: #002B5B; padding: 6px 15px; border-radius: 6px; font-weight: 800; font-size: 12px; cursor: pointer; box-shadow: 2px 2px 8px rgba(0,0,0,0.4); display: flex; align-items: center; gap: 5px; font-family: sans-serif; transition: all 0.3s;">
+        📷 Download JPG
+    </button>
+</div>
+
+<script>
+    function downloadJPG() {
+        var btn = document.getElementById("btn-download-jpg");
+        var originalText = btn.innerHTML;
+        
+        // Ubah tombol pas diklik biar user tau robotnya lagi kerja
+        btn.innerHTML = "⏳ Memotret Peta...";
+        btn.style.background = "#e0e0e0";
+        btn.style.pointerEvents = "none";
+        
+        // Kasih jeda 0.5 detik biar tombolnya beneran berubah sebelum kamera jepret
+        setTimeout(function() {
+            // Sasar seluruh area body peta (termasuk Legend dan Judul)
+            html2canvas(document.body, {
+                useCORS: true,           // Izin narik gambar jalan dari server peta
+                allowTaint: false,
+                backgroundColor: "#ffffff" // Background putih biar lautnya gak item
+            }).then(function(canvas) {
+                // Proses rakit JPG dan Download Otomatis
+                var link = document.createElement("a");
+                link.download = "Peta_Command_Center_NTB.jpg";
+                link.href = canvas.toDataURL("image/jpeg", 0.95);
+                link.click();
+                
+                // Balikin tombol ke semula
+                btn.innerHTML = originalText;
+                btn.style.background = "#ffffff";
+                btn.style.pointerEvents = "auto";
+            }).catch(function(err) {
+                alert("Waduh gagal motret Bro: " + err);
+                btn.innerHTML = originalText;
+                btn.style.background = "#ffffff";
+                btn.style.pointerEvents = "auto";
+            });
+        }, 500);
+    }
+</script>
+'''
+m.get_root().html.add_child(folium.Element(script_jpg))
+
 # TAMPILKAN PETA UTAMA
 # Height kita set tinggi, nanti CSS calc(100vh) yang bakal nge-press biar pas layar!
 st_folium(m, height=900, width="100%", returned_objects=[])
