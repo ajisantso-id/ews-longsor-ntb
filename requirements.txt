@@ -5,6 +5,6 @@ pandas
 requests
 pytz
 streamlit-autorefresh
-
+html2image
 
 
