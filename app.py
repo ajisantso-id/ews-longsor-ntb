@@ -803,7 +803,7 @@ m.save(nama_file_peta)
 # ==========================================
 # PANEL TOMBOL MELAYANG
 # ==========================================
-col_dl, col_jpg, col_h2, col_h1, col_h0, col_tab = st.columns(6)
+col_dl, col_h2, col_h1, col_h0, col_tab = st.columns(6)
 
 with col_dl:
     with open(nama_file_peta, "rb") as file:
