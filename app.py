@@ -801,25 +801,39 @@ nama_file_peta = "Peta_EWS_NTB_Terbaru.html"
 m.save(nama_file_peta)
 
 # ==========================================
-# FUNGSI POP-UP CARA DOWNLOAD JPG (SOLUSI HD)
+# FUNGSI CONVERT HTML KE JPG (HEADLESS BROWSER)
 # ==========================================
-@st.dialog("📸 Cara Simpan Peta Jadi JPG (Kualitas HD)", width="small")
-def tampilkan_cara_jpg():
-    st.warning("⚠️ **Sistem Keamanan Browser memblokir download gambar otomatis dari dalam peta.**")
-    st.markdown("""
-    Tapi tenang! Cara paling **Pro & High Resolution** adalah pakai kamera bawaan browser lu. Cuma butuh 2 detik:
-
-    **🔥 Microsoft Edge / Google Chrome / Windows:**
-    1. Tekan kombinasi keyboard: **`Windows` + `Shift` + `S`** (Atau `Ctrl` + `Shift` + `S`).
-    2. Tarik kotak menutupi seluruh batas peta lu.
-    3. Langsung **Paste (`Ctrl` + `V`)** di grup WA Pimpinan!
-
-    **🦊 Mozilla Firefox:**
-    1. Tekan keyboard: **`Ctrl` + `Shift` + `S`**
-    2. Tarik area peta, lalu klik **Download**.
-
-    *Cara ini dijamin 100% anti-gagal dan hasilnya jauh lebih tajam dibanding download otomatis!*
-    """)
+@st.dialog("📸 Memproses Foto Peta...", width="small")
+def proses_download_jpg():
+    st.info("Robot sedang memotret peta (butuh waktu 5-10 detik)...")
+    with st.spinner("Membangunkan Browser Hantu..."):
+        try:
+            from html2image import Html2Image
+            import os
+            
+            # Panggil robotnya
+            hti = Html2Image()
+            # Settingan wajib biar Chrome bisa jalan di server Streamlit Cloud
+            hti.browser.flags = ['--no-sandbox', '--disable-setuid-sandbox', '--headless']
+            
+            nama_jpg = "Peta_Command_Center_NTB.jpg"
+            # Jepret file HTML-nya pake resolusi Full HD (1920x1080)
+            hti.screenshot(html_file=nama_file_peta, save_as=nama_jpg, size=(1920, 1080))
+            
+            st.success("✅ Peta berhasil difoto!")
+            
+            # Keluarin tombol asli buat nge-save ke laptop
+            with open(nama_jpg, "rb") as file:
+                st.download_button(
+                    label="📥 Save File JPG ke Laptop",
+                    data=file,
+                    file_name=nama_jpg,
+                    mime="image/jpeg",
+                    use_container_width=True,
+                    type="primary"
+                )
+        except Exception as e:
+            st.error(f"Gagal memotret! Pastikan packages.txt sudah dibuat di GitHub. Error: {e}")
 
 # ==========================================
 # PANEL TOMBOL MELAYANG
@@ -831,7 +845,7 @@ with col_dl:
         st.download_button("📥 HTML", data=file, file_name=nama_file_peta, mime="text/html")
 with col_jpg:
     if st.button("📷 JPG"):
-        tampilkan_cara_jpg()
+        proses_download_jpg()  # <--- Ubah panggilannya jadi ini
 with col_h2:
     st.button("⏮️ H-2", on_click=set_hari, args=(2,)) 
 with col_h1:
