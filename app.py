@@ -383,31 +383,47 @@ for item in data_sensor:
             elif 0 < curah <= 20: kategori, status_area, fill_warna = "Hujan Ringan", "Aman", "green"
             else: kategori, status_area, fill_warna = "Hujan Sedang", "Aman", "yellow" 
 
-            # INI DIA OBATNYA BRO! Kita bikin titik buletnya pake CSS HTML murni!
             # ==================================
-            # JURUS REVISI 1: BEDA BENTUK LOGO
+            # JURUS REVISI 1: LOGO SHAPE PURE (SVG VECTOR)
             # ==================================
-            # Asumsi: Ada field 'jenis_alat' dari API. Kalau beda nama, sesuaikan ya Bro!
-            jenis = str(item.get('jenis_alat', 'AWS')).upper()
+            nama_stasiun_upper = nama.upper()
             
-            if 'ARG' in jenis:
-                bentuk_css = "border-radius: 50%;" # Bulat
-                huruf = "R"
-            elif 'MAWS' in jenis:
-                bentuk_css = "clip-path: polygon(50% 0%, 0% 100%, 100% 100%); border-radius: 0;" # Segitiga
-                huruf = "M"
-            elif 'AAWS' in jenis:
-                bentuk_css = "border-radius: 4px;" # Kotak Tumpul
-                huruf = "A"
-            else: # Default AWS
-                bentuk_css = "border-radius: 0;" # Kotak Tajam
-                huruf = "W"
-
-            html_dot = f'''
-            <div style="background-color: {fill_warna}; {bentuk_css} width: 16px; height: 16px; border: 1.5px solid black; box-shadow: 1px 1px 4px rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; color: white; font-size: 8px; font-weight: bold; font-family: sans-serif; text-shadow: 0px 0px 2px black;">
-                {huruf}
-            </div>
-            '''
+            if 'ARG' in nama_stasiun_upper:
+                # LOGO SEGITIGA (ARG)
+                html_dot = f'''
+                <div style="display: flex; justify-content: center; align-items: center; width: 100%; height: 100%;">
+                    <svg width="18" height="18" viewBox="0 0 18 18" style="filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.5));">
+                      <polygon points="9,2 2,15 16,15" fill="{fill_warna}" stroke="black" stroke-width="1.5" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                '''
+            elif 'MAWS' in nama_stasiun_upper or 'MARITIM' in nama_stasiun_upper:
+                # LOGO BELAH KETUPAT / DIAMOND (MAWS)
+                html_dot = f'''
+                <div style="display: flex; justify-content: center; align-items: center; width: 100%; height: 100%;">
+                    <svg width="18" height="18" viewBox="0 0 18 18" style="filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.5));">
+                      <polygon points="9,2 16,9 9,16 2,9" fill="{fill_warna}" stroke="black" stroke-width="1.5" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                '''
+            elif 'AAWS' in nama_stasiun_upper or 'AGRO' in nama_stasiun_upper:
+                # LOGO KOTAK (AAWS)
+                html_dot = f'''
+                <div style="display: flex; justify-content: center; align-items: center; width: 100%; height: 100%;">
+                    <svg width="16" height="16" viewBox="0 0 16 16" style="filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.5));">
+                      <rect x="2" y="2" width="12" height="12" fill="{fill_warna}" stroke="black" stroke-width="1.5" rx="1"/>
+                    </svg>
+                </div>
+                '''
+            else: 
+                # LOGO LINGKARAN (AWS STANDAR)
+                html_dot = f'''
+                <div style="display: flex; justify-content: center; align-items: center; width: 100%; height: 100%;">
+                    <svg width="16" height="16" viewBox="0 0 16 16" style="filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.5));">
+                      <circle cx="8" cy="8" r="6" fill="{fill_warna}" stroke="black" stroke-width="1.5"/>
+                    </svg>
+                </div>
+                '''
 
             # Karena pakenya folium.Marker + DivIcon, dia OTOMATIS pindah ke Lantai Atas!
             folium.Marker(
