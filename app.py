@@ -241,6 +241,48 @@ elif st.session_state.offset_hari == 2:
         st.warning("⚠️ Data histori H-2 belum tersedia.")
 
 # ==========================================
+# JURUS REVISI 3: ALARM DARURAT 3 HARI (BENCANA HIDROMETEOROLOGI)
+# ==========================================
+def cek_bahaya_3_hari():
+    try:
+        # Tarik data 3 hari
+        live_data = ambil_data_live() if 'ambil_data_live' in globals() else []
+        h1_data, h2_data = [], []
+        if os.path.exists('data_h1.json'):
+            with open('data_h1.json', 'r') as f: h1_data = json.load(f)
+        if os.path.exists('data_h2.json'):
+            with open('data_h2.json', 'r') as f: h2_data = json.load(f)
+            
+        # Ekstrak curah hujan jadi dictionary biar gampang dicari
+        def parse_curah(val):
+            try: return float(str(val).replace(',', '.'))
+            except: return 0.0
+            
+        dict_h1 = {item['id_station']: parse_curah(item.get('curah', 0)) for item in h1_data}
+        dict_h2 = {item['id_station']: parse_curah(item.get('curah', 0)) for item in h2_data}
+        
+        stasiun_bahaya = []
+        for item in live_data:
+            id_stat = item.get('id_station')
+            nama_stat = item.get('name_station')
+            c0 = parse_curah(item.get('curah', 0))
+            c1 = dict_h1.get(id_stat, 0.0)
+            c2 = dict_h2.get(id_stat, 0.0)
+            
+            # LOGIKA ALARM: > 50mm selama 3 hari berturut-turut!
+            if c0 > 50 and c1 > 50 and c2 > 50:
+                stasiun_bahaya.append(nama_stat)
+                
+        if stasiun_bahaya:
+            list_bahaya = ", ".join(stasiun_bahaya)
+            st.error(f"🚨 **PERINGATAN DARURAT:** Terdapat curah hujan > 50mm selama 3 Hari Berturut-turut di stasiun: **{list_bahaya}**! Potensi Longsor/Banjir Sangat Tinggi!", icon="⚠️")
+    except Exception as e:
+        pass
+
+# Panggil fungsinya biar jalan pas web dibuka
+cek_bahaya_3_hari()
+
+# ==========================================
 # 1. BIKIN PETA KOSONG
 # ==========================================
 m = folium.Map(location=[-8.65, 117.36], zoom_start=8.5, tiles=None, attributionControl=False)
@@ -263,6 +305,35 @@ folium.TileLayer(
     attr=' ',
     name='Google Satellite (Satelit)',
     overlay=False,
+    control=True,
+    show=False
+).add_to(m)
+
+# ==========================================
+# JURUS REVISI 4: LAYER RADAR BMKG (PAC & CMAX)
+# ==========================================
+# CATATAN: URL WMS ini sering diganti sama pusat. Kalau mati, lu harus minta URL WMS terbaru ke teknisi radar BMKG Pusat (biasanya formatnya https://sig.bmkg.go.id/WMS atau Geoserver lokal)
+
+# Layer Radar CMAX (Column Max)
+folium.raster_layers.WmsTileLayer(
+    url='https://sig.bmkg.go.id/WMS', # Ganti URL ini kalau BMKG pake server Geoserver lain
+    layers='radar_cmax_ntb',          # Nama layer di server BMKG (Tanya teknisi nama pastinya)
+    fmt='image/png',
+    transparent=True,
+    name='📡 Radar BMKG (CMAX)',
+    overlay=True,
+    control=True,
+    show=False
+).add_to(m)
+
+# Layer Radar PAC (Precipitation Accumulation)
+folium.raster_layers.WmsTileLayer(
+    url='https://sig.bmkg.go.id/WMS', # Ganti URL WMS
+    layers='radar_pac_ntb',           # Nama layer di server BMKG
+    fmt='image/png',
+    transparent=True,
+    name='📡 Radar BMKG (PAC)',
+    overlay=True,
     control=True,
     show=False
 ).add_to(m)
@@ -313,8 +384,29 @@ for item in data_sensor:
             else: kategori, status_area, fill_warna = "Hujan Sedang", "Aman", "yellow" 
 
             # INI DIA OBATNYA BRO! Kita bikin titik buletnya pake CSS HTML murni!
+            # ==================================
+            # JURUS REVISI 1: BEDA BENTUK LOGO
+            # ==================================
+            # Asumsi: Ada field 'jenis_alat' dari API. Kalau beda nama, sesuaikan ya Bro!
+            jenis = str(item.get('jenis_alat', 'AWS')).upper()
+            
+            if 'ARG' in jenis:
+                bentuk_css = "border-radius: 50%;" # Bulat
+                huruf = "R"
+            elif 'MAWS' in jenis:
+                bentuk_css = "clip-path: polygon(50% 0%, 0% 100%, 100% 100%); border-radius: 0;" # Segitiga
+                huruf = "M"
+            elif 'AAWS' in jenis:
+                bentuk_css = "border-radius: 4px;" # Kotak Tumpul
+                huruf = "A"
+            else: # Default AWS
+                bentuk_css = "border-radius: 0;" # Kotak Tajam
+                huruf = "W"
+
             html_dot = f'''
-            <div style="background-color: {fill_warna}; border-radius: 50%; width: 12px; height: 12px; border: 2px solid black; box-shadow: 1px 1px 4px rgba(0,0,0,0.6);"></div>
+            <div style="background-color: {fill_warna}; {bentuk_css} width: 16px; height: 16px; border: 1.5px solid black; box-shadow: 1px 1px 4px rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; color: white; font-size: 8px; font-weight: bold; font-family: sans-serif; text-shadow: 0px 0px 2px black;">
+                {huruf}
+            </div>
             '''
 
             # Karena pakenya folium.Marker + DivIcon, dia OTOMATIS pindah ke Lantai Atas!
@@ -531,11 +623,22 @@ if data_cuaca_bmkg:
 layer_prakiraan.add_to(m)
 
 # ==========================================
-# FUNGSI NARIK DATA PERINGATAN DINI (THE ULTIMATE FIX)
+# FUNGSI NARIK PERINGATAN DINI (LIVE + HISTORY)
 # ==========================================
 @st.cache_data(ttl=60) 
-def ambil_peringatan_dini():
+def ambil_peringatan_dini(offset_hari):
     peringatan_aktif = []
+    
+    # KALO LAGI LIAT H-1 atau H-2 (BACA DARI FILE LOKAL)
+    if offset_hari > 0:
+        nama_file = f"warning_h{offset_hari}.json"
+        if os.path.exists(nama_file):
+            with open(nama_file, 'r') as f:
+                return json.load(f)
+        else:
+            return [] # Kosong kalo file backup belum dibikin robot
+            
+    # KALO LIVE (HARI INI) -> TEMBAK KE BMKG
     session = requests.Session()
     session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
     
@@ -552,7 +655,6 @@ def ambil_peringatan_dini():
             
             for item in root_rss.findall('.//item'):
                 title = item.findtext('title', '')
-                
                 if 'Nusa Tenggara Barat' in title or 'NTB' in title or 'NUSA TENGGARA BARAT' in title:
                     link_detail = item.findtext('link', '')
                     if link_detail:
@@ -562,31 +664,20 @@ def ambil_peringatan_dini():
                         if res_cap.status_code == 200:
                             cap_text = re.sub(r' xmlns="[^"]+"', '', res_cap.text)
                             cap_root = ET.fromstring(cap_text)
-                            
-                            # 1. Ambil HANYA wadah <info> Bahasa Indonesia
                             info_blocks = [i for i in cap_root.findall('.//info') if 'id' in i.findtext('language', '').lower()]
                             
-                            # 2. LOOP WADAH (KUNCI: WARNA DITENTUKAN DI SINI, BUKAN DI DALAM KECAMATAN!)
                             for idx_info, info in enumerate(info_blocks):
                                 event = info.findtext('event', 'Peringatan Dini Cuaca')
-                                headline = info.findtext('headline', '-')
                                 desc = info.findtext('description', '-')
                                 effective = info.findtext('effective', '-')
                                 expires = info.findtext('expires', '-')
                                 
-                                # Logika Murni Pusat: Wadah 1 (index 0) = Oren, Wadah 2 (index 1) = Kuning
                                 warna_poly = 'orange' if idx_info == 0 else 'yellow'
-                                
-                                # Backup validasi pakai Severity resmi CAP Internasional
                                 severity = info.findtext('severity', '').lower()
-                                if severity in ['moderate', 'minor']:
-                                    warna_poly = 'yellow'
-                                elif severity in ['severe', 'extreme']:
-                                    warna_poly = 'orange'
-                                    
+                                if severity in ['moderate', 'minor']: warna_poly = 'yellow'
+                                elif severity in ['severe', 'extreme']: warna_poly = 'orange'
                                 opacity_poly = 0.6 if warna_poly == 'orange' else 0.4
                                 
-                                # 3. LOOP AREA/KECAMATAN (Haram ganti warna poly di dalam sini!)
                                 for area in info.findall('.//area'):
                                     area_desc = area.findtext('areaDesc', 'Wilayah Terdampak')
                                     for poly in area.findall('.//polygon'):
@@ -600,19 +691,12 @@ def ambil_peringatan_dini():
                                             
                                             if coords:
                                                 peringatan_aktif.append({
-                                                    'coords': coords,
-                                                    'warna': warna_poly,
-                                                    'opacity': opacity_poly,
-                                                    'nama_area': area_desc,
-                                                    'event': event,
-                                                    'description': desc,
-                                                    'effective': effective,
-                                                    'expires': expires
+                                                    'coords': coords, 'warna': warna_poly, 'opacity': opacity_poly,
+                                                    'nama_area': area_desc, 'event': event, 'description': desc,
+                                                    'effective': effective, 'expires': expires
                                                 })
                                                 
-            # 4. JURUS Z-INDEX (KARPET KUNING DIGELAR DULUAN, OREN DI ATASNYA)
             peringatan_aktif.sort(key=lambda x: 1 if x['warna'] == 'yellow' else 2)
-            
     except Exception as e:
         pass 
         
@@ -624,7 +708,7 @@ def ambil_peringatan_dini():
 layer_peringatan = folium.FeatureGroup(name="🚨 Peringatan Dini Cuaca", show=False)
 
 with st.spinner("🚨 Mengecek Peringatan Dini Cuaca NTB..."):
-    data_peringatan = ambil_peringatan_dini()
+    data_peringatan = ambil_peringatan_dini(st.session_state.offset_hari)
 
 if data_peringatan and len(data_peringatan) > 0:
     for poly_dict in data_peringatan:
