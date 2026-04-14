@@ -310,34 +310,71 @@ folium.TileLayer(
 ).add_to(m)
 
 # ==========================================
-# JURUS REVISI 4: LAYER RADAR BMKG (PAC & CMAX)
+# FUNGSI PENCULIK GAMBAR RADAR INTERNAL (SIDARMA)
 # ==========================================
-# CATATAN: URL WMS ini sering diganti sama pusat. Kalau mati, lu harus minta URL WMS terbaru ke teknisi radar BMKG Pusat (biasanya formatnya https://sig.bmkg.go.id/WMS atau Geoserver lokal)
+@st.cache_data(ttl=300) # Update tiap 5 menit
+def ambil_radar_internal():
+    url_json = "http://172.19.1.142/sidarma-nowcast/imageStatus_Lombok.json?id=123"
+    base_url = "http://172.19.1.142/sidarma-nowcast/"
+    auth_login = ("CNB", "CNB@20:22") # Akun VVIP lu nih Bro
+    
+    radar_urls = {'PAC': None, 'CMAX': None}
+    
+    try:
+        res = requests.get(url_json, auth=auth_login, timeout=10)
+        if res.status_code == 200:
+            data = res.json()
+            
+            # Culik link gambar PAC terbaru
+            if 'PAC12H' in data and 'Latest' in data['PAC12H']:
+                path_pac = data['PAC12H']['Latest']['file']
+                radar_urls['PAC'] = base_url + path_pac
+                
+            # Culik link gambar CMAX terbaru (Gue asumsi nama bloknya 'CMAX')
+            if 'CMAX' in data and 'Latest' in data['CMAX']:
+                path_cmax = data['CMAX']['Latest']['file']
+                radar_urls['CMAX'] = base_url + path_cmax
+                
+    except Exception as e:
+        pass # Kalo server mati/offline, lewatin aja biar web ga crash
+        
+    return radar_urls
 
-# Layer Radar CMAX (Column Max)
-folium.raster_layers.WmsTileLayer(
-    url='https://sig.bmkg.go.id/WMS', # Ganti URL ini kalau BMKG pake server Geoserver lain
-    layers='radar_cmax_ntb',          # Nama layer di server BMKG (Tanya teknisi nama pastinya)
-    fmt='image/png',
-    transparent=True,
-    name='📡 Radar BMKG (CMAX)',
-    overlay=True,
-    control=True,
-    show=False
-).add_to(m)
+# ==========================================
+# JURUS REVISI 4: OVERLAY RADAR LOKAL (IMAGE OVERLAY)
+# ==========================================
+with st.spinner("📡 Menghubungkan ke Server SIDARMA..."):
+    radar_links = ambil_radar_internal()
 
-# Layer Radar PAC (Precipitation Accumulation)
-folium.raster_layers.WmsTileLayer(
-    url='https://sig.bmkg.go.id/WMS', # Ganti URL WMS
-    layers='radar_pac_ntb',           # Nama layer di server BMKG
-    fmt='image/png',
-    transparent=True,
-    name='📡 Radar BMKG (PAC)',
-    overlay=True,
-    control=True,
-    show=False
-).add_to(m)
+# ⚠️ PERHATIAN PENTING BRO! ⚠️
+# Ini adalah Bounding Box (Batas pojok peta) buat Radar Lombok. 
+# Gue set kasar radius ~250km dari radar. 
+# KALO GAMBARNYA MELENCENG, lu harus tanya teknisi SIDARMA kordinat pastinya!
+# Format: [[Latitude_Bawah, Longitude_Kiri], [Latitude_Atas, Longitude_Kanan]]
+batas_radar_lombok = [[-10.85, 113.85], [-6.45, 118.45]] 
 
+if radar_links.get('CMAX'):
+    folium.raster_layers.ImageOverlay(
+        image=radar_links['CMAX'],
+        bounds=batas_radar_lombok,
+        opacity=0.7, # Biar agak transparan
+        name='📡 Radar SIDARMA (CMAX)',
+        show=False,
+        interactive=False,
+        cross_origin=False
+    ).add_to(m)
+
+if radar_links.get('PAC'):
+    folium.raster_layers.ImageOverlay(
+        image=radar_links['PAC'],
+        bounds=batas_radar_lombok,
+        opacity=0.7,
+        name='📡 Radar SIDARMA (PAC12H)',
+        show=False,
+        interactive=False,
+        cross_origin=False
+    ).add_to(m)
+    
 # ==========================================
 # FUNGSI WARNA ZONA
 # ==========================================
